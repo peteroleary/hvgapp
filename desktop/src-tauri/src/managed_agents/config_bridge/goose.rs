@@ -162,6 +162,52 @@ pub(crate) fn goose_config_path() -> Option<PathBuf> {
     Some(home.join(".config").join("goose").join("config.yaml"))
 }
 
+/// Resolve the goose-native provider ID that actually serves `model`, by
+/// scanning `~/.config/goose/custom_providers/*.json`.
+///
+/// Buzz's own `provider` field is a harness-agnostic connector *kind*
+/// ("openai-compat", "anthropic", ...) used to pick an HTTP client shape.
+/// Goose's ACP `session/new` instead requires the literal provider ID the
+/// user named when they registered a custom provider (e.g. "custom_kimi") —
+/// a name Buzz has no other way to know, since it's arbitrary and lives only
+/// in this directory. Forwarding the connector-kind string as `GOOSE_PROVIDER`
+/// verbatim only works by coincidence, when the kind and the goose provider ID
+/// happen to be spelled the same (as with "google"); for custom OpenAI-compatible
+/// providers they never match, and goose fails every fresh `session/new` with
+/// "Configuration value not found: GOOSE_MODEL".
+///
+/// Returns the first custom provider file whose `models[].name` contains
+/// `model`, matching goose's own model-declaration schema exactly.
+pub(crate) fn resolve_custom_provider_for_model(model: &str) -> Option<String> {
+    let dir = goose_config_path()?.parent()?.join("custom_providers");
+    let entries = std::fs::read_dir(dir).ok()?;
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.extension().and_then(|e| e.to_str()) != Some("json") {
+            continue;
+        }
+        let Ok(raw) = std::fs::read_to_string(&path) else {
+            continue;
+        };
+        let Ok(value) = serde_json::from_str::<serde_json::Value>(&raw) else {
+            continue;
+        };
+        let Some(name) = value.get("name").and_then(|v| v.as_str()) else {
+            continue;
+        };
+        let Some(models) = value.get("models").and_then(|v| v.as_array()) else {
+            continue;
+        };
+        let serves_model = models
+            .iter()
+            .any(|m| m.get("name").and_then(|n| n.as_str()) == Some(model));
+        if serves_model {
+            return Some(name.to_string());
+        }
+    }
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

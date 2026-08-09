@@ -729,12 +729,36 @@ pub fn spawn_agent_child(
     );
     build_buzz_agent_provider_defaults(&mut command);
     if let Some(meta) = runtime_meta {
+        // For the goose harness, Buzz's `provider` field is a harness-agnostic
+        // connector kind (e.g. "openai-compat"), not necessarily the literal
+        // provider ID goose has registered under `providers:` /
+        // `custom_providers/*.json`. The two only coincide by accident (as
+        // with "google"). When they don't, goose's ACP `session/new` can't
+        // resolve a model on any fresh session and fails every time with
+        // "Configuration value not found: GOOSE_MODEL" — see
+        // `config_bridge::resolve_goose_custom_provider_for_model`. Resolve
+        // the real goose provider ID by matching the model against goose's
+        // custom provider files; fall back to the raw value when no match is
+        // found, which covers built-in providers like "google" that aren't
+        // custom-provider files at all.
+        let goose_provider_override = if meta.id == "goose" {
+            effective_model.as_deref().and_then(|model| {
+                crate::managed_agents::config_bridge::resolve_goose_custom_provider_for_model(
+                    model,
+                )
+            })
+        } else {
+            None
+        };
+        let provider_for_env = goose_provider_override
+            .as_deref()
+            .or(effective_provider.as_deref());
         for (key, value) in runtime_metadata_env_vars(
             meta.model_env_var,
             meta.provider_env_var,
             meta.provider_locked,
             effective_model.as_deref(),
-            effective_provider.as_deref(),
+            provider_for_env,
         ) {
             command.env(key, value);
         }

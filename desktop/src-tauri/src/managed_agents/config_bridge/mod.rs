@@ -16,3 +16,12 @@ pub(crate) use types::*;
 pub(crate) fn read_goose_file_config() -> Option<RuntimeFileConfig> {
     goose::read_config_file()
 }
+
+/// Resolve the goose-native provider ID that serves `model`, from
+/// `~/.config/goose/custom_providers/*.json`. See
+/// `goose::resolve_custom_provider_for_model` for why this translation is
+/// needed — Buzz's own `provider` field is a connector kind, not a goose
+/// provider ID, and the two vocabularies only coincide by accident.
+pub(crate) fn resolve_goose_custom_provider_for_model(model: &str) -> Option<String> {
+    goose::resolve_custom_provider_for_model(model)
+}

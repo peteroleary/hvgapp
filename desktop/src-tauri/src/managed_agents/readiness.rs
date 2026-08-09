@@ -230,12 +230,35 @@ fn resolve_effective_agent_env_with_def(
         super::global_config::resolve_effective_model_provider(record, personas, global);
 
     if let Some(rt) = runtime {
+        // Same translation as `spawn_agent_child` in runtime.rs: for the goose
+        // harness, Buzz's `provider` field is a harness-agnostic connector kind
+        // (e.g. "openai-compat"), not necessarily goose's own registered
+        // provider ID (e.g. "custom_kimi"). This function's output flows into
+        // `EffectiveHarnessDescriptor.env`, which `spawn_agent_child` applies
+        // LAST (deliberately, so user env overrides win) — so if this call
+        // computes GOOSE_PROVIDER from the raw value, it silently overwrites
+        // the correctly-resolved value spawn_agent_child computed earlier in
+        // the same spawn, even though GOOSE_PROVIDER is a derived key that was
+        // never meant to be independently re-derived here. Keep both call
+        // sites' resolution in sync — see `config_bridge::resolve_goose_custom_provider_for_model`.
+        let goose_provider_override = if rt.id == "goose" {
+            effective_model.as_deref().and_then(|model| {
+                crate::managed_agents::config_bridge::resolve_goose_custom_provider_for_model(
+                    model,
+                )
+            })
+        } else {
+            None
+        };
+        let provider_for_env = goose_provider_override
+            .as_deref()
+            .or(effective_provider.as_deref());
         for (key, value) in super::runtime::runtime_metadata_env_vars(
             rt.model_env_var,
             rt.provider_env_var,
             rt.provider_locked,
             effective_model.as_deref(),
-            effective_provider.as_deref(),
+            provider_for_env,
         ) {
             env.insert(key.to_string(), value.to_string());
         }
