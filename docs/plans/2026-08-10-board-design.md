@@ -44,7 +44,7 @@ Board is the operational Kanban for the entire six-brand operation (and any bran
   id: string,
   brandScope: string,
   framework: 'SMART' | 'OKR' | 'PACT',
-  smart?: { specific, measurable, attainable, reachable, timeBound },
+  smart?: { specific, measurable, attainable, relevant, timeBound },
   okr?: { objective: string, keyResults: [{ description, targetMetric, currentValue?, targetValue? }] },
   pact?: { purposeful, actionable, continuous, trackable },
   status: 'draft' | 'proposed' | 'approved' | 'executing' | 'completed',
