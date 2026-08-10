@@ -1,4 +1,11 @@
-import { Activity, Bot, FolderGit2, Inbox, Zap } from "lucide-react";
+import {
+  Activity,
+  Bot,
+  FolderGit2,
+  Inbox,
+  LayoutDashboard,
+  Zap,
+} from "lucide-react";
 
 import { TopbarSearch } from "@/features/search/ui/TopbarSearch";
 import { FeatureGate } from "@/shared/features";
@@ -14,6 +21,7 @@ import { SidebarMenuLabel } from "@/shared/ui/sidebar-menu-label";
 
 type SidebarSelectedView =
   | "home"
+  | "board"
   | "channel"
   | "messages"
   | "agents"
@@ -38,6 +46,7 @@ type AppSidebarPinnedHeaderProps = {
 type AppSidebarPrimaryMenuProps = {
   homeBadgeCount: number;
   onSelectAgents: () => void;
+  onSelectBoard: () => void;
   onSelectHome: () => void;
   onSelectProjects: () => void;
   onSelectPulse: () => void;
@@ -83,6 +92,7 @@ export function AppSidebarPinnedHeader({
 export function AppSidebarPrimaryMenu({
   homeBadgeCount,
   onSelectAgents,
+  onSelectBoard,
   onSelectHome,
   onSelectProjects,
   onSelectPulse,
@@ -187,6 +197,18 @@ export function AppSidebarPrimaryMenu({
             </SidebarMenuButton>
           </SidebarMenuItem>
         </FeatureGate>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            data-testid="open-board-view"
+            isActive={selectedView === "board"}
+            onClick={onSelectBoard}
+            tooltip="Board"
+            type="button"
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            <SidebarMenuLabel>Board</SidebarMenuLabel>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
       </SidebarMenu>
     </SidebarHeader>
   );

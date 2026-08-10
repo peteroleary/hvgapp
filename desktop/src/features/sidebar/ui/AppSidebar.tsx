@@ -98,6 +98,7 @@ type AppSidebarProps = {
   selectedChannelId: string | null;
   selectedView:
     | "home"
+    | "board"
     | "channel"
     | "messages"
     | "agents"
@@ -141,6 +142,7 @@ type AppSidebarProps = {
   ) => void;
   onRemoveCommunity: (id: string) => Promise<LeaveCommunityResult | undefined>;
   onCreateAgent: () => void;
+  onSelectBoard: () => void;
   onSelectAgents: () => void;
   onSelectProjects: () => void;
   onSelectPulse: () => void;
@@ -213,6 +215,7 @@ export function AppSidebar({
   onUpdateCommunity,
   onRemoveCommunity,
   onCreateAgent,
+  onSelectBoard,
   onSelectAgents,
   onSelectProjects,
   onSelectPulse,
@@ -609,6 +612,7 @@ export function AppSidebar({
               <AppSidebarPrimaryMenu
                 homeBadgeCount={homeBadgeCount}
                 onSelectAgents={onSelectAgents}
+                onSelectBoard={onSelectBoard}
                 onSelectHome={onSelectHome}
                 onSelectProjects={onSelectProjects}
                 onSelectPulse={onSelectPulse}
