@@ -32,7 +32,11 @@ test("edit-untouched: runtime omitted; visible-but-empty model/provider sent as 
     isAutoSeeded: true,
   });
   assert.equal(result.runtime, undefined, "runtime must be omitted");
-  assert.equal(result.model, "", "visible empty model must be an explicit clear");
+  assert.equal(
+    result.model,
+    "",
+    "visible empty model must be an explicit clear",
+  );
   assert.equal(
     result.provider,
     "",
@@ -147,5 +151,9 @@ test("defaults-mode-clears: blank model/provider on a capable runtime are explic
   });
   assert.equal(result.runtime, "goose", "runtime must be persisted");
   assert.equal(result.model, "", "blank model must clear to inherit global");
-  assert.equal(result.provider, "", "blank provider must clear to inherit global");
+  assert.equal(
+    result.provider,
+    "",
+    "blank provider must clear to inherit global",
+  );
 });

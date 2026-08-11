@@ -96,17 +96,17 @@ export const BoardCard: React.FC<BoardCardProps> = ({
       {/* Top Bar */}
       <div className="flex items-center justify-between gap-2 mb-2">
         <span
-          className={`text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border ${brandStyle.badge}`}
+          className={`text-badge font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border ${brandStyle.badge}`}
         >
           {card.brand}
         </span>
 
         {isRejected ? (
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border bg-rose-950/60 text-rose-300 border-rose-600/70 animate-pulse">
+          <span className="inline-flex items-center gap-1 text-badge font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border bg-rose-950/60 text-rose-300 border-rose-600/70 animate-pulse">
             🚫 Rejected
           </span>
         ) : requiresApproval ? (
-          <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded border bg-amber-950/40 text-amber-300 border-amber-700/50">
+          <span className="inline-flex items-center gap-1 text-badge font-semibold px-1.5 py-0.5 rounded border bg-amber-950/40 text-amber-300 border-amber-700/50">
             🛡️ Needs Approval
           </span>
         ) : null}
@@ -125,7 +125,7 @@ export const BoardCard: React.FC<BoardCardProps> = ({
           </span>
         )}
         {card.sourceLineage && (
-          <span className="bg-muted/40 px-1 py-0.5 rounded text-[9px]">
+          <span className="bg-muted/40 px-1 py-0.5 rounded text-3xs">
             ↖ From: {card.sourceLineage.fromBoardTitle}
           </span>
         )}
@@ -139,7 +139,7 @@ export const BoardCard: React.FC<BoardCardProps> = ({
             <div
               key={assignee.id}
               title={`${assignee.id} (${assignee.role || "assignee"})`}
-              className="relative inline-flex items-center justify-center w-5 h-5 rounded-full bg-sidebar-accent text-sidebar-foreground border border-background text-[10px] font-bold"
+              className="relative inline-flex items-center justify-center w-5 h-5 rounded-full bg-sidebar-accent text-sidebar-foreground border border-background text-badge font-bold"
             >
               {assignee.id.slice(0, 2).toUpperCase()}
               <span
@@ -154,7 +154,7 @@ export const BoardCard: React.FC<BoardCardProps> = ({
         {/* Function Tag & Comment Count */}
         <div className="flex items-center gap-1.5 text-2xs">
           <span
-            className={`px-1.5 py-0.5 rounded border text-[10px] font-medium capitalize ${functionStyle}`}
+            className={`px-1.5 py-0.5 rounded border text-badge font-medium capitalize ${functionStyle}`}
           >
             {card.functionArea}
           </span>

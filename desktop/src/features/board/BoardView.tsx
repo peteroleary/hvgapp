@@ -82,7 +82,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
             >
               <span>Goals & Frameworks</span>
               {pendingGoals.length > 0 && (
-                <span className="w-4 h-4 rounded-full bg-amber-500 text-amber-950 font-bold text-[9px] flex items-center justify-center">
+                <span className="w-4 h-4 rounded-full bg-amber-500 text-amber-950 font-bold text-3xs flex items-center justify-center">
                   {pendingGoals.length}
                 </span>
               )}
