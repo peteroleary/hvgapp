@@ -107,7 +107,7 @@ export const BoardFeedRulesModal: React.FC<BoardFeedRulesModalProps> = ({
                         <span>({rule.broken.detail})</span>
                       )}
                     </div>
-                    <div className="text-[10px] text-rose-300/70">
+                    <div className="text-badge text-rose-300/70">
                       Detected:{" "}
                       {new Date(rule.broken.detectedAt).toLocaleString()}
                     </div>

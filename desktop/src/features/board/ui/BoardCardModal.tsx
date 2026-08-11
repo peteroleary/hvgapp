@@ -280,7 +280,7 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
                         </span>
                       </div>
                       {assignee.role && (
-                        <span className="text-[10px] uppercase font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                        <span className="text-badge uppercase font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                           {assignee.role}
                         </span>
                       )}
