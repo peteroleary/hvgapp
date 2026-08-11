@@ -222,7 +222,7 @@ Start with **N=2** for most deployments. Increase if queue depth grows under loa
 
 ## Forum Channels
 
-By default, the ACP harness subscribes to stream message kinds (9, 46010, 40007). To receive forum events, opt in with `--kinds` and disable the mention filter (forum posts don't @mention agents):
+By default, the ACP harness subscribes to stream message kinds (9, 46010, 40007, 50001). To receive forum events, opt in with `--kinds` and disable the mention filter (forum posts don't @mention agents):
 
 **CLI flags:**
 ```bash

@@ -1,5 +1,6 @@
 import {
   KIND_APPROVAL_REQUEST,
+  KIND_BOARD_APPROVAL_REQUESTED,
   KIND_JOB_ACCEPTED,
   KIND_JOB_ERROR,
   KIND_JOB_PROGRESS,
@@ -125,6 +126,7 @@ export function slotForFeedKind(
   if (kind === KIND_JOB_RESULT) return "job_result";
   if (kind === KIND_JOB_ERROR) return "job_error";
   if (kind === KIND_APPROVAL_REQUEST) return "needs_action";
+  if (kind === KIND_BOARD_APPROVAL_REQUESTED) return "needs_action";
   return "needs_action";
 }
 

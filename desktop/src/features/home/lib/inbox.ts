@@ -189,6 +189,8 @@ function feedHeadline(item: FeedItem, groupItems: readonly FeedItem[] = []) {
       return "Forum reply";
     case 46010:
       return "Approval requested";
+    case 50001:
+      return "Board approval requested";
     default:
       if (item.category === "mention") {
         return "Mention";
@@ -210,6 +212,10 @@ function feedPreview(item: FeedItem) {
 
   if (item.kind === 46010) {
     return "A workflow is waiting for approval.";
+  }
+
+  if (item.kind === 50001) {
+    return "A Board card is waiting for approval.";
   }
 
   if (item.kind === 40007) {

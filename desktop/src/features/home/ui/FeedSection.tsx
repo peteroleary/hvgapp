@@ -7,6 +7,7 @@ import {
 import type { FeedItem } from "@/shared/api/types";
 import {
   KIND_APPROVAL_REQUEST,
+  KIND_BOARD_APPROVAL_REQUESTED,
   KIND_FORUM_COMMENT,
   KIND_FORUM_POST,
   KIND_JOB_ACCEPTED,
@@ -80,6 +81,8 @@ function feedHeadline(item: FeedItem) {
       return "Forum reply";
     case KIND_APPROVAL_REQUEST:
       return "Approval requested";
+    case KIND_BOARD_APPROVAL_REQUESTED:
+      return "Board approval requested";
     default:
       if (item.category === "mention") {
         return "Mention";
@@ -101,6 +104,10 @@ function feedContent(item: FeedItem) {
 
   if (item.kind === KIND_APPROVAL_REQUEST) {
     return "A workflow is waiting for approval.";
+  }
+
+  if (item.kind === KIND_BOARD_APPROVAL_REQUESTED) {
+    return "A Board card is waiting for approval.";
   }
 
   if (item.kind === KIND_REMINDER) {

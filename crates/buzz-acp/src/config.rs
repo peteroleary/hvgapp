@@ -1244,7 +1244,8 @@ pub fn resolve_channel_filters(
     rules: &[SubscriptionRule],
 ) -> HashMap<Uuid, ChannelFilter> {
     use buzz_core::kind::{
-        KIND_STREAM_MESSAGE, KIND_STREAM_REMINDER, KIND_WORKFLOW_APPROVAL_REQUESTED,
+        KIND_BOARD_APPROVAL_REQUESTED, KIND_STREAM_MESSAGE, KIND_STREAM_REMINDER,
+        KIND_WORKFLOW_APPROVAL_REQUESTED,
     };
 
     let target_channels: Vec<Uuid> = if let Some(ref overrides) = config.channels_override {
@@ -1266,6 +1267,7 @@ pub fn resolve_channel_filters(
                     KIND_STREAM_MESSAGE,
                     KIND_WORKFLOW_APPROVAL_REQUESTED,
                     KIND_STREAM_REMINDER,
+                    KIND_BOARD_APPROVAL_REQUESTED,
                 ]
             });
             let require_mention = !config.no_mention_filter;
@@ -1346,7 +1348,8 @@ pub fn resolve_dynamic_channel_filter(
     rules: &[crate::filter::SubscriptionRule],
 ) -> Option<ChannelFilter> {
     use buzz_core::kind::{
-        KIND_STREAM_MESSAGE, KIND_STREAM_REMINDER, KIND_WORKFLOW_APPROVAL_REQUESTED,
+        KIND_BOARD_APPROVAL_REQUESTED, KIND_STREAM_MESSAGE, KIND_STREAM_REMINDER,
+        KIND_WORKFLOW_APPROVAL_REQUESTED,
     };
 
     // In Mentions/All mode, if the operator explicitly constrained channels
@@ -1371,6 +1374,7 @@ pub fn resolve_dynamic_channel_filter(
                     KIND_STREAM_MESSAGE,
                     KIND_WORKFLOW_APPROVAL_REQUESTED,
                     KIND_STREAM_REMINDER,
+                    KIND_BOARD_APPROVAL_REQUESTED,
                 ]
             })),
             require_mention: !config.no_mention_filter,
@@ -1518,6 +1522,7 @@ mod tests {
             assert!(kinds.contains(&buzz_core::kind::KIND_STREAM_MESSAGE));
             assert!(kinds.contains(&buzz_core::kind::KIND_WORKFLOW_APPROVAL_REQUESTED));
             assert!(kinds.contains(&buzz_core::kind::KIND_STREAM_REMINDER));
+            assert!(kinds.contains(&buzz_core::kind::KIND_BOARD_APPROVAL_REQUESTED));
         }
     }
 
