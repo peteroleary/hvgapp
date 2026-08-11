@@ -1,5 +1,5 @@
-import React from 'react';
-import { FeedRule } from '../types/boardTypes';
+import type React from "react";
+import type { FeedRule } from "../types/boardTypes";
 
 export interface BoardFeedRulesModalProps {
   rules: FeedRule[];
@@ -9,9 +9,12 @@ export interface BoardFeedRulesModalProps {
   onDeleteRule?: (ruleId: string) => void;
 }
 
-const BROKEN_REASON_COPY: Record<NonNullable<FeedRule['broken']>['reason'], string> = {
-  target_list_missing: 'Target list has been deleted or removed',
-  target_board_missing: 'Target board is missing or unreachable',
+const BROKEN_REASON_COPY: Record<
+  NonNullable<FeedRule["broken"]>["reason"],
+  string
+> = {
+  target_list_missing: "Target list has been deleted or removed",
+  target_board_missing: "Target board is missing or unreachable",
 };
 
 export const BoardFeedRulesModal: React.FC<BoardFeedRulesModalProps> = ({
@@ -32,6 +35,7 @@ export const BoardFeedRulesModal: React.FC<BoardFeedRulesModalProps> = ({
             <span>⚡</span> Board Interconnection & Feed Rules
           </h2>
           <button
+            type="button"
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground p-1 rounded-lg transition-colors font-semibold"
           >
@@ -41,19 +45,20 @@ export const BoardFeedRulesModal: React.FC<BoardFeedRulesModalProps> = ({
 
         {/* Rules List */}
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          {rules.map(rule => {
+          {rules.map((rule) => {
             const isBroken = Boolean(rule.broken);
-            const reasonText = isBroken && rule.broken
-              ? BROKEN_REASON_COPY[rule.broken.reason] || rule.broken.reason
-              : '';
+            const reasonText =
+              isBroken && rule.broken
+                ? BROKEN_REASON_COPY[rule.broken.reason] || rule.broken.reason
+                : "";
 
             return (
               <div
                 key={rule.id}
                 className={`p-4 rounded-xl border space-y-3 ${
                   isBroken
-                    ? 'bg-rose-950/20 border-2 border-rose-500/80 text-rose-200'
-                    : 'bg-sidebar/40 border-sidebar-border text-foreground'
+                    ? "bg-rose-950/20 border-2 border-rose-500/80 text-rose-200"
+                    : "bg-sidebar/40 border-sidebar-border text-foreground"
                 }`}
               >
                 {/* Rule Header */}
@@ -67,18 +72,20 @@ export const BoardFeedRulesModal: React.FC<BoardFeedRulesModalProps> = ({
                   <div className="flex items-center gap-2">
                     {onToggleRule && (
                       <button
+                        type="button"
                         onClick={() => onToggleRule(rule.id, !rule.enabled)}
                         className={`px-2.5 py-1 rounded text-2xs font-bold transition-colors ${
                           rule.enabled
-                            ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-700/60'
-                            : 'bg-muted text-muted-foreground'
+                            ? "bg-emerald-950/60 text-emerald-300 border border-emerald-700/60"
+                            : "bg-muted text-muted-foreground"
                         }`}
                       >
-                        {rule.enabled ? 'Active' : 'Disabled'}
+                        {rule.enabled ? "Active" : "Disabled"}
                       </button>
                     )}
                     {onDeleteRule && (
                       <button
+                        type="button"
                         onClick={() => onDeleteRule(rule.id)}
                         className="text-muted-foreground hover:text-rose-400 p-1 text-xs"
                         title="Delete Rule"
@@ -95,19 +102,28 @@ export const BoardFeedRulesModal: React.FC<BoardFeedRulesModalProps> = ({
                     <div className="flex items-center gap-1.5 text-rose-300">
                       <span>⚠️ BROKEN FEED RULE:</span>
                       <span>{reasonText}</span>
-                      {rule.broken.detail && <span>({rule.broken.detail})</span>}
+                      {rule.broken.detail && (
+                        <span>({rule.broken.detail})</span>
+                      )}
                     </div>
-                    <div className="text-[10px] text-rose-300/70">
-                      Detected: {new Date(rule.broken.detectedAt).toLocaleString()}
+                    <div className="text-badge text-rose-300/70">
+                      Detected:{" "}
+                      {new Date(rule.broken.detectedAt).toLocaleString()}
                     </div>
                   </div>
                 )}
 
                 {/* Routing Flow Visual */}
                 <div className="flex items-center gap-2 text-2xs text-muted-foreground font-mono bg-background/50 p-2 rounded border border-border">
-                  <span className="text-foreground">{rule.sourceBoardId}:{rule.sourceListId}</span>
-                  <span className="text-primary font-bold">➔ [{rule.action}] ➔</span>
-                  <span className="text-foreground">{rule.targetBoardId}:{rule.targetListId}</span>
+                  <span className="text-foreground">
+                    {rule.sourceBoardId}:{rule.sourceListId}
+                  </span>
+                  <span className="text-primary font-bold">
+                    ➔ [{rule.action}] ➔
+                  </span>
+                  <span className="text-foreground">
+                    {rule.targetBoardId}:{rule.targetListId}
+                  </span>
                 </div>
               </div>
             );

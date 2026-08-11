@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
-import { Card, AutonomyPolicy, evaluateAutonomy } from '../types/boardTypes';
-import { BRAND_TOKENS, FUNCTION_TOKENS } from './BoardCard';
+import type React from "react";
+import { useState } from "react";
+import {
+  type Card,
+  type AutonomyPolicy,
+  evaluateAutonomy,
+} from "../types/boardTypes";
+import { BRAND_TOKENS, FUNCTION_TOKENS } from "./BoardCard";
 
 export interface BoardCardModalProps {
   card: Card | null;
@@ -21,28 +26,31 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
   onRejectCard,
   onAddComment,
 }) => {
-  const [commentText, setCommentText] = useState('');
-  const [rejectionReasonText, setRejectionReasonText] = useState('');
+  const [commentText, setCommentText] = useState("");
+  const [rejectionReasonText, setRejectionReasonText] = useState("");
   const [isRejecting, setIsRejecting] = useState(false);
 
   if (!isOpen || !card) return null;
 
   const requiresApproval = evaluateAutonomy(card, autonomyPolicies);
-  const isRejected = card.approvalDecision?.state === 'rejected';
-  const brandStyle = BRAND_TOKENS[card.brand] || { badge: 'bg-muted text-muted-foreground' };
-  const functionStyle = FUNCTION_TOKENS[card.functionArea] || FUNCTION_TOKENS.other;
+  const isRejected = card.approvalDecision?.state === "rejected";
+  const brandStyle = BRAND_TOKENS[card.brand] || {
+    badge: "bg-muted text-muted-foreground",
+  };
+  const functionStyle =
+    FUNCTION_TOKENS[card.functionArea] || FUNCTION_TOKENS.other;
 
   const handleSendComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim() || !onAddComment) return;
     onAddComment(card.id, commentText.trim());
-    setCommentText('');
+    setCommentText("");
   };
 
   const handleConfirmReject = () => {
     if (!rejectionReasonText.trim() || !onRejectCard) return;
     onRejectCard(card.id, rejectionReasonText.trim());
-    setRejectionReasonText('');
+    setRejectionReasonText("");
     setIsRejecting(false);
   };
 
@@ -52,14 +60,19 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
         {/* Modal Header */}
         <div className="flex items-center justify-between p-4 border-b border-border bg-sidebar/50">
           <div className="flex items-center gap-2">
-            <span className={`text-2xs font-semibold uppercase px-2 py-0.5 rounded border ${brandStyle.badge}`}>
+            <span
+              className={`text-2xs font-semibold uppercase px-2 py-0.5 rounded border ${brandStyle.badge}`}
+            >
               {card.brand}
             </span>
-            <span className={`text-2xs font-semibold uppercase px-2 py-0.5 rounded border ${functionStyle}`}>
+            <span
+              className={`text-2xs font-semibold uppercase px-2 py-0.5 rounded border ${functionStyle}`}
+            >
               {card.functionArea}
             </span>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground p-1 rounded-lg transition-colors font-semibold"
           >
@@ -71,11 +84,20 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Title & Metadata */}
           <div>
-            <h2 className="text-xl font-bold text-foreground mb-2">{card.title}</h2>
+            <h2 className="text-xl font-bold text-foreground mb-2">
+              {card.title}
+            </h2>
             <div className="flex flex-wrap items-center gap-3 text-2xs text-muted-foreground">
-              <span>ID: <code className="font-mono">{card.id}</code></span>
-              <span>Created by <strong className="text-foreground">@{card.createdBy}</strong></span>
-              <span>List: <strong className="text-foreground">{card.listId}</strong></span>
+              <span>
+                ID: <code className="font-mono">{card.id}</code>
+              </span>
+              <span>
+                Created by{" "}
+                <strong className="text-foreground">@{card.createdBy}</strong>
+              </span>
+              <span>
+                List: <strong className="text-foreground">{card.listId}</strong>
+              </span>
             </div>
           </div>
 
@@ -84,7 +106,9 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
             <div className="p-4 rounded-lg bg-rose-950/20 border-2 border-rose-600/80 space-y-3">
               <div className="flex items-center gap-2 text-rose-300 font-bold text-xs uppercase tracking-wider">
                 <span>🚫 WORK REJECTED</span>
-                {card.approvalDecision?.by && <span>BY @{card.approvalDecision.by}</span>}
+                {card.approvalDecision?.by && (
+                  <span>BY @{card.approvalDecision.by}</span>
+                )}
               </div>
               {card.approvalDecision?.reason && (
                 <p className="text-xs text-rose-200 bg-rose-950/40 p-2.5 rounded border border-rose-800/40">
@@ -98,7 +122,8 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
                 <span>🛡️ APPROVAL REQUIRED BEFORE EXECUTION</span>
               </div>
               <p className="text-2xs text-amber-200/90">
-                This card requires explicit human sign-off based on the Autonomy Policy for assigned agents.
+                This card requires explicit human sign-off based on the Autonomy
+                Policy for assigned agents.
               </p>
               {isRejecting ? (
                 <div className="space-y-2 pt-2">
@@ -106,17 +131,19 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
                     type="text"
                     placeholder="Enter reason for rejection..."
                     value={rejectionReasonText}
-                    onChange={e => setRejectionReasonText(e.target.value)}
+                    onChange={(e) => setRejectionReasonText(e.target.value)}
                     className="w-full text-xs p-2 rounded bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-rose-500"
                   />
                   <div className="flex gap-2">
                     <button
+                      type="button"
                       onClick={handleConfirmReject}
                       className="px-3 py-1.5 rounded bg-rose-600 hover:bg-rose-500 text-white text-2xs font-semibold transition-colors"
                     >
                       Confirm Rejection
                     </button>
                     <button
+                      type="button"
                       onClick={() => setIsRejecting(false)}
                       className="px-3 py-1.5 rounded bg-muted hover:bg-muted/80 text-muted-foreground text-2xs font-semibold transition-colors"
                     >
@@ -128,6 +155,7 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
                 <div className="flex flex-wrap gap-2 pt-1">
                   {onApproveCard && (
                     <button
+                      type="button"
                       onClick={() => onApproveCard(card.id)}
                       className="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-2xs font-semibold transition-colors"
                     >
@@ -136,6 +164,7 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
                   )}
                   {onRejectCard && (
                     <button
+                      type="button"
                       onClick={() => setIsRejecting(true)}
                       className="px-3 py-1.5 rounded bg-rose-600/80 hover:bg-rose-600 text-white text-2xs font-semibold transition-colors"
                     >
@@ -161,7 +190,7 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
                   Description
                 </h3>
                 <div className="p-3.5 rounded-lg bg-sidebar/40 border border-sidebar-border text-xs text-foreground whitespace-pre-wrap leading-relaxed">
-                  {card.description || 'No description provided.'}
+                  {card.description || "No description provided."}
                 </div>
               </div>
 
@@ -183,17 +212,26 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
                   Activity & Comments
                 </h3>
                 <div className="space-y-3 mb-4">
-                  {card.comments.map(c => (
-                    <div key={c.id} className="p-3 rounded-lg bg-sidebar/30 border border-sidebar-border/60 text-xs">
+                  {card.comments.map((c) => (
+                    <div
+                      key={c.id}
+                      className="p-3 rounded-lg bg-sidebar/30 border border-sidebar-border/60 text-xs"
+                    >
                       <div className="flex items-center justify-between text-2xs text-muted-foreground mb-1">
-                        <strong className="text-foreground">@{c.authorId}</strong>
-                        <span>{new Date(c.createdAt).toLocaleTimeString()}</span>
+                        <strong className="text-foreground">
+                          @{c.authorId}
+                        </strong>
+                        <span>
+                          {new Date(c.createdAt).toLocaleTimeString()}
+                        </span>
                       </div>
                       <p className="text-foreground/90">{c.body}</p>
                     </div>
                   ))}
                   {card.comments.length === 0 && (
-                    <p className="text-2xs text-muted-foreground italic">No comments yet.</p>
+                    <p className="text-2xs text-muted-foreground italic">
+                      No comments yet.
+                    </p>
                   )}
                 </div>
 
@@ -204,7 +242,7 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
                       type="text"
                       placeholder="Add a comment or execution note..."
                       value={commentText}
-                      onChange={e => setCommentText(e.target.value)}
+                      onChange={(e) => setCommentText(e.target.value)}
                       className="flex-1 text-xs p-2.5 rounded-lg bg-background border border-border text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                     />
                     <button
@@ -226,21 +264,25 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
                   Assignees
                 </h3>
                 <div className="space-y-2">
-                  {card.assignees.map((assignee, idx) => (
+                  {card.assignees.map((assignee) => (
                     <div
-                      key={assignee.id + idx}
+                      key={`${assignee.type}:${assignee.id}`}
                       className="flex items-center justify-between p-2 rounded bg-sidebar/50 border border-sidebar-border text-xs"
                     >
                       <div className="flex items-center gap-2">
                         <span
                           className={`w-2 h-2 rounded-full ${
-                            assignee.type === 'agent' ? 'bg-amber-400' : 'bg-blue-400'
+                            assignee.type === "agent"
+                              ? "bg-amber-400"
+                              : "bg-blue-400"
                           }`}
                         />
-                        <span className="font-medium text-foreground">@{assignee.id}</span>
+                        <span className="font-medium text-foreground">
+                          @{assignee.id}
+                        </span>
                       </div>
                       {assignee.role && (
-                        <span className="text-[10px] uppercase font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                        <span className="text-badge uppercase font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                           {assignee.role}
                         </span>
                       )}

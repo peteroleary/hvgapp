@@ -1,6 +1,6 @@
-import React from 'react';
-import { Card, AutonomyPolicy } from '../types/boardTypes';
-import { BoardCard } from './BoardCard';
+import type React from "react";
+import type { Card, AutonomyPolicy } from "../types/boardTypes";
+import { BoardCard } from "./BoardCard";
 
 export interface BoardColumnProps {
   listId: string;
@@ -31,6 +31,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
         </div>
         {onAddCard && (
           <button
+            type="button"
             onClick={() => onAddCard(listId)}
             className="p-1 rounded hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors text-sm font-bold"
             title="Add card"
@@ -42,7 +43,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
 
       {/* Column Body / Cards List */}
       <div className="flex-1 overflow-y-auto p-2.5 space-y-2.5 min-h-[150px]">
-        {cards.map(card => (
+        {cards.map((card) => (
           <BoardCard
             key={card.id}
             card={card}
