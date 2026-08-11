@@ -61,6 +61,18 @@ export const KIND_REPO_ANNOUNCEMENT = 30617;
 export const KIND_REPO_STATE = 30618;
 // NIP-MP: project grouping above NIP-34 repositories.
 export const KIND_PROJECT_ANNOUNCEMENT = 30621;
+// Board's addressable operational entities. Keep these synchronized with
+// buzz-core's Board kind registry and the Board Nostr data contract.
+export const KIND_BOARD = 30623;
+export const KIND_BOARD_CARD = 30624;
+export const KIND_BOARD_GOAL = 30625;
+export const KIND_BOARD_FEED_RULE = 30626;
+export const KIND_BOARD_AUTONOMY_POLICY = 30627;
+// Board approvals intentionally do not reuse the workflow 46010–46012 block:
+// workflow execution classification must never consume Board approval events.
+export const KIND_BOARD_APPROVAL_REQUESTED = 50001;
+export const KIND_BOARD_APPROVAL_GRANTED = 50002;
+export const KIND_BOARD_APPROVAL_DENIED = 50003;
 export const KIND_GIT_PATCH = 1617;
 export const KIND_GIT_PULL_REQUEST = 1618;
 export const KIND_GIT_PR_UPDATE = 1619;
