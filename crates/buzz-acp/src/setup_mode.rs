@@ -115,6 +115,11 @@ pub(crate) enum RequirementPayload {
     },
     /// Git for Windows is missing; open Agent runtimes for the installation guide.
     GitBash,
+    /// The harness binary itself was not found on any search path.
+    MissingBinary {
+        /// The command the desktop looked for (e.g. "kimi").
+        command: String,
+    },
 }
 
 impl RequirementPayload {
@@ -188,6 +193,12 @@ impl RequirementPayload {
             }
             RequirementPayload::GitBash => {
                 "install Git for Windows (open Agent runtimes in Settings to diagnose)".to_string()
+            }
+            RequirementPayload::MissingBinary { command } => {
+                format!(
+                    "install `{}` or put it on PATH (open Agent runtimes in Settings to diagnose)",
+                    command
+                )
             }
         }
     }
@@ -697,6 +708,23 @@ mod tests {
             payload.requirements.as_slice(),
             [RequirementPayload::GitBash]
         ));
+    }
+
+    #[test]
+    fn setup_payload_deserializes_missing_binary_requirement() {
+        // Emitted by the desktop (`Requirement::MissingBinary`) when the harness
+        // binary is not on any search path — e.g. a CLI installed somewhere the
+        // app's discovery does not look. The harness must parse it and nudge
+        // instead of dying with "unknown variant".
+        let payload: SetupPayload = serde_json::from_str(
+            r#"{"agent_name":"Prop","agent_pubkey":"test","requirements":[{"surface":"missing_binary","command":"kimi"}]}"#,
+        )
+        .unwrap();
+        assert!(matches!(
+            payload.requirements.as_slice(),
+            [RequirementPayload::MissingBinary { command }] if command == "kimi"
+        ));
+        assert!(payload.nudge_body().contains("install `kimi`"));
     }
 
     #[test]
