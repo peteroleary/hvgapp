@@ -13,7 +13,9 @@ use buzz_auth::Scope;
 use buzz_core::kind::{
     event_kind_u32, is_identity_archive_request_kind, is_parameterized_replaceable,
     is_relay_admin_kind, KIND_AGENT_ENGRAM, KIND_AGENT_PROFILE, KIND_AGENT_TURN_METRIC,
-    KIND_APPROVAL_DENY, KIND_APPROVAL_GRANT, KIND_AUTH, KIND_BOOKMARK_LIST, KIND_BOOKMARK_SET,
+    KIND_APPROVAL_DENY, KIND_APPROVAL_GRANT, KIND_AUTH, KIND_BOARD, KIND_BOARD_APPROVAL_DENIED,
+    KIND_BOARD_APPROVAL_GRANTED, KIND_BOARD_APPROVAL_REQUESTED, KIND_BOARD_AUTONOMY_POLICY,
+    KIND_BOARD_CARD, KIND_BOARD_FEED_RULE, KIND_BOARD_GOAL, KIND_BOOKMARK_LIST, KIND_BOOKMARK_SET,
     KIND_CANVAS, KIND_CONTACT_LIST, KIND_DELETION, KIND_DM_ADD_MEMBER, KIND_DM_HIDE, KIND_DM_OPEN,
     KIND_EMOJI_LIST, KIND_EMOJI_SET, KIND_EVENT_REMINDER, KIND_FOLLOW_SET, KIND_FORUM_COMMENT,
     KIND_FORUM_POST, KIND_FORUM_VOTE, KIND_GIFT_WRAP, KIND_GIT_ISSUE, KIND_GIT_PATCH,
@@ -432,6 +434,18 @@ fn required_scope_for_kind(kind: u32, event: &Event) -> Result<Scope, &'static s
         KIND_DM_OPEN | KIND_DM_ADD_MEMBER | KIND_DM_HIDE => Ok(Scope::MessagesWrite),
         KIND_WORKFLOW_DEF | KIND_WORKFLOW_TRIGGER => Ok(Scope::MessagesWrite),
         KIND_APPROVAL_GRANT | KIND_APPROVAL_DENY => Ok(Scope::MessagesWrite),
+        // Board (NIP-BD): addressable entities (30623–30627) and the approval
+        // triple (50001–50003). Community-global member writes, same shape as
+        // workflow defs/triggers; the 50001–50003 block intentionally stays
+        // outside 46001–46012 so workflow classification never consumes it.
+        KIND_BOARD
+        | KIND_BOARD_CARD
+        | KIND_BOARD_GOAL
+        | KIND_BOARD_FEED_RULE
+        | KIND_BOARD_AUTONOMY_POLICY
+        | KIND_BOARD_APPROVAL_REQUESTED
+        | KIND_BOARD_APPROVAL_GRANTED
+        | KIND_BOARD_APPROVAL_DENIED => Ok(Scope::MessagesWrite),
         _ => Err("restricted: unknown event kind"),
     }
 }
@@ -561,6 +575,18 @@ pub(crate) fn is_global_only_kind(kind: u32) -> bool {
             // `buzz-channel` tag is a metadata reference, not a routing directive,
             // so a project's state is never channel-scoped.
             | KIND_PROJECT
+            // NIP-BD: Board entities are addressed by (pubkey, kind, d_tag) and
+            // approvals are community-global signals tagged to their approvers —
+            // the Board read model queries them unscoped, so a stray `h` tag
+            // must never channel-scope them.
+            | KIND_BOARD
+            | KIND_BOARD_CARD
+            | KIND_BOARD_GOAL
+            | KIND_BOARD_FEED_RULE
+            | KIND_BOARD_AUTONOMY_POLICY
+            | KIND_BOARD_APPROVAL_REQUESTED
+            | KIND_BOARD_APPROVAL_GRANTED
+            | KIND_BOARD_APPROVAL_DENIED
             // Community moderation commands (9040–9044): community-global
             // direct commands, same model as the NIP-43 9030-series. A stray
             // `h` tag must never channel-scope them (pinned contract —
@@ -4875,6 +4901,66 @@ mod tests {
         // keyed by (pubkey, kind, d), so one signer can never overwrite another's
         // project. No relay-side permission check exists or is needed.
         assert!(is_parameterized_replaceable(KIND_PROJECT));
+    }
+
+    #[test]
+    fn board_kinds_are_in_scope_allowlist() {
+        let dummy = make_dummy_event();
+        for kind in [
+            KIND_BOARD,
+            KIND_BOARD_CARD,
+            KIND_BOARD_GOAL,
+            KIND_BOARD_FEED_RULE,
+            KIND_BOARD_AUTONOMY_POLICY,
+            KIND_BOARD_APPROVAL_REQUESTED,
+            KIND_BOARD_APPROVAL_GRANTED,
+            KIND_BOARD_APPROVAL_DENIED,
+        ] {
+            assert_eq!(
+                required_scope_for_kind(kind, &dummy).unwrap(),
+                Scope::MessagesWrite,
+                "Board kind {kind} should be an ordinary member write"
+            );
+        }
+    }
+
+    #[test]
+    fn board_kinds_are_global_only() {
+        // Board entities are NIP-33 addressable and approvals are
+        // community-global; the Board read model queries all of them unscoped.
+        for kind in [
+            KIND_BOARD,
+            KIND_BOARD_CARD,
+            KIND_BOARD_GOAL,
+            KIND_BOARD_FEED_RULE,
+            KIND_BOARD_AUTONOMY_POLICY,
+            KIND_BOARD_APPROVAL_REQUESTED,
+            KIND_BOARD_APPROVAL_GRANTED,
+            KIND_BOARD_APPROVAL_DENIED,
+        ] {
+            assert!(is_global_only_kind(kind), "Board kind {kind} must be global");
+            assert!(
+                !requires_h_channel_scope(kind),
+                "Board kind {kind} must not require an h tag"
+            );
+        }
+    }
+
+    #[test]
+    fn board_entity_kinds_are_parameterized_replaceable() {
+        // Same NIP-33 owner-only editing story as KIND_PROJECT.
+        for kind in [
+            KIND_BOARD,
+            KIND_BOARD_CARD,
+            KIND_BOARD_GOAL,
+            KIND_BOARD_FEED_RULE,
+            KIND_BOARD_AUTONOMY_POLICY,
+        ] {
+            assert!(
+                is_parameterized_replaceable(kind),
+                "Board entity kind {kind} must be parameterized replaceable"
+            );
+        }
     }
 
     /// Drive every case in the shared NIP-MP fixture file against
