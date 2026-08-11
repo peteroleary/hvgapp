@@ -864,7 +864,7 @@ CREATE INDEX push_match_queue_due
 CREATE INDEX push_match_queue_recovery
     ON push_match_queue (lease_until) WHERE state = 'matching';
 
--- T1b push gate (keep in sync with migrations/0023). Enqueue only when the
+-- T1b push gate (keep in sync with migrations/0029). Enqueue only when the
 -- community has an active, endpoint-enabled, unexpired lease; the shared
 -- advisory lock pairs with the exclusive lock taken by lease activations
 -- (crates/buzz-db/src/push.rs) to close the lost-wake race.
@@ -874,7 +874,7 @@ BEGIN
     -- Keep this allowlist identical to the relay's validated NIP-PL descriptor.
     -- Centralizing it on the events table covers every durable producer,
     -- including internal paths that bypass live dispatch.
-    IF NEW.kind IN (7, 9, 1059, 40007, 46010) THEN
+    IF NEW.kind IN (7, 9, 1059, 40007, 46010, 50001) THEN
         PERFORM pg_advisory_xact_lock_shared(
             hashtextextended('buzz_push_gate:' || NEW.community_id::text, 0));
         IF EXISTS (

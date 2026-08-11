@@ -57,6 +57,15 @@ export function notificationTitle(item: FeedItem, senderName?: string) {
     });
   }
 
+  if (item.kind === 50001) {
+    return formatNotificationTitle({
+      prefix: senderName
+        ? `${senderName} requested Board approval`
+        : "Board Approval Requested",
+      channelLabel,
+    });
+  }
+
   return formatNotificationTitle({
     prefix: senderName ? senderName : "Needs Action",
     channelLabel,
@@ -67,7 +76,9 @@ export function notificationBody(item: FeedItem) {
   const fallback =
     item.kind === 46010
       ? "A workflow is waiting for your approval."
-      : "Something in Buzz needs your attention.";
+      : item.kind === 50001
+        ? "A Board card is waiting for your approval."
+        : "Something in Buzz needs your attention.";
   return truncateNotificationBody(item.content, fallback);
 }
 

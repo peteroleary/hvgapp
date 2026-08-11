@@ -601,6 +601,26 @@ pub const KIND_HUDDLE_GUIDELINES: u32 = 48106;
 /// Internal kind for media upload audit entries. Not a relay event kind.
 pub const KIND_MEDIA_UPLOAD: u32 = 49001;
 
+// Board (addressable entities 30623–30627, approvals 50001–50003)
+/// Board — an operational Kanban surface (parameterized replaceable, d = board id).
+pub const KIND_BOARD: u32 = 30623;
+/// Board card (parameterized replaceable, d = card id).
+pub const KIND_BOARD_CARD: u32 = 30624;
+/// Board goal (parameterized replaceable, d = goal id).
+pub const KIND_BOARD_GOAL: u32 = 30625;
+/// Board feed rule (parameterized replaceable, d = rule id).
+pub const KIND_BOARD_FEED_RULE: u32 = 30626;
+/// Board autonomy policy (parameterized replaceable, d = policy id).
+pub const KIND_BOARD_AUTONOMY_POLICY: u32 = 30627;
+/// A Board card is waiting for approval. Intentionally outside the workflow
+/// 46010–46012 block: workflow execution classification must never consume
+/// Board approval events.
+pub const KIND_BOARD_APPROVAL_REQUESTED: u32 = 50001;
+/// A pending Board approval was granted.
+pub const KIND_BOARD_APPROVAL_GRANTED: u32 = 50002;
+/// A pending Board approval was denied.
+pub const KIND_BOARD_APPROVAL_DENIED: u32 = 50003;
+
 /// NIP-34: Repository announcement (parameterized replaceable, d-tag = repo-id).
 pub const KIND_GIT_REPO_ANNOUNCEMENT: u32 = 30617;
 /// NIP-34: Repository state — current branch/tag refs (parameterized replaceable, d-tag = repo-id).
@@ -752,6 +772,14 @@ pub const ALL_KINDS: &[u32] = &[
     KIND_HUDDLE_ENDED,
     KIND_HUDDLE_GUIDELINES,
     KIND_MEDIA_UPLOAD,
+    KIND_BOARD,
+    KIND_BOARD_CARD,
+    KIND_BOARD_GOAL,
+    KIND_BOARD_FEED_RULE,
+    KIND_BOARD_AUTONOMY_POLICY,
+    KIND_BOARD_APPROVAL_REQUESTED,
+    KIND_BOARD_APPROVAL_GRANTED,
+    KIND_BOARD_APPROVAL_DENIED,
     KIND_GIT_REPO_ANNOUNCEMENT,
     KIND_GIT_REPO_STATE,
     KIND_GIT_PATCH,
@@ -879,6 +907,13 @@ const _: () = assert!(
 const _: () = assert!(KIND_AUTH <= u16::MAX as u32);
 const _: () = assert!(KIND_CANVAS <= u16::MAX as u32);
 const _: () = assert!(KIND_HUDDLE_GUIDELINES <= u16::MAX as u32);
+// Board: entity kinds are parameterized replaceable; the approval triple are
+// regular stored kinds that fit nostr's u16-backed Kind.
+const _: () = assert!(is_parameterized_replaceable(KIND_BOARD));
+const _: () = assert!(is_parameterized_replaceable(KIND_BOARD_AUTONOMY_POLICY));
+const _: () = assert!(!is_replaceable(KIND_BOARD_APPROVAL_REQUESTED));
+const _: () = assert!(!is_ephemeral(KIND_BOARD_APPROVAL_REQUESTED));
+const _: () = assert!(KIND_BOARD_APPROVAL_DENIED <= u16::MAX as u32);
 const _: () = assert!(EPHEMERAL_KIND_MIN < EPHEMERAL_KIND_MAX);
 // Compile-time: KIND_AGENT_TURN_METRIC is a regular stored kind (not ephemeral, not replaceable).
 const _: () = assert!(!is_ephemeral(KIND_AGENT_TURN_METRIC));

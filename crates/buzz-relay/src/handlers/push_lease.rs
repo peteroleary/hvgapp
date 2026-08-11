@@ -12,8 +12,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Number, Value};
 use sha2::Digest as _;
 
-pub(crate) const PUSH_KINDS: &[u64] = &[7, 9, 1059, 40007, 46010];
-pub(crate) const URGENT_KINDS: &[u64] = &[];
+pub(crate) const PUSH_KINDS: &[u64] = &[7, 9, 1059, 40007, 46010, 50001];
+pub(crate) const URGENT_KINDS: &[u64] = &[50001];
 
 /// NIP-PL addressable push-lease event kind.
 pub const KIND_PUSH_LEASE: u32 = 30_350;
@@ -702,7 +702,9 @@ mod tests {
             .collect::<Vec<_>>()
             .join(", ");
         let predicate = format!("NEW.kind IN ({kinds})");
-        let migration = include_str!("../../../../migrations/0018_push_match_queue.sql");
+        // 0018/0023 are checksum-frozen; the effective trigger allowlist lives
+        // in the newest gate migration, which must match PUSH_KINDS exactly.
+        let migration = include_str!("../../../../migrations/0029_board_approval_push_kind.sql");
         assert!(
             migration.contains(&predicate),
             "migration trigger must use PUSH_KINDS exactly: {predicate}"

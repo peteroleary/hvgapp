@@ -561,7 +561,7 @@ mod tests {
         let mut migrations: Vec<_> = MIGRATOR.iter().collect();
         migrations.sort_by_key(|migration| migration.version);
 
-        assert_eq!(migrations.len(), 28);
+        assert_eq!(migrations.len(), 29);
         assert_eq!(migrations[0].version, 1);
         assert_eq!(&*migrations[0].description, "initial schema");
         assert!(migrations[0]
@@ -946,6 +946,18 @@ mod tests {
             long_reactions.contains("ALTER TABLE reactions ALTER COLUMN emoji TYPE VARCHAR(66)")
         );
         assert!(desired_schema.contains("emoji               VARCHAR(66) NOT NULL"));
+
+        // Board approval wake: 0018/0023 are checksum-frozen, so the gated
+        // push-match trigger is re-created with kind 50001 in the allowlist.
+        // Gate logic must carry over unchanged — only the kind list grows.
+        assert_eq!(migrations[28].version, 29);
+        let board_push = migrations[28].sql.as_str();
+        assert!(board_push.contains("CREATE OR REPLACE FUNCTION enqueue_push_match_job"));
+        assert!(board_push.contains("NEW.kind IN (7, 9, 1059, 40007, 46010, 50001)"));
+        assert!(board_push.contains("pg_advisory_xact_lock_shared"));
+        assert!(board_push.contains("'buzz_push_gate:' || NEW.community_id::text"));
+        assert!(board_push.contains("endpoint_enabled"));
+        assert!(desired_schema.contains("NEW.kind IN (7, 9, 1059, 40007, 46010, 50001)"));
     }
 
     #[test]

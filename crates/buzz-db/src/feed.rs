@@ -2,7 +2,7 @@
 //!
 //! Aggregates three categories of data:
 //! - **Mentions**: Events where the user's pubkey appears in a `p` tag.
-//! - **Needs Action**: Approval requests (kind 46010) and reminders (kind 40007) tagged to the user.
+//! - **Needs Action**: Approval requests (kinds 46010 and 50001) and reminders (kind 40007) tagged to the user.
 //! - **Activity**: Recent events from channels the user can access.
 //!
 //! ## Performance characteristics
@@ -34,10 +34,11 @@ use sqlx::{PgPool, QueryBuilder};
 use uuid::Uuid;
 
 use buzz_core::kind::{
-    KIND_FORUM_COMMENT, KIND_FORUM_POST, KIND_GIT_ISSUE, KIND_GIT_PR_UPDATE, KIND_GIT_PULL_REQUEST,
-    KIND_GIT_STATUS_CLOSED, KIND_GIT_STATUS_DRAFT, KIND_GIT_STATUS_MERGED, KIND_GIT_STATUS_OPEN,
-    KIND_JOB_PROGRESS, KIND_JOB_REQUEST, KIND_JOB_RESULT, KIND_STREAM_MESSAGE,
-    KIND_STREAM_MESSAGE_V2, KIND_STREAM_REMINDER, KIND_TEXT_NOTE, KIND_WORKFLOW_APPROVAL_REQUESTED,
+    KIND_BOARD_APPROVAL_REQUESTED, KIND_FORUM_COMMENT, KIND_FORUM_POST, KIND_GIT_ISSUE,
+    KIND_GIT_PR_UPDATE, KIND_GIT_PULL_REQUEST, KIND_GIT_STATUS_CLOSED, KIND_GIT_STATUS_DRAFT,
+    KIND_GIT_STATUS_MERGED, KIND_GIT_STATUS_OPEN, KIND_JOB_PROGRESS, KIND_JOB_REQUEST,
+    KIND_JOB_RESULT, KIND_STREAM_MESSAGE, KIND_STREAM_MESSAGE_V2, KIND_STREAM_REMINDER,
+    KIND_TEXT_NOTE, KIND_WORKFLOW_APPROVAL_REQUESTED,
 };
 use buzz_core::{CommunityId, StoredEvent};
 
@@ -188,7 +189,7 @@ fn build_needs_action_query(
     qb.push(" AND m.pubkey_hex = ").push_bind(pubkey_hex);
     qb.push(" AND e.deleted_at IS NULL");
     qb.push(format!(
-        " AND e.kind IN ({KIND_WORKFLOW_APPROVAL_REQUESTED}, {KIND_STREAM_REMINDER})"
+        " AND e.kind IN ({KIND_WORKFLOW_APPROVAL_REQUESTED}, {KIND_STREAM_REMINDER}, {KIND_BOARD_APPROVAL_REQUESTED})"
     ));
     push_visible_channel_filter(&mut qb, "e.channel_id", accessible_channel_ids);
     if let Some(s) = since {
@@ -202,6 +203,7 @@ fn build_needs_action_query(
 /// Find events that require action from the given pubkey:
 /// - [`KIND_WORKFLOW_APPROVAL_REQUESTED`] (workflow approval requested, tagged with user pubkey)
 /// - [`KIND_STREAM_REMINDER`] (reminder, tagged with user pubkey)
+/// - [`KIND_BOARD_APPROVAL_REQUESTED`] (Board card approval requested, tagged with user pubkey)
 ///
 /// Only returns community-global events and events from channels the user has access to
 /// (`accessible_channel_ids`). This prevents surfacing approval requests from channels
@@ -648,8 +650,14 @@ mod tests {
 
     #[test]
     fn needs_action_query_includes_approval_and_reminder_kinds() {
-        use buzz_core::kind::{KIND_STREAM_REMINDER, KIND_WORKFLOW_APPROVAL_REQUESTED};
-        let needs_action_kinds: &[u32] = &[KIND_WORKFLOW_APPROVAL_REQUESTED, KIND_STREAM_REMINDER];
+        use buzz_core::kind::{
+            KIND_BOARD_APPROVAL_REQUESTED, KIND_STREAM_REMINDER, KIND_WORKFLOW_APPROVAL_REQUESTED,
+        };
+        let needs_action_kinds: &[u32] = &[
+            KIND_WORKFLOW_APPROVAL_REQUESTED,
+            KIND_STREAM_REMINDER,
+            KIND_BOARD_APPROVAL_REQUESTED,
+        ];
 
         assert!(
             needs_action_kinds.contains(&KIND_WORKFLOW_APPROVAL_REQUESTED),
@@ -658,6 +666,10 @@ mod tests {
         assert!(
             needs_action_kinds.contains(&KIND_STREAM_REMINDER),
             "reminder kind must be in needs_action"
+        );
+        assert!(
+            needs_action_kinds.contains(&KIND_BOARD_APPROVAL_REQUESTED),
+            "board approval request kind must be in needs_action"
         );
     }
 
@@ -725,11 +737,15 @@ mod tests {
     #[test]
     fn needs_action_kinds_do_not_overlap_with_activity_kinds() {
         use buzz_core::kind::{
-            KIND_FORUM_POST, KIND_JOB_PROGRESS, KIND_JOB_REQUEST, KIND_JOB_RESULT,
-            KIND_STREAM_MESSAGE, KIND_STREAM_MESSAGE_V2, KIND_STREAM_REMINDER,
+            KIND_BOARD_APPROVAL_REQUESTED, KIND_FORUM_POST, KIND_JOB_PROGRESS, KIND_JOB_REQUEST,
+            KIND_JOB_RESULT, KIND_STREAM_MESSAGE, KIND_STREAM_MESSAGE_V2, KIND_STREAM_REMINDER,
             KIND_WORKFLOW_APPROVAL_REQUESTED,
         };
-        let needs_action_kinds: &[u32] = &[KIND_WORKFLOW_APPROVAL_REQUESTED, KIND_STREAM_REMINDER];
+        let needs_action_kinds: &[u32] = &[
+            KIND_WORKFLOW_APPROVAL_REQUESTED,
+            KIND_STREAM_REMINDER,
+            KIND_BOARD_APPROVAL_REQUESTED,
+        ];
         let activity_kinds: &[u32] = &[
             KIND_STREAM_MESSAGE,
             KIND_STREAM_MESSAGE_V2,
