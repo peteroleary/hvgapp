@@ -344,8 +344,6 @@ export function AgentDefinitionDialog({
       isEditMode: "id" in initialValues,
       isAutoSeeded: isRuntimeAutoSeededRef.current,
       initialPreviousRuntime: initialValues.runtime?.trim() ?? "",
-      initialModel: initialValues.model,
-      initialProvider: initialValues.provider,
       initialModelProviderEditableWithoutRuntime,
     });
     const namePool = parsePersonaNamePoolText(namePoolText);

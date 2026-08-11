@@ -9,6 +9,14 @@ import { runtimeSupportsLlmProviderSelection } from "./agentConfigOptions";
  * runtime was auto-seeded (the user never explicitly chose one), it is omitted
  * from the payload, and model/provider edits are still persisted via the
  * `modelProviderEditableWithoutRuntime` path.
+ *
+ * Absent-vs-empty contract with the backend (`UpdatePersonaRequest`):
+ * - `undefined` (key omitted) = "don't touch the stored value" — used whenever
+ *   the control is hidden or the value was never user-chosen. Omitting must
+ *   never wipe stored config.
+ * - `""` (empty after trimming, while the control is visible) = explicit
+ *   "no override — inherit the global layer" — the backend clears the field.
+ * - a non-empty string = set.
  */
 export function buildRuntimeModelProviderPayload({
   runtime,
@@ -17,8 +25,6 @@ export function buildRuntimeModelProviderPayload({
   isEditMode,
   isAutoSeeded,
   initialPreviousRuntime,
-  initialModel,
-  initialProvider,
   initialModelProviderEditableWithoutRuntime,
 }: {
   runtime: string;
@@ -27,8 +33,6 @@ export function buildRuntimeModelProviderPayload({
   isEditMode: boolean;
   isAutoSeeded: boolean;
   initialPreviousRuntime: string;
-  initialModel: string | null | undefined;
-  initialProvider: string | null | undefined;
   initialModelProviderEditableWithoutRuntime: boolean;
 }): {
   runtime: string | undefined;
@@ -53,23 +57,16 @@ export function buildRuntimeModelProviderPayload({
     (runtimeForSubmit.length > 0 &&
       runtimeSupportsLlmProviderSelection(runtimeForSubmit)) ||
     modelProviderEditableWithoutRuntime;
-  const shouldPreserveHiddenModelProvider =
-    isEditMode &&
-    previousRuntime.length === 0 &&
-    runtimeForSubmit.length === 0 &&
-    !modelProviderEditableWithoutRuntime;
   return {
     runtime: runtimeForSubmit || undefined,
+    // Visible + editable: an empty field is a deliberate "inherit from the
+    // global layer" choice — send "" so the backend clears the stored value.
+    // Hidden (provider-locked runtime): omit the key so the backend preserves
+    // the stored value instead of nulling it on an unrelated edit.
     model:
       runtimeForSubmit || modelProviderEditableWithoutRuntime
-        ? model.trim() || undefined
-        : shouldPreserveHiddenModelProvider
-          ? (initialModel ?? undefined)
-          : undefined,
-    provider: llmProviderVisibleForSubmit
-      ? provider.trim() || undefined
-      : shouldPreserveHiddenModelProvider
-        ? (initialProvider ?? undefined)
+        ? model.trim()
         : undefined,
+    provider: llmProviderVisibleForSubmit ? provider.trim() : undefined,
   };
 }
