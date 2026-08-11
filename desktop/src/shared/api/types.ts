@@ -765,9 +765,11 @@ export type CreatePersonaInput = {
   displayName: string;
   avatarUrl?: string;
   systemPrompt: string;
-  runtime?: string;
-  model?: string;
-  provider?: string;
+  /** `null` is accepted (treated like omission: no runtime) so the shared
+   * dialog payload builder's tri-state output type-checks on the create path. */
+  runtime?: string | null;
+  model?: string | null;
+  provider?: string | null;
   namePool?: string[];
   envVars?: Record<string, string>;
   behavior?: PersonaBehaviorInput;
@@ -783,9 +785,17 @@ export type UpdatePersonaInput = {
   displayName: string;
   avatarUrl?: string;
   systemPrompt: string;
-  runtime?: string;
-  model?: string;
-  provider?: string;
+  /**
+   * Tri-state: omitted (`undefined`) = leave the stored value untouched,
+   * `null` = clear it, a string = set it. Omission must never wipe a saved
+   * value — the dialog omits these keys when the control is hidden or the
+   * runtime was auto-seeded.
+   */
+  runtime?: string | null;
+  /** Same tri-state contract as `runtime`. */
+  model?: string | null;
+  /** Same tri-state contract as `runtime`. */
+  provider?: string | null;
   namePool?: string[];
   envVars?: Record<string, string>;
   behavior?: PersonaBehaviorInput;

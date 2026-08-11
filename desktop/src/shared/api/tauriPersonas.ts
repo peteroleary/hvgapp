@@ -96,6 +96,9 @@ function updatePersonaPayload(input: UpdatePersonaInput) {
     displayName: input.displayName,
     avatarUrl: input.avatarUrl,
     systemPrompt: input.systemPrompt,
+    // Tri-state contract, same shape as envVars/behavior below: `undefined`
+    // keys are dropped by JSON serialization and tell the backend "don't
+    // touch the stored value"; explicit `null` clears it; a string sets it.
     runtime: input.runtime,
     model: input.model,
     provider: input.provider,

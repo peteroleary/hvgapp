@@ -18,6 +18,31 @@ use super::{pending, retain_persona_pending, trim_optional, trim_required};
 
 #[cfg(test)]
 mod name_propagation_tests;
+#[cfg(test)]
+mod tri_state_tests;
+
+/// Merge an update request's tri-state runtime/model/provider into `persona`.
+/// `None` (key absent from the request) preserves the stored value;
+/// `Some(None)` (explicit null, or blank after trimming) clears it;
+/// `Some(Some(v))` sets it. Extracted so the contract is testable without an
+/// AppHandle — mirroring `apply_model_provider_prompt_update` on the
+/// instance-update side, which already uses this shape.
+fn apply_runtime_model_provider_update(
+    persona: &mut AgentDefinition,
+    runtime: Option<Option<String>>,
+    model: Option<Option<String>>,
+    provider: Option<Option<String>>,
+) {
+    if let Some(runtime) = runtime {
+        persona.runtime = trim_optional(runtime);
+    }
+    if let Some(model) = model {
+        persona.model = trim_optional(model);
+    }
+    if let Some(provider) = provider {
+        persona.provider = trim_optional(provider);
+    }
+}
 
 /// Return value of the `update_persona` command. Uses flatten so all
 /// `AgentDefinition` fields appear at the top level of the JSON response —
@@ -92,9 +117,6 @@ pub(super) async fn update_persona_with<R: Send + 'static>(
             let display_name = trim_required(&input.display_name, "Display name")?;
             let system_prompt = input.system_prompt.clone();
             let avatar_url = trim_optional(input.avatar_url);
-            let runtime = trim_optional(input.runtime);
-            let model = trim_optional(input.model);
-            let provider = trim_optional(input.provider);
 
             let _store_guard = state
                 .managed_agents_store_lock
@@ -115,9 +137,12 @@ pub(super) async fn update_persona_with<R: Send + 'static>(
             persona.display_name = display_name;
             persona.avatar_url = avatar_url;
             persona.system_prompt = system_prompt;
-            persona.runtime = runtime;
-            persona.model = model;
-            persona.provider = provider;
+            apply_runtime_model_provider_update(
+                persona,
+                input.runtime,
+                input.model,
+                input.provider,
+            );
             persona.name_pool = input
                 .name_pool
                 .into_iter()

@@ -104,12 +104,19 @@ pub struct UpdatePersonaRequest {
     pub display_name: String,
     pub avatar_url: Option<String>,
     pub system_prompt: String,
-    #[serde(default)]
-    pub runtime: Option<String>,
-    #[serde(default)]
-    pub model: Option<String>,
-    #[serde(default)]
-    pub provider: Option<String>,
+    /// Absent = don't touch. Present (`null`, or blank after trimming) = clear.
+    /// A non-empty value = set. Same tri-state contract as
+    /// `UpdateManagedAgentRequest::model` and `env_vars` below: the dialog
+    /// omits these keys whenever the control is hidden or the runtime was
+    /// auto-seeded, and an omitted key must never wipe the stored value.
+    /// `double_option` keeps an explicit JSON `null` (clear) distinct from an
+    /// absent key (don't touch) — plain serde collapses both to `None`.
+    #[serde(default, deserialize_with = "crate::util::double_option")]
+    pub runtime: Option<Option<String>>,
+    #[serde(default, deserialize_with = "crate::util::double_option")]
+    pub model: Option<Option<String>>,
+    #[serde(default, deserialize_with = "crate::util::double_option")]
+    pub provider: Option<Option<String>>,
     #[serde(default)]
     pub name_pool: Vec<String>,
     /// Environment variables for agents created from this persona.
@@ -302,6 +309,36 @@ mod tests {
         assert_eq!(record.respond_to.as_deref(), Some("allowlist"));
         assert_eq!(record.respond_to_allowlist, vec!["a".repeat(64)]);
         assert_eq!(record.parallelism, Some(4));
+    }
+
+    /// Wire-level tri-state for `UpdatePersonaRequest`'s runtime/model/provider:
+    /// an absent key must deserialize to `None` (don't touch), an explicit
+    /// `null` to `Some(None)` (clear), and a string to `Some(Some(v))` (set).
+    /// Without `double_option`, plain serde collapses present-null into `None`,
+    /// silently turning "clear" into "don't touch".
+    #[test]
+    fn update_persona_request_runtime_model_provider_tri_state() {
+        let base = r#"{"id":"p-1","displayName":"Prop","systemPrompt":"p"}"#;
+        let absent: UpdatePersonaRequest = serde_json::from_str(base).unwrap();
+        assert_eq!(absent.runtime, None);
+        assert_eq!(absent.model, None);
+        assert_eq!(absent.provider, None);
+
+        let nulled: UpdatePersonaRequest = serde_json::from_str(
+            r#"{"id":"p-1","displayName":"Prop","systemPrompt":"p","runtime":null,"model":null,"provider":null}"#,
+        )
+        .unwrap();
+        assert_eq!(nulled.runtime, Some(None));
+        assert_eq!(nulled.model, Some(None));
+        assert_eq!(nulled.provider, Some(None));
+
+        let set: UpdatePersonaRequest = serde_json::from_str(
+            r#"{"id":"p-1","displayName":"Prop","systemPrompt":"p","runtime":"goose","model":"kimi-k3","provider":"openai-compat"}"#,
+        )
+        .unwrap();
+        assert_eq!(set.runtime, Some(Some("goose".to_string())));
+        assert_eq!(set.model, Some(Some("kimi-k3".to_string())));
+        assert_eq!(set.provider, Some(Some("openai-compat".to_string())));
     }
 
     #[test]
