@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
-import { Board, Card, Goal, AutonomyPolicy, FeedRule } from './types/boardTypes';
-import { BoardColumn } from './ui/BoardColumn';
-import { BoardCardModal } from './ui/BoardCardModal';
-import { GoalDraftPanel } from './ui/GoalDraftPanel';
-import { BoardFeedRulesModal } from './ui/BoardFeedRulesModal';
+import type React from "react";
+import { useState } from "react";
+
+import type {
+  AutonomyPolicy,
+  Board,
+  Card,
+  FeedRule,
+  Goal,
+} from "./types/boardTypes";
+import { BoardCardModal } from "./ui/BoardCardModal";
+import { BoardColumn } from "./ui/BoardColumn";
+import { BoardFeedRulesModal } from "./ui/BoardFeedRulesModal";
+import { GoalDraftPanel } from "./ui/GoalDraftPanel";
 
 export interface BoardViewProps {
   board: Board;
@@ -32,9 +40,11 @@ export const BoardView: React.FC<BoardViewProps> = ({
 }) => {
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [isFeedRulesOpen, setIsFeedRulesOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'columns' | 'goals' | 'feedRules'>('columns');
+  const [activeTab, setActiveTab] = useState<"columns" | "goals" | "feedRules">(
+    "columns",
+  );
 
-  const pendingGoals = goals.filter(g => g.status === 'proposed');
+  const pendingGoals = goals.filter((g) => g.status === "proposed");
 
   return (
     <div className="flex flex-col h-full w-full bg-background overflow-hidden">
@@ -43,27 +53,31 @@ export const BoardView: React.FC<BoardViewProps> = ({
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <span className="text-lg">⚡</span>
-            <h1 className="text-base font-bold text-foreground">{board.title}</h1>
+            <h1 className="text-base font-bold text-foreground">
+              {board.title}
+            </h1>
           </div>
 
           {/* View Mode Tabs */}
           <div className="flex items-center bg-muted/60 p-1 rounded-lg text-2xs font-semibold">
             <button
-              onClick={() => setActiveTab('columns')}
+              type="button"
+              onClick={() => setActiveTab("columns")}
               className={`px-3 py-1 rounded-md transition-colors ${
-                activeTab === 'columns'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
+                activeTab === "columns"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Kanban Columns
             </button>
             <button
-              onClick={() => setActiveTab('goals')}
+              type="button"
+              onClick={() => setActiveTab("goals")}
               className={`px-3 py-1 rounded-md transition-colors flex items-center gap-1.5 ${
-                activeTab === 'goals'
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
+                activeTab === "goals"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <span>Goals & Frameworks</span>
@@ -79,11 +93,12 @@ export const BoardView: React.FC<BoardViewProps> = ({
         {/* Actions */}
         <div className="flex items-center gap-3">
           <button
+            type="button"
             onClick={() => setIsFeedRulesOpen(true)}
             className="px-3 py-1.5 rounded-lg border border-border bg-sidebar hover:bg-sidebar-accent text-2xs font-semibold text-foreground transition-colors flex items-center gap-1.5"
           >
             <span>⚡ Feed Rules</span>
-            {feedRules.some(r => r.broken) && (
+            {feedRules.some((r) => r.broken) && (
               <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
             )}
           </button>
@@ -92,10 +107,10 @@ export const BoardView: React.FC<BoardViewProps> = ({
 
       {/* Main Canvas Surface */}
       <div className="flex-1 overflow-x-auto p-6 bg-background">
-        {activeTab === 'columns' && (
+        {activeTab === "columns" && (
           <div className="flex h-full gap-4 items-start">
-            {board.lists.map(list => {
-              const listCards = cards.filter(c => c.listId === list.id);
+            {board.lists.map((list) => {
+              const listCards = cards.filter((c) => c.listId === list.id);
               return (
                 <BoardColumn
                   key={list.id}
@@ -103,19 +118,19 @@ export const BoardView: React.FC<BoardViewProps> = ({
                   title={list.title}
                   cards={listCards}
                   autonomyPolicies={autonomyPolicies}
-                  onSelectCard={card => setSelectedCard(card)}
+                  onSelectCard={(card) => setSelectedCard(card)}
                 />
               );
             })}
           </div>
         )}
 
-        {activeTab === 'goals' && (
+        {activeTab === "goals" && (
           <div className="max-w-4xl mx-auto space-y-6">
             <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">
               Pending Comet Goal Proposals
             </h2>
-            {pendingGoals.map(goal => (
+            {pendingGoals.map((goal) => (
               <GoalDraftPanel
                 key={goal.id}
                 goal={goal}
