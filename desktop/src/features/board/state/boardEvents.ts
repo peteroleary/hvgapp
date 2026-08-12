@@ -150,6 +150,12 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+const RANK_PATTERN = /^[a-z]+$/;
+
+function isRank(value: unknown): value is string {
+  return typeof value === "string" && RANK_PATTERN.test(value);
+}
+
 function optionalString(value: unknown): string | undefined {
   return isNonEmptyString(value) ? value : undefined;
 }
@@ -725,11 +731,11 @@ export function buildBoardEventTemplate(board: Board): BoardEventTemplate {
   }
   if (
     board.lists.some(
-      (list) => !isNonEmptyString(list.id) || !isNonEmptyString(list.rank),
+      (list) => !isNonEmptyString(list.id) || !isRank(list.rank),
     )
   ) {
     throw new Error(
-      "Every Board list requires a stable id and fractional rank.",
+      "Every Board list requires a stable id and a lowercase a-z rank.",
     );
   }
   const { id, ...content } = board;

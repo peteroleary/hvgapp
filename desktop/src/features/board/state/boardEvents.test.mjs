@@ -241,6 +241,18 @@ test("buildBoardState re-evaluates a card gate from the latest policy head", () 
   );
 });
 
+test("buildBoardEventTemplate rejects list ranks outside the a-z alphabet", () => {
+  assert.throws(
+    () =>
+      buildBoardEventTemplate({
+        id: "operations",
+        title: "Operations",
+        lists: [{ id: "backlog", title: "Backlog", rank: "a0" }],
+      }),
+    /a-z/,
+  );
+});
+
 function cardAddress(card) {
   return `${card.kind}:${card.pubkey}:${card.tags[0][1]}`;
 }
