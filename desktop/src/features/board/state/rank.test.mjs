@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { RANK_FIRST, compareRank, rankBetween } from "./rank.ts";
+import { RANK_FIRST, compareRank, isValidRank, rankBetween } from "./rank.ts";
 
 /** Mirrors how boardEvents sorts a column: rank.localeCompare(rank). */
 function sorted(ranks) {
@@ -122,4 +122,30 @@ test("compareRank orders a shuffled column identically to localeCompare", () => 
   }));
   const viaCompare = [...entries].sort(compareRank).map((e) => e.rank);
   assert.deepEqual(viaCompare, sorted(entries.map((e) => e.rank)));
+});
+
+test("isValidRank agrees with rankBetween on every candidate", () => {
+  // Two functions encode the same rule; this test fails the moment either
+  // changes without the other. Admittance must imply computability — a rank
+  // the guard waves through may never make the primitive throw on drag.
+  const candidates = ["a", "na", "ba", "n", "u", "z", "hn", "A", "h1", ""];
+  for (const rank of candidates) {
+    if (isValidRank(rank)) {
+      assert.doesNotThrow(
+        () => rankBetween(rank, null),
+        `guard admitted "${rank}" but rankBetween rejects it`,
+      );
+    } else {
+      assert.throws(
+        () => rankBetween(rank, null),
+        undefined,
+        `guard rejected "${rank}" but rankBetween accepts it`,
+      );
+    }
+  }
+  // Spot-check both directions of the trailing-a rule explicitly.
+  assert.equal(isValidRank("n"), true);
+  assert.equal(isValidRank("a"), false);
+  assert.equal(isValidRank("na"), false);
+  assert.equal(isValidRank("an"), true);
 });

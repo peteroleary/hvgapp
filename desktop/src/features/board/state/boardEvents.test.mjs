@@ -186,7 +186,7 @@ test("buildBoardEventTemplate indexes the board's brand scope for relay filters"
   assert.deepEqual(unbranded.tags, [["d", "master"]]);
 });
 
-test("event templates reject ranks outside the a-z alphabet", () => {
+test("event templates reject ranks rankBetween cannot compute with", () => {
   // The cutover script wrote list ranks like "a0"; rankBetween refuses to
   // compute with digits, so every drag against such an entry throws. The
   // template builders are the chokepoint where that data is now stopped.
@@ -195,6 +195,15 @@ test("event templates reject ranks outside the a-z alphabet", () => {
       id: "master",
       title: "Unified Master",
       lists: [{ id: "backlog", title: "Backlog", rank: "a0" }],
+    }),
+  );
+  // A hand-seeded a/b/c/d board passes the alphabet check but still ends in
+  // the lowest digit, which leaves no room to subdivide below it.
+  assert.throws(() =>
+    buildBoardEventTemplate({
+      id: "master",
+      title: "Unified Master",
+      lists: [{ id: "backlog", title: "Backlog", rank: "a" }],
     }),
   );
   assert.throws(() =>
