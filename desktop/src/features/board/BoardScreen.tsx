@@ -175,8 +175,8 @@ export function BoardScreen() {
           void getIdentity().then((identity) => {
             mutations.updateCard.mutate({
               boardAddress: entity.boardAddress,
-              card: {
-                ...entity.card,
+              cardId: entity.card.id,
+              changes: {
                 comments: [
                   ...entity.card.comments,
                   {

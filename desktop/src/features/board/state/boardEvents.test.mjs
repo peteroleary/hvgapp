@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import {
@@ -8,8 +10,45 @@ import {
   buildCardEventTemplate,
 } from "./boardEvents.ts";
 
+const goldenVectors = JSON.parse(
+  readFileSync(
+    fileURLToPath(
+      new URL("./fixtures/boardReconciliationGoldenVectors.json", import.meta.url),
+    ),
+    "utf8",
+  ),
+);
+
+const OWNER_PUBKEYS = {
+  owner: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  other: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  third: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+};
+
+function mapOwnerPlaceholders(value, pubkeys = OWNER_PUBKEYS) {
+  if (typeof value === "string") {
+    return value
+      .replace(/\bowner\b/g, pubkeys.owner)
+      .replace(/\bother\b/g, pubkeys.other)
+      .replace(/\bthird\b/g, pubkeys.third);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => mapOwnerPlaceholders(item, pubkeys));
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [
+        key,
+        mapOwnerPlaceholders(item, pubkeys),
+      ]),
+    );
+  }
+  return value;
+}
+
 const OWNER = "a".repeat(64);
 const OTHER_OWNER = "b".repeat(64);
+const THIRD_OWNER = "c".repeat(64);
 
 function event({ id, kind, tags, content, createdAt = 1, pubkey = OWNER }) {
   return {
@@ -21,6 +60,68 @@ function event({ id, kind, tags, content, createdAt = 1, pubkey = OWNER }) {
     pubkey,
     sig: "c".repeat(128),
   };
+}
+
+function cardEvent({
+  id,
+  cardId,
+  pubkey = OWNER,
+  createdAt = 1,
+  title = "Card",
+  description = "Description",
+  assignees = [],
+  executionState = "idle",
+  listId = "backlog",
+  rank = "m",
+  brand = "HVG",
+  functionArea = "build",
+  comments = [],
+  createdBy = OWNER,
+}) {
+  return event({
+    id,
+    kind: 30624,
+    pubkey,
+    createdAt,
+    tags: [
+      ["d", cardId],
+      ["a", `30623:${OWNER}:operations`],
+      ["l", listId],
+      ["t", `brand:${brand}`],
+      ["t", `fn:${functionArea}`],
+      ...assignees.map((a) => ["p", a.id, "", a.role ?? ""]),
+      ["rank", rank],
+    ],
+    content: {
+      title,
+      description,
+      assignees,
+      executionState,
+      createdBy,
+      comments,
+    },
+  });
+}
+
+function approvalEvent({
+  id,
+  cardAddress,
+  kind,
+  pubkey = OWNER,
+  createdAt = 1,
+  approvers = [],
+}) {
+  return event({
+    id,
+    kind,
+    pubkey,
+    createdAt,
+    tags: [
+      ["a", cardAddress],
+      ...approvers.map((pubkey) => ["p", pubkey]),
+    ],
+    content: {},
+  });
 }
 
 test("buildBoardSnapshot selects the newest addressable heads and reads card placement from tags", () => {
@@ -228,26 +329,11 @@ test("event templates reject ranks rankBetween cannot compute with", () => {
 });
 
 test("buildBoardState re-evaluates a card gate from the latest policy head", () => {
-  const card = event({
+  const card = cardEvent({
     id: "card-1",
-    kind: 30624,
-    tags: [
-      ["d", "card-1"],
-      ["a", `30623:${OWNER}:operations`],
-      ["l", "backlog"],
-      ["t", "brand:HVG"],
-      ["t", "fn:build"],
-      ["p", OTHER_OWNER, "", "executor"],
-      ["rank", "m0"],
-    ],
-    content: {
-      title: "Ship it",
-      description: "Implement the Board store.",
-      assignees: [{ type: "agent", id: OTHER_OWNER, role: "executor" }],
-      executionState: "eligible",
-      createdBy: OWNER,
-      comments: [],
-    },
+    cardId: "card-1",
+    assignees: [{ type: "agent", id: OTHER_OWNER, role: "executor" }],
+    executionState: "eligible",
   });
   const manualPolicy = event({
     id: "policy-manual",
@@ -273,15 +359,282 @@ test("buildBoardState re-evaluates a card gate from the latest policy head", () 
   });
 
   const gated = buildBoardState([card, manualPolicy]);
-  assert.equal(gated.requiresApprovalByCardAddress[cardAddress(card)], true);
+  assert.equal(gated.approvalPendingByCardId["card-1"], true);
 
   const eligible = buildBoardState([card, manualPolicy, autoPolicy]);
-  assert.equal(
-    eligible.requiresApprovalByCardAddress[cardAddress(card)],
-    false,
-  );
+  assert.equal(eligible.approvalPendingByCardId["card-1"], false);
 });
 
-function cardAddress(card) {
-  return `${card.kind}:${card.pubkey}:${card.tags[0][1]}`;
-}
+test("reconciliation collapses multi-author cards to one head", () => {
+  const ownerCard = cardEvent({
+    id: "owner-card",
+    cardId: "shared-card",
+    pubkey: OWNER,
+    createdAt: 10,
+    title: "Owner title",
+    rank: "a",
+  });
+  const otherCard = cardEvent({
+    id: "other-card",
+    cardId: "shared-card",
+    pubkey: OTHER_OWNER,
+    createdAt: 20,
+    title: "Other title",
+    rank: "b",
+  });
+
+  const snapshot = buildBoardSnapshot([ownerCard, otherCard]);
+  assert.equal(snapshot.cards.length, 1);
+  assert.equal(snapshot.cards[0].eventId, "other-card");
+  assert.equal(snapshot.cards[0].owner, OTHER_OWNER);
+  assert.equal(snapshot.cards[0].card.title, "Other title");
+});
+
+test("reconciliation collapses multi-author boards to one head", () => {
+  const ownerBoard = event({
+    id: "owner-board",
+    kind: 30623,
+    pubkey: OWNER,
+    createdAt: 10,
+    tags: [["d", "shared-board"]],
+    content: {
+      title: "Owner board",
+      lists: [{ id: "a", title: "A", rank: "a" }],
+    },
+  });
+  const otherBoard = event({
+    id: "other-board",
+    kind: 30623,
+    pubkey: OTHER_OWNER,
+    createdAt: 20,
+    tags: [["d", "shared-board"]],
+    content: {
+      title: "Other board",
+      lists: [
+        { id: "a", title: "A", rank: "a" },
+        { id: "b", title: "B", rank: "c" },
+      ],
+    },
+  });
+
+  const snapshot = buildBoardSnapshot([ownerBoard, otherBoard]);
+  assert.equal(snapshot.boards.length, 1);
+  assert.equal(snapshot.boards[0].eventId, "other-board");
+  assert.equal(snapshot.boards[0].board.lists.length, 2);
+});
+
+test("reconciliation tie-breaks equal created_at by smaller event id", () => {
+  const firstCard = cardEvent({
+    id: "zzzz",
+    cardId: "tie-card",
+    pubkey: OWNER,
+    createdAt: 10,
+    title: "First",
+  });
+  const secondCard = cardEvent({
+    id: "aaaa",
+    cardId: "tie-card",
+    pubkey: OTHER_OWNER,
+    createdAt: 10,
+    title: "Second",
+  });
+
+  const snapshot = buildBoardSnapshot([firstCard, secondCard]);
+  assert.equal(snapshot.cards.length, 1);
+  assert.equal(snapshot.cards[0].eventId, "aaaa");
+});
+
+test("goals, feed rules and autonomy policies stay author-scoped", () => {
+  const ownerGoal = event({
+    id: "owner-goal",
+    kind: 30625,
+    pubkey: OWNER,
+    createdAt: 10,
+    tags: [["d", "shared-goal"]],
+    content: {
+      brandScope: "HVG",
+      title: "Owner goal",
+      framework: "SMART",
+      status: "draft",
+      proposedCards: [],
+    },
+  });
+  const otherGoal = event({
+    id: "other-goal",
+    kind: 30625,
+    pubkey: OTHER_OWNER,
+    createdAt: 20,
+    tags: [["d", "shared-goal"]],
+    content: {
+      brandScope: "HVG",
+      title: "Other goal",
+      framework: "SMART",
+      status: "draft",
+      proposedCards: [],
+    },
+  });
+
+  const snapshot = buildBoardSnapshot([ownerGoal, otherGoal]);
+  assert.equal(snapshot.goals.length, 2);
+});
+
+test("approval survives a cross-author card write", () => {
+  const ownerCard = cardEvent({
+    id: "owner-card",
+    cardId: "approved-card",
+    pubkey: OWNER,
+    createdAt: 10,
+    assignees: [{ type: "agent", id: OTHER_OWNER, role: "executor" }],
+    executionState: "eligible",
+  });
+  const otherCard = cardEvent({
+    id: "other-card",
+    cardId: "approved-card",
+    pubkey: OTHER_OWNER,
+    createdAt: 20,
+    assignees: [{ type: "agent", id: OTHER_OWNER, role: "executor" }],
+    executionState: "eligible",
+  });
+  const approval = approvalEvent({
+    id: "approval-1",
+    kind: 50002,
+    cardAddress: `30624:${OWNER}:approved-card`,
+    pubkey: THIRD_OWNER,
+    createdAt: 15,
+    approvers: [THIRD_OWNER],
+  });
+
+  const state = buildBoardState([ownerCard, otherCard, approval]);
+  assert.equal(state.cards.length, 1);
+  assert.equal(state.cards[0].owner, OTHER_OWNER);
+  // The approval event still matches the card after the head moved to another
+  // identity, so the effective gate is open even though the card content does
+  // not carry an approvalDecision field.
+  assert.equal(state.approvalPendingByCardId["approved-card"], false);
+});
+
+test("approval tie-break matches card/board rule: smaller event id wins", () => {
+  const card = cardEvent({
+    id: "card-1",
+    cardId: "tie-approval-card",
+    pubkey: OWNER,
+    createdAt: 1,
+    assignees: [{ type: "agent", id: OTHER_OWNER, role: "executor" }],
+    executionState: "eligible",
+  });
+  const denied = approvalEvent({
+    id: "zzz-denied",
+    kind: 50003,
+    cardAddress: `30624:${OWNER}:tie-approval-card`,
+    pubkey: THIRD_OWNER,
+    createdAt: 10,
+  });
+  const granted = approvalEvent({
+    id: "aaa-granted",
+    kind: 50002,
+    cardAddress: `30624:${OWNER}:tie-approval-card`,
+    pubkey: THIRD_OWNER,
+    createdAt: 10,
+  });
+
+  const state = buildBoardState([card, denied, granted]);
+  assert.equal(state.approvalPendingByCardId["tie-approval-card"], false);
+});
+
+test("golden vectors match reconciled state", () => {
+  for (const scenario of goldenVectors.scenarios) {
+    const events = scenario.events.map((event) => ({
+      ...event,
+      pubkey: OWNER_PUBKEYS[event.pubkey],
+      content: JSON.stringify(
+        mapOwnerPlaceholders(event.content, OWNER_PUBKEYS),
+      ),
+      tags: event.tags.map((tag) =>
+        tag.map((value) =>
+          typeof value === "string"
+            ? mapOwnerPlaceholders(value, OWNER_PUBKEYS)
+            : value,
+        ),
+      ),
+    }));
+
+    const state = buildBoardState(events);
+
+    assert.equal(
+      state.cards.length,
+      scenario.expected.cards.length,
+      `${scenario.name}: card count mismatch`,
+    );
+    for (const expectedCard of scenario.expected.cards) {
+      const actual = state.cards.find((c) => c.card.id === expectedCard.id);
+      assert.ok(actual, `${scenario.name}: missing card ${expectedCard.id}`);
+      assert.equal(
+        actual.eventId,
+        expectedCard.eventId,
+        `${scenario.name}: eventId mismatch for ${expectedCard.id}`,
+      );
+      assert.equal(
+        actual.owner,
+        OWNER_PUBKEYS[expectedCard.owner],
+        `${scenario.name}: owner mismatch for ${expectedCard.id}`,
+      );
+      assert.equal(
+        actual.card.title,
+        expectedCard.title,
+        `${scenario.name}: title mismatch for ${expectedCard.id}`,
+      );
+      if (expectedCard.rank !== undefined) {
+        assert.equal(
+          actual.card.rank,
+          expectedCard.rank,
+          `${scenario.name}: rank mismatch for ${expectedCard.id}`,
+        );
+      }
+
+    }
+
+    assert.equal(
+      state.boards.length,
+      scenario.expected.boards.length,
+      `${scenario.name}: board count mismatch`,
+    );
+    for (const expectedBoard of scenario.expected.boards) {
+      const actual = state.boards.find((b) => b.board.id === expectedBoard.id);
+      assert.ok(actual, `${scenario.name}: missing board ${expectedBoard.id}`);
+      assert.equal(
+        actual.eventId,
+        expectedBoard.eventId,
+        `${scenario.name}: eventId mismatch for ${expectedBoard.id}`,
+      );
+      assert.equal(
+        actual.owner,
+        OWNER_PUBKEYS[expectedBoard.owner],
+        `${scenario.name}: owner mismatch for ${expectedBoard.id}`,
+      );
+      assert.equal(
+        actual.board.title,
+        expectedBoard.title,
+        `${scenario.name}: title mismatch for ${expectedBoard.id}`,
+      );
+      if (expectedBoard.listCount !== undefined) {
+        assert.equal(
+          actual.board.lists.length,
+          expectedBoard.listCount,
+          `${scenario.name}: list count mismatch for ${expectedBoard.id}`,
+        );
+      }
+    }
+
+    if (scenario.expected.approvalPendingByCardId) {
+      for (const [cardId, expectedValue] of Object.entries(
+        scenario.expected.approvalPendingByCardId,
+      )) {
+        assert.equal(
+          state.approvalPendingByCardId[cardId],
+          expectedValue,
+          `${scenario.name}: approval gate mismatch for ${cardId}`,
+        );
+      }
+    }
+  }
+});

@@ -98,6 +98,7 @@ export type AutonomyPolicyEntity = {
 export type BoardApprovalEvent = {
   approvers: string[];
   cardAddress: string;
+  cardId: string;
   content: Record<string, unknown>;
   createdAt: number;
   eventId: string;
@@ -121,11 +122,12 @@ export type BoardSnapshot = {
 /**
  * Board data together with the approval gate derived once for this snapshot.
  *
- * The gate is deliberately keyed by the full card coordinate rather than the
- * `d` tag: separate Board owners may legitimately use the same card id.
+ * The gate is keyed by card id. Card ids are generated with `crypto.randomUUID()`,
+ * so they are globally unique within a workspace; matching approvals by id keeps
+ * approvals attached when a different identity writes the next head of the same card.
  */
 export type BoardState = BoardSnapshot & {
-  requiresApprovalByCardAddress: Readonly<Record<string, boolean>>;
+  approvalPendingByCardId: Readonly<Record<string, boolean>>;
 };
 
 /** A signed-event input ready for the shared `signRelayEvent` helper. */
@@ -198,6 +200,23 @@ function addressForEvent(event: RelayEvent): string | null {
   const dtag = firstTag(event, "d");
   const owner = event.pubkey.toLowerCase();
   if (!dtag || !PUBKEY_PATTERN.test(owner)) return null;
+  return `${event.kind}:${owner}:${dtag}`;
+}
+
+/**
+ * Returns the key used to dedupe addressable events into one logical entity.
+ *
+ * Boards (30623) and cards (30624) are shared workspace objects: many identities
+ * may write the same logical board or card, so they reconcile by kind + dtag.
+ * Goals, feed rules, and autonomy policies stay author-scoped for now.
+ */
+function reconciliationKey(event: RelayEvent): string | null {
+  const dtag = firstTag(event, "d");
+  const owner = event.pubkey.toLowerCase();
+  if (!dtag || !PUBKEY_PATTERN.test(owner)) return null;
+  if (event.kind === KIND_BOARD || event.kind === KIND_BOARD_CARD) {
+    return `${event.kind}:${dtag}`;
+  }
   return `${event.kind}:${owner}:${dtag}`;
 }
 
@@ -571,7 +590,10 @@ function parseApprovalEvent(event: RelayEvent): BoardApprovalEvent | null {
     return null;
   }
   const cardAddress = firstTag(event, "a");
-  if (!cardAddress || !parseAddress(cardAddress, KIND_BOARD_CARD)) return null;
+  const parsedAddress = cardAddress
+    ? parseAddress(cardAddress, KIND_BOARD_CARD)
+    : null;
+  if (!cardAddress || !parsedAddress) return null;
   const content = parseJson(event.content);
   if (!content) return null;
   const approvers = tags(event, "p")
@@ -584,6 +606,7 @@ function parseApprovalEvent(event: RelayEvent): BoardApprovalEvent | null {
   return {
     approvers: [...new Set(approvers)],
     cardAddress,
+    cardId: parsedAddress.dtag,
     content,
     createdAt: event.created_at,
     eventId: event.id,
@@ -597,15 +620,15 @@ function selectLatestAddressableEvents(
 ): RelayEvent[] {
   const latest = new Map<string, RelayEvent>();
   for (const event of events) {
-    const address = addressForEvent(event);
-    if (!address || !uniqueDTag(event)) continue;
-    const existing = latest.get(address);
+    const key = reconciliationKey(event);
+    if (!key || !uniqueDTag(event)) continue;
+    const existing = latest.get(key);
     if (
       !existing ||
       event.created_at > existing.created_at ||
       (event.created_at === existing.created_at && event.id < existing.id)
     ) {
-      latest.set(address, event);
+      latest.set(key, event);
     }
   }
   return [...latest.values()];
@@ -681,24 +704,51 @@ export function buildBoardSnapshot(
   return { approvals, autonomyPolicies, boards, cards, feedRules, goals };
 }
 
+function latestApprovalByCardId(
+  approvals: readonly BoardApprovalEvent[],
+): Map<string, BoardApprovalEvent> {
+  const latest = new Map<string, BoardApprovalEvent>();
+  for (const approval of approvals) {
+    const existing = latest.get(approval.cardId);
+    if (
+      !existing ||
+      approval.createdAt > existing.createdAt ||
+      (approval.createdAt === existing.createdAt &&
+        approval.eventId < existing.eventId)
+    ) {
+      latest.set(approval.cardId, approval);
+    }
+  }
+  return latest;
+}
+
 /**
- * Builds the Board read model and freezes the policy-derived gate for this
- * relay snapshot. Callers must not persist this value: a policy update is
- * reflected by the next snapshot rebuild.
+ * Builds the Board read model and freezes the effective approval gate for this
+ * relay snapshot. `approvalPendingByCardId` is true when the card is currently
+ * gated: either policy requires approval and no grant exists, or the latest
+ * decision is a denial/rejection. The gate considers both autonomy policy and
+ * the latest approval decision event keyed by card id, so an approval survives
+ * a cross-author card write. Callers must not persist this value: a policy or
+ * approval update is reflected by the next snapshot rebuild.
  */
 export function buildBoardState(events: readonly RelayEvent[]): BoardState {
   const snapshot = buildBoardSnapshot(events);
   const policies = snapshot.autonomyPolicies.map((entity) => entity.policy);
-  const requiresApprovalByCardAddress: Record<string, boolean> = {};
+  const approvalsByCardId = latestApprovalByCardId(snapshot.approvals);
+  const approvalPendingByCardId: Record<string, boolean> = {};
 
   for (const entity of snapshot.cards) {
-    requiresApprovalByCardAddress[entity.address] = evaluateAutonomy(
-      entity.card,
-      policies,
-    );
+    const autonomyRequiresApproval = evaluateAutonomy(entity.card, policies);
+    if (!autonomyRequiresApproval) {
+      approvalPendingByCardId[entity.card.id] = false;
+      continue;
+    }
+    const latestApproval = approvalsByCardId.get(entity.card.id);
+    approvalPendingByCardId[entity.card.id] =
+      latestApproval?.kind !== KIND_BOARD_APPROVAL_GRANTED;
   }
 
-  return { ...snapshot, requiresApprovalByCardAddress };
+  return { ...snapshot, approvalPendingByCardId };
 }
 
 function requireBoardAddress(value: string): ParsedAddress {

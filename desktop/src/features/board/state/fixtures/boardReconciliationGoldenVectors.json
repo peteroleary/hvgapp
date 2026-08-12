@@ -1,0 +1,313 @@
+{
+  "description": "Shared golden vectors for board reconciliation. TS and Rust implementations must produce identical resolved state for the same input events.",
+  "owners": {
+    "owner": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "other": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "third": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  },
+  "scenarios": [
+    {
+      "name": "multi-author-card",
+      "description": "Two identities write the same card id; the newer event wins and only one card remains.",
+      "events": [
+        {
+          "id": "owner-card",
+          "kind": 30624,
+          "pubkey": "owner",
+          "created_at": 10,
+          "tags": [
+            ["d", "shared-card"],
+            ["a", "30623:owner:operations"],
+            ["l", "backlog"],
+            ["t", "brand:HVG"],
+            ["t", "fn:build"],
+            ["rank", "a"]
+          ],
+          "content": {
+            "title": "Owner title",
+            "description": "Owner description",
+            "assignees": [],
+            "executionState": "idle",
+            "createdBy": "owner",
+            "comments": []
+          }
+        },
+        {
+          "id": "other-card",
+          "kind": 30624,
+          "pubkey": "other",
+          "created_at": 20,
+          "tags": [
+            ["d", "shared-card"],
+            ["a", "30623:owner:operations"],
+            ["l", "backlog"],
+            ["t", "brand:HVG"],
+            ["t", "fn:build"],
+            ["rank", "b"]
+          ],
+          "content": {
+            "title": "Other title",
+            "description": "Other description",
+            "assignees": [],
+            "executionState": "idle",
+            "createdBy": "other",
+            "comments": []
+          }
+        }
+      ],
+      "expected": {
+        "cards": [
+          {
+            "id": "shared-card",
+            "eventId": "other-card",
+            "owner": "other",
+            "title": "Other title",
+            "rank": "b"
+          }
+        ],
+        "boards": []
+      }
+    },
+    {
+      "name": "multi-author-board",
+      "description": "Two identities write the same board id; the newer event wins and columns are not duplicated.",
+      "events": [
+        {
+          "id": "owner-board",
+          "kind": 30623,
+          "pubkey": "owner",
+          "created_at": 10,
+          "tags": [["d", "shared-board"]],
+          "content": {
+            "title": "Owner board",
+            "lists": [{ "id": "a", "title": "A", "rank": "a" }]
+          }
+        },
+        {
+          "id": "other-board",
+          "kind": 30623,
+          "pubkey": "other",
+          "created_at": 20,
+          "tags": [["d", "shared-board"]],
+          "content": {
+            "title": "Other board",
+            "lists": [
+              { "id": "a", "title": "A", "rank": "a" },
+              { "id": "b", "title": "B", "rank": "c" }
+            ]
+          }
+        }
+      ],
+      "expected": {
+        "cards": [],
+        "boards": [
+          {
+            "id": "shared-board",
+            "eventId": "other-board",
+            "owner": "other",
+            "title": "Other board",
+            "listCount": 2
+          }
+        ]
+      }
+    },
+    {
+      "name": "tie-break-equal-created-at",
+      "description": "When two heads have the same created_at, the lexicographically smaller event id wins.",
+      "events": [
+        {
+          "id": "zzzz",
+          "kind": 30624,
+          "pubkey": "owner",
+          "created_at": 10,
+          "tags": [
+            ["d", "tie-card"],
+            ["a", "30623:owner:operations"],
+            ["l", "backlog"],
+            ["t", "brand:HVG"],
+            ["t", "fn:build"],
+            ["rank", "a"]
+          ],
+          "content": {
+            "title": "First",
+            "description": "First description",
+            "assignees": [],
+            "executionState": "idle",
+            "createdBy": "owner",
+            "comments": []
+          }
+        },
+        {
+          "id": "aaaa",
+          "kind": 30624,
+          "pubkey": "other",
+          "created_at": 10,
+          "tags": [
+            ["d", "tie-card"],
+            ["a", "30623:owner:operations"],
+            ["l", "backlog"],
+            ["t", "brand:HVG"],
+            ["t", "fn:build"],
+            ["rank", "b"]
+          ],
+          "content": {
+            "title": "Second",
+            "description": "Second description",
+            "assignees": [],
+            "executionState": "idle",
+            "createdBy": "other",
+            "comments": []
+          }
+        }
+      ],
+      "expected": {
+        "cards": [
+          {
+            "id": "tie-card",
+            "eventId": "aaaa",
+            "owner": "other",
+            "title": "Second",
+            "rank": "b"
+          }
+        ],
+        "boards": []
+      }
+    },
+    {
+      "name": "approval-survives-cross-author-write",
+      "description": "An approval granted against owner A's card address still matches after owner B writes the next head.",
+      "events": [
+        {
+          "id": "owner-card",
+          "kind": 30624,
+          "pubkey": "owner",
+          "created_at": 10,
+          "tags": [
+            ["d", "approved-card"],
+            ["a", "30623:owner:operations"],
+            ["l", "backlog"],
+            ["t", "brand:HVG"],
+            ["t", "fn:build"],
+            ["p", "other", "", "executor"],
+            ["rank", "a"]
+          ],
+          "content": {
+            "title": "Approved card",
+            "description": "Description",
+            "assignees": [{ "type": "agent", "id": "other", "role": "executor" }],
+            "executionState": "eligible",
+            "createdBy": "owner",
+            "comments": []
+          }
+        },
+        {
+          "id": "approval-1",
+          "kind": 50002,
+          "pubkey": "third",
+          "created_at": 15,
+          "tags": [
+            ["a", "30624:owner:approved-card"],
+            ["p", "third"]
+          ],
+          "content": {}
+        },
+        {
+          "id": "other-card",
+          "kind": 30624,
+          "pubkey": "other",
+          "created_at": 20,
+          "tags": [
+            ["d", "approved-card"],
+            ["a", "30623:owner:operations"],
+            ["l", "backlog"],
+            ["t", "brand:HVG"],
+            ["t", "fn:build"],
+            ["p", "other", "", "executor"],
+            ["rank", "b"]
+          ],
+          "content": {
+            "title": "Approved card updated",
+            "description": "Description",
+            "assignees": [{ "type": "agent", "id": "other", "role": "executor" }],
+            "executionState": "eligible",
+            "createdBy": "other",
+            "comments": []
+          }
+        }
+      ],
+      "expected": {
+        "cards": [
+          {
+            "id": "approved-card",
+            "eventId": "other-card",
+            "owner": "other",
+            "title": "Approved card updated"
+          }
+        ],
+        "boards": [],
+        "approvalPendingByCardId": { "approved-card": false }
+      }
+    },
+    {
+      "name": "approval-tie-break-equal-created-at",
+      "description": "A GRANTED and DENIED for the same card in the same second tie-break by smaller event id, matching the card/board rule.",
+      "events": [
+        {
+          "id": "zzz-denied",
+          "kind": 50003,
+          "pubkey": "third",
+          "created_at": 10,
+          "tags": [
+            ["a", "30624:owner:tie-approval-card"]
+          ],
+          "content": {}
+        },
+        {
+          "id": "aaa-granted",
+          "kind": 50002,
+          "pubkey": "third",
+          "created_at": 10,
+          "tags": [
+            ["a", "30624:owner:tie-approval-card"]
+          ],
+          "content": {}
+        },
+        {
+          "id": "card-1",
+          "kind": 30624,
+          "pubkey": "owner",
+          "created_at": 1,
+          "tags": [
+            ["d", "tie-approval-card"],
+            ["a", "30623:owner:operations"],
+            ["l", "backlog"],
+            ["t", "brand:HVG"],
+            ["t", "fn:build"],
+            ["p", "other", "", "executor"],
+            ["rank", "a"]
+          ],
+          "content": {
+            "title": "Tie approval card",
+            "description": "Description",
+            "assignees": [{ "type": "agent", "id": "other", "role": "executor" }],
+            "executionState": "eligible",
+            "createdBy": "owner",
+            "comments": []
+          }
+        }
+      ],
+      "expected": {
+        "cards": [
+          {
+            "id": "tie-approval-card",
+            "eventId": "card-1",
+            "owner": "owner",
+            "title": "Tie approval card"
+          }
+        ],
+        "boards": [],
+        "approvalPendingByCardId": { "tie-approval-card": false }
+      }
+    }
+  ]
+}
