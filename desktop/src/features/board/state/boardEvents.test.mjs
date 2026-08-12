@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildBoardEventTemplate,
   buildBoardState,
   buildBoardSnapshot,
   buildCardEventTemplate,
@@ -156,6 +157,33 @@ test("buildCardEventTemplate writes the Board contract's addressable and indexed
       triggerEventId: "trigger-1",
     },
   });
+});
+
+test("buildBoardEventTemplate indexes the board's brand scope for relay filters", () => {
+  const branded = buildBoardEventTemplate({
+    id: "kb-board",
+    title: "K&B Concrete",
+    brandScope: "kb-concrete",
+    lists: [{ id: "backlog", title: "Backlog", rank: "n" }],
+  });
+
+  assert.equal(branded.kind, 30623);
+  assert.deepEqual(branded.tags, [
+    ["d", "kb-board"],
+    ["t", "brand:kb-concrete"],
+  ]);
+  assert.deepEqual(JSON.parse(branded.content), {
+    title: "K&B Concrete",
+    brandScope: "kb-concrete",
+    lists: [{ id: "backlog", title: "Backlog", rank: "n" }],
+  });
+
+  const unbranded = buildBoardEventTemplate({
+    id: "master",
+    title: "Unified Master",
+    lists: [{ id: "backlog", title: "Backlog", rank: "n" }],
+  });
+  assert.deepEqual(unbranded.tags, [["d", "master"]]);
 });
 
 test("buildBoardState re-evaluates a card gate from the latest policy head", () => {

@@ -11,14 +11,19 @@ import type {
 import { BoardCardModal } from "./ui/BoardCardModal";
 import { BoardColumn } from "./ui/BoardColumn";
 import { BoardFeedRulesModal } from "./ui/BoardFeedRulesModal";
+import { CardComposerModal, type CardDraft } from "./ui/CardComposerModal";
 import { GoalDraftPanel } from "./ui/GoalDraftPanel";
 
 export interface BoardViewProps {
   board: Board;
+  boards?: Array<{ id: string; title: string }>;
   cards: Card[];
   goals?: Goal[];
   autonomyPolicies: AutonomyPolicy[];
   feedRules?: FeedRule[];
+  onSelectBoard?: (boardId: string) => void;
+  onNewBoard?: () => void;
+  onAddCard?: (listId: string, draft: CardDraft) => void;
   onApproveCard?: (cardId: string) => void;
   onRejectCard?: (cardId: string, reason: string) => void;
   onAddComment?: (cardId: string, commentBody: string) => void;
@@ -28,10 +33,14 @@ export interface BoardViewProps {
 
 export const BoardView: React.FC<BoardViewProps> = ({
   board,
+  boards = [],
   cards,
   goals = [],
   autonomyPolicies,
   feedRules = [],
+  onSelectBoard,
+  onNewBoard,
+  onAddCard,
   onApproveCard,
   onRejectCard,
   onAddComment,
@@ -40,11 +49,13 @@ export const BoardView: React.FC<BoardViewProps> = ({
 }) => {
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [isFeedRulesOpen, setIsFeedRulesOpen] = useState(false);
+  const [composerListId, setComposerListId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"columns" | "goals" | "feedRules">(
     "columns",
   );
 
   const pendingGoals = goals.filter((g) => g.status === "proposed");
+  const composerList = board.lists.find((list) => list.id === composerListId);
 
   return (
     <div className="flex flex-col h-full w-full bg-background overflow-hidden">
@@ -53,9 +64,23 @@ export const BoardView: React.FC<BoardViewProps> = ({
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <span className="text-lg">⚡</span>
-            <h1 className="text-base font-bold text-foreground">
-              {board.title}
-            </h1>
+            {onSelectBoard && boards.length > 0 ? (
+              <select
+                value={board.id}
+                onChange={(e) => onSelectBoard(e.target.value)}
+                className="rounded-md border border-border bg-background px-2 py-1 text-base font-bold text-foreground focus:outline-none focus:border-primary/60"
+              >
+                {boards.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.title}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <h1 className="text-base font-bold text-foreground">
+                {board.title}
+              </h1>
+            )}
           </div>
 
           {/* View Mode Tabs */}
@@ -92,6 +117,15 @@ export const BoardView: React.FC<BoardViewProps> = ({
 
         {/* Actions */}
         <div className="flex items-center gap-3">
+          {onNewBoard && (
+            <button
+              type="button"
+              onClick={onNewBoard}
+              className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-2xs font-semibold hover:bg-primary/90 transition-colors"
+            >
+              + New Board
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setIsFeedRulesOpen(true)}
@@ -119,6 +153,11 @@ export const BoardView: React.FC<BoardViewProps> = ({
                   cards={listCards}
                   autonomyPolicies={autonomyPolicies}
                   onSelectCard={(card) => setSelectedCard(card)}
+                  onAddCard={
+                    onAddCard
+                      ? (listId) => setComposerListId(listId)
+                      : undefined
+                  }
                 />
               );
             })}
@@ -164,6 +203,20 @@ export const BoardView: React.FC<BoardViewProps> = ({
         isOpen={isFeedRulesOpen}
         onClose={() => setIsFeedRulesOpen(false)}
       />
+
+      {/* Add Card Composer — keyed by board so a board switch resets drafts */}
+      {onAddCard && (
+        <CardComposerModal
+          key={board.id}
+          isOpen={Boolean(composerList)}
+          listTitle={composerList?.title ?? ""}
+          defaultBrand={board.brandScope}
+          onClose={() => setComposerListId(null)}
+          onAddCard={(draft) => {
+            if (composerListId) onAddCard(composerListId, draft);
+          }}
+        />
+      )}
     </div>
   );
 };

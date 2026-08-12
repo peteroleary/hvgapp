@@ -59,7 +59,7 @@ test("generated ranks never end in the lowest digit", () => {
 test("repeatedly inserting between the same neighbours keeps strict order", () => {
   // The pathological drag: always drop into the same gap.
   let low = "h";
-  let high = "i";
+  const high = "i";
   for (let i = 0; i < 200; i += 1) {
     const mid = rankBetween(low, high);
     assert.ok(mid > low, `${mid} should sort after ${low}`);
