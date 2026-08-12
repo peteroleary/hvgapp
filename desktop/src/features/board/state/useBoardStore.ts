@@ -36,9 +36,9 @@ const BOARD_FETCH_LIMIT = 2_000;
 /**
  * Loads the current Board event set and reconciles it into a safe UI state.
  *
- * Board entities are deliberately not author-scoped: the operational Board is
- * a shared community surface, and addressable-event reconciliation chooses the
- * current head for each owner/`d` coordinate.
+ * Boards (30623) and cards (30624) are shared workspace objects and reconcile
+ * by kind/`d` coordinate across authors. Goals, feed rules and autonomy
+ * policies remain author-scoped.
  */
 export async function fetchBoardState(): Promise<BoardState> {
   const events = await relayClient.fetchEvents({

@@ -21,12 +21,26 @@ import {
   buildFeedRuleEventTemplate,
   buildGoalEventTemplate,
   type BoardEventTemplate,
+  type BoardState,
 } from "./boardEvents";
 import { boardQueryKey } from "./useBoardStore";
 
 export type BoardCardInput = {
   boardAddress: string;
   card: Card;
+};
+
+export type UpdateCardInput = {
+  boardAddress: string;
+  cardId: string;
+  changes: Partial<Card>;
+};
+
+export type MoveCardInput = {
+  boardAddress: string;
+  cardId: string;
+  listId: string;
+  rank: string;
 };
 
 /** Signs and publishes one Board event while preserving the shared error UX. */
@@ -51,25 +65,41 @@ export function createCard(input: BoardCardInput): Promise<RelayEvent> {
   return publishBoardEvent(buildCardEventTemplate(input));
 }
 
-/** Replaces a Board card while preserving all contract-indexed tag fields. */
-export function updateCard(input: BoardCardInput): Promise<RelayEvent> {
-  return createCard(input);
+/**
+ * Replaces a Board card, applying the supplied changes to the reconciled
+ * snapshot head rather than to caller-supplied state. This prevents a stale
+ * caller from silently overwriting fields it did not know changed.
+ */
+export function updateCard(
+  input: UpdateCardInput,
+  getCurrentCard: (cardId: string) => Card | undefined,
+): Promise<RelayEvent> {
+  const current = getCurrentCard(input.cardId);
+  if (!current) {
+    throw new Error(`Card ${input.cardId} not found in current board state.`);
+  }
+  return createCard({
+    boardAddress: input.boardAddress,
+    card: { ...current, ...input.changes },
+  });
 }
 
-/** Moves a card by publishing its new list/rank as the next addressable head. */
-export function moveCard({
-  boardAddress,
-  card,
-  listId,
-  rank,
-}: BoardCardInput & {
-  listId: string;
-  rank: string;
-}): Promise<RelayEvent> {
-  return updateCard({
-    boardAddress,
-    card: { ...card, listId, rank },
-  });
+/**
+ * Moves a card by publishing its new list/rank against the reconciled snapshot
+ * head. Like updateCard, this never builds from caller-supplied card state.
+ */
+export function moveCard(
+  input: MoveCardInput,
+  getCurrentCard: (cardId: string) => Card | undefined,
+): Promise<RelayEvent> {
+  return updateCard(
+    {
+      boardAddress: input.boardAddress,
+      cardId: input.cardId,
+      changes: { listId: input.listId, rank: input.rank },
+    },
+    getCurrentCard,
+  );
 }
 
 /** Publishes the append-only event which begins an approval gate. */
@@ -122,11 +152,22 @@ export function useBoardMutations() {
     queryClient.invalidateQueries({ queryKey: boardQueryKey });
   const options = { onSuccess: invalidate };
 
+  const getCurrentCard = (cardId: string): Card | undefined => {
+    const state = queryClient.getQueryData<BoardState>(boardQueryKey);
+    return state?.cards.find((entity) => entity.card.id === cardId)?.card;
+  };
+
   return {
     publishBoard: useMutation({ mutationFn: publishBoard, ...options }),
     createCard: useMutation({ mutationFn: createCard, ...options }),
-    updateCard: useMutation({ mutationFn: updateCard, ...options }),
-    moveCard: useMutation({ mutationFn: moveCard, ...options }),
+    updateCard: useMutation({
+      mutationFn: (input: UpdateCardInput) => updateCard(input, getCurrentCard),
+      ...options,
+    }),
+    moveCard: useMutation({
+      mutationFn: (input: MoveCardInput) => moveCard(input, getCurrentCard),
+      ...options,
+    }),
     requestApproval: useMutation({ mutationFn: requestApproval, ...options }),
     recordApprovalDecision: useMutation({
       mutationFn: recordApprovalDecision,
