@@ -3,9 +3,10 @@ import { compareRank, rankBetween, type RankedEntry } from "./rank.ts";
 export interface DropRankInput {
   /**
    * All items in the destination column. The dragged item is included if it
-   * already lives in this column; cross-column drops may omit it.
+   * already lives in this column; cross-column drops may omit it. Every entry
+   * must have an `id` so the helper can locate the active and over items.
    */
-  column: readonly RankedEntry[];
+  column: readonly (RankedEntry & { id: string })[];
   /** The id of the item being dragged. */
   activeId: string;
   /**
