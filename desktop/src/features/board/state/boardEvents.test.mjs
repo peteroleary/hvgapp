@@ -115,7 +115,7 @@ test("buildCardEventTemplate writes the Board contract's addressable and indexed
       functionArea: "build",
       assignees: [{ type: "agent", id: OTHER_OWNER, role: "executor" }],
       executionState: "eligible",
-      rank: "m0",
+      rank: "m",
       listId: "backlog",
       boardId: "operations",
       createdBy: OWNER,
@@ -138,7 +138,7 @@ test("buildCardEventTemplate writes the Board contract's addressable and indexed
     ["t", "brand:hvg.app"],
     ["t", "fn:build"],
     ["p", OTHER_OWNER, "", "executor"],
-    ["rank", "m0"],
+    ["rank", "m"],
     ["feedRule", "rule-1", "trigger-1"],
     ["e", "trigger-1"],
   ]);
@@ -184,6 +184,47 @@ test("buildBoardEventTemplate indexes the board's brand scope for relay filters"
     lists: [{ id: "backlog", title: "Backlog", rank: "n" }],
   });
   assert.deepEqual(unbranded.tags, [["d", "master"]]);
+});
+
+test("event templates reject ranks rankBetween cannot compute with", () => {
+  // The cutover script wrote list ranks like "a0"; rankBetween refuses to
+  // compute with digits, so every drag against such an entry throws. The
+  // template builders are the chokepoint where that data is now stopped.
+  assert.throws(() =>
+    buildBoardEventTemplate({
+      id: "master",
+      title: "Unified Master",
+      lists: [{ id: "backlog", title: "Backlog", rank: "a0" }],
+    }),
+  );
+  // A hand-seeded a/b/c/d board passes the alphabet check but still ends in
+  // the lowest digit, which leaves no room to subdivide below it.
+  assert.throws(() =>
+    buildBoardEventTemplate({
+      id: "master",
+      title: "Unified Master",
+      lists: [{ id: "backlog", title: "Backlog", rank: "a" }],
+    }),
+  );
+  assert.throws(() =>
+    buildCardEventTemplate({
+      boardAddress: `30623:${OWNER}:operations`,
+      card: {
+        id: "card-1",
+        title: "Ship the Board store",
+        description: "Persist Board state over Nostr.",
+        brand: "hvg.app",
+        functionArea: "build",
+        assignees: [],
+        executionState: "eligible",
+        rank: "m0",
+        listId: "backlog",
+        boardId: "operations",
+        createdBy: OWNER,
+        comments: [],
+      },
+    }),
+  );
 });
 
 test("buildBoardState re-evaluates a card gate from the latest policy head", () => {
