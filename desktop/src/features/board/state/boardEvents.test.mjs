@@ -264,18 +264,18 @@ test("buildBoardEventTemplate indexes the board's brand scope for relay filters"
   const branded = buildBoardEventTemplate({
     id: "kb-board",
     title: "K&B Concrete",
-    brandScope: "kb-concrete",
+    brandScope: "concrete",
     lists: [{ id: "backlog", title: "Backlog", rank: "n" }],
   });
 
   assert.equal(branded.kind, 30623);
   assert.deepEqual(branded.tags, [
     ["d", "kb-board"],
-    ["t", "brand:kb-concrete"],
+    ["t", "brand:concrete"],
   ]);
   assert.deepEqual(JSON.parse(branded.content), {
     title: "K&B Concrete",
-    brandScope: "kb-concrete",
+    brandScope: "concrete",
     lists: [{ id: "backlog", title: "Backlog", rank: "n" }],
   });
 
