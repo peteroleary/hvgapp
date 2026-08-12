@@ -27,6 +27,15 @@ const RANK_PATTERN = /^[a-z]+$/;
 export const RANK_FIRST = "n";
 
 /**
+ * Publish-time guard: true when `rankBetween` can compute with the value.
+ * Anything a Board event carries must pass this, or every later drag against
+ * that entry throws the moment the primitive tries to subdivide around it.
+ */
+export function isValidRank(rank: string): boolean {
+  return RANK_PATTERN.test(rank);
+}
+
+/**
  * A rank must never end in `a`. `a` is the lowest digit, so a trailing `a`
  * leaves no room to insert below it without lengthening the *neighbour* — the
  * one thing fractional ranking exists to avoid. Refusing to emit one keeps

@@ -11,6 +11,7 @@ import {
 } from "@/shared/constants/kinds";
 
 import { evaluateAutonomy } from "../types/boardTypes";
+import { isValidRank } from "./rank";
 import type {
   ApprovalDecision,
   Assignee,
@@ -725,7 +726,7 @@ export function buildBoardEventTemplate(board: Board): BoardEventTemplate {
   }
   if (
     board.lists.some(
-      (list) => !isNonEmptyString(list.id) || !isNonEmptyString(list.rank),
+      (list) => !isNonEmptyString(list.id) || !isValidRank(list.rank),
     )
   ) {
     throw new Error(
@@ -762,7 +763,7 @@ export function buildCardEventTemplate({
     !isNonEmptyString(card.title) ||
     !isNonEmptyString(card.description) ||
     !isNonEmptyString(card.listId) ||
-    !isNonEmptyString(card.rank) ||
+    !isValidRank(card.rank) ||
     !FUNCTION_AREAS.has(card.functionArea) ||
     !CARD_EXECUTION_STATES.has(card.executionState) ||
     card.boardId !== board.dtag
