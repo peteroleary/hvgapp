@@ -3,7 +3,7 @@ import { useState } from "react";
 
 import { evaluateAutonomy } from "../types/boardTypes";
 import type { AutonomyPolicy, Card } from "../types/boardTypes";
-import { BRAND_TOKENS, FUNCTION_TOKENS } from "./BoardCard";
+import { BRAND_TOKENS, brandDisplayName, FUNCTION_TOKENS } from "./BoardCard";
 
 export interface BoardCardModalProps {
   card: Card | null;
@@ -61,7 +61,7 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
             <span
               className={`text-2xs font-semibold uppercase px-2 py-0.5 rounded border ${brandStyle.badge}`}
             >
-              {card.brand}
+              {brandDisplayName(card.brand)}
             </span>
             <span
               className={`text-2xs font-semibold uppercase px-2 py-0.5 rounded border ${functionStyle}`}

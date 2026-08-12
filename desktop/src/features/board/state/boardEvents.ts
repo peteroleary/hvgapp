@@ -733,10 +733,18 @@ export function buildBoardEventTemplate(board: Board): BoardEventTemplate {
     );
   }
   const { id, ...content } = board;
+  // Mirror the card contract's brand tag so relays can index boards by brand
+  // scope server-side instead of scanning every board head client-side.
+  const tags: string[][] = board.brandScope
+    ? [
+        ["d", id],
+        ["t", `brand:${board.brandScope}`],
+      ]
+    : [["d", id]];
   return {
     kind: KIND_BOARD,
     content: serialize(content),
-    tags: [["d", id]],
+    tags,
   };
 }
 

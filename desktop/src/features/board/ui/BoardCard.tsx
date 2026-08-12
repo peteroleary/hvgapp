@@ -9,32 +9,51 @@ export interface BoardCardProps {
   onSelectCard: (card: Card) => void;
 }
 
+/**
+ * Brand identity is the slug (`card.brand`, `board.brandScope`, and the
+ * relay-indexed `t` tag value `brand:<slug>`). Display names live in
+ * BRAND_DISPLAY_NAMES so the query-safe key never doubles as UI text.
+ */
 export const BRAND_TOKENS: Record<string, { badge: string; border: string }> = {
-  MoSober: {
+  mosober: {
     badge: "bg-amber-950/40 text-amber-300 border-amber-700/50",
     border: "border-amber-600",
   },
-  "Clean Startup": {
+  "clean-startup": {
     badge: "bg-emerald-950/40 text-emerald-300 border-emerald-700/50",
     border: "border-emerald-500",
   },
-  We3Live: {
+  we3live: {
     badge: "bg-purple-950/40 text-purple-300 border-purple-700/50",
     border: "border-purple-500",
   },
-  HVG: {
+  hvg: {
     badge: "bg-blue-950/40 text-blue-300 border-blue-700/50",
     border: "border-blue-500",
   },
-  "K&B": {
+  "kb-concrete": {
     badge: "bg-stone-800 text-stone-200 border-stone-600",
     border: "border-stone-400",
   },
-  "hvg.app": {
+  "hvg-app": {
     badge: "bg-yellow-950/40 text-yellow-300 border-yellow-700/50",
     border: "border-yellow-500",
   },
 };
+
+export const BRAND_DISPLAY_NAMES: Record<string, string> = {
+  mosober: "MoSober",
+  "clean-startup": "Clean Startup",
+  we3live: "We3Live",
+  hvg: "HVG",
+  "kb-concrete": "K&B Concrete",
+  "hvg-app": "hvg.app",
+};
+
+/** Badge text for a brand slug; falls back to the raw value for unknown brands. */
+export function brandDisplayName(brand: string): string {
+  return BRAND_DISPLAY_NAMES[brand] ?? brand;
+}
 
 export const FUNCTION_TOKENS: Record<string, string> = {
   build: "text-cyan-400 bg-cyan-950/30 border-cyan-800/40",
@@ -98,7 +117,7 @@ export const BoardCard: React.FC<BoardCardProps> = ({
         <span
           className={`text-badge font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border ${brandStyle.badge}`}
         >
-          {card.brand}
+          {brandDisplayName(card.brand)}
         </span>
 
         {isRejected ? (
