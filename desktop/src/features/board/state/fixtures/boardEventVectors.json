@@ -1,0 +1,19 @@
+{
+  "generatedBy": "desktop/scripts/generate-board-event-vectors.mjs — do not hand-edit",
+  "spec": "PLANS/BUZZ_BOARD_CLI.md, conformance pins 1 and 7",
+  "defaultListTitles": [
+    "Backlog",
+    "Spec'd",
+    "In Progress",
+    "In Review",
+    "Done"
+  ],
+  "brandSlugs": [
+    "clean",
+    "concrete",
+    "hvg-app",
+    "itshvg",
+    "sober",
+    "three"
+  ]
+}
