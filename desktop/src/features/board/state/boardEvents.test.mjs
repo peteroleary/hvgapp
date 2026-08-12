@@ -212,7 +212,7 @@ test("buildCardEventTemplate writes the Board contract's addressable and indexed
       id: "card-1",
       title: "Ship the Board store",
       description: "Persist Board state over Nostr.",
-      brand: "hvg.app",
+      brand: "not-a-real-brand",
       functionArea: "build",
       assignees: [{ type: "agent", id: OTHER_OWNER, role: "executor" }],
       executionState: "eligible",
@@ -236,7 +236,7 @@ test("buildCardEventTemplate writes the Board contract's addressable and indexed
     ["d", "card-1"],
     ["a", `30623:${OWNER}:operations`],
     ["l", "backlog"],
-    ["t", "brand:hvg.app"],
+    ["t", "brand:not-a-real-brand"],
     ["t", "fn:build"],
     ["p", OTHER_OWNER, "", "executor"],
     ["rank", "m"],
@@ -264,18 +264,18 @@ test("buildBoardEventTemplate indexes the board's brand scope for relay filters"
   const branded = buildBoardEventTemplate({
     id: "kb-board",
     title: "K&B Concrete",
-    brandScope: "kb-concrete",
+    brandScope: "concrete",
     lists: [{ id: "backlog", title: "Backlog", rank: "n" }],
   });
 
   assert.equal(branded.kind, 30623);
   assert.deepEqual(branded.tags, [
     ["d", "kb-board"],
-    ["t", "brand:kb-concrete"],
+    ["t", "brand:concrete"],
   ]);
   assert.deepEqual(JSON.parse(branded.content), {
     title: "K&B Concrete",
-    brandScope: "kb-concrete",
+    brandScope: "concrete",
     lists: [{ id: "backlog", title: "Backlog", rank: "n" }],
   });
 
@@ -314,7 +314,7 @@ test("event templates reject ranks rankBetween cannot compute with", () => {
         id: "card-1",
         title: "Ship the Board store",
         description: "Persist Board state over Nostr.",
-        brand: "hvg.app",
+        brand: "not-a-real-brand",
         functionArea: "build",
         assignees: [],
         executionState: "eligible",
