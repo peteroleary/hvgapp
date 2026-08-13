@@ -210,6 +210,9 @@ enum Cmd {
     /// Publish and edit long-form NIP-23 notes — team knowledge base
     #[command(subcommand)]
     Notes(NotesCmd),
+    /// Read and write Boards (kinds 30623-30627) — cards, columns, brands
+    #[command(subcommand)]
+    Board(BoardCmd),
     /// Announce and discover git repositories (NIP-34)
     #[command(subcommand)]
     Repos(ReposCmd),
@@ -1134,6 +1137,84 @@ pub enum NotesCmd {
 }
 
 #[derive(Subcommand)]
+pub enum BoardCmd {
+    /// List boards (reconciled heads across all authors).
+    Ls {
+        /// Filter to one brand scope (locked set: clean, itshvg, sober, concrete, three, hvg-app).
+        #[arg(long)]
+        brand: Option<String>,
+        /// Max results (default 50, hard cap 200).
+        #[arg(long)]
+        limit: Option<u32>,
+    },
+    /// Show one board: metadata plus cards grouped by column.
+    Get {
+        /// Board id (the `d` tag — e.g. `unified-master`, `clean`).
+        board_id: String,
+    },
+    /// Create a board. Refuses if the id already exists (any author) —
+    /// boards reconcile by id, so re-creating would overwrite the shared head.
+    #[command(
+        after_help = "Examples:\n  buzz board create --id clean --title 'Clean Startup' --brand clean\n  buzz board create --id ops --title 'Ops' --lists 'Backlog,Doing,Done'"
+    )]
+    Create {
+        /// Board id — human slug, becomes the `d` tag. `[a-z0-9._-]{1,80}`.
+        #[arg(long)]
+        id: String,
+        /// Board title.
+        #[arg(long)]
+        title: String,
+        /// Brand scope (locked set — validated at the write boundary).
+        #[arg(long)]
+        brand: Option<String>,
+        /// Optional description.
+        #[arg(long)]
+        description: Option<String>,
+        /// Comma-separated column titles. Default: the standard set
+        /// "Backlog,Spec'd,In Progress,In Review,Done".
+        #[arg(long)]
+        lists: Option<String>,
+    },
+    /// Card operations.
+    #[command(subcommand)]
+    Card(BoardCardCmd),
+}
+
+#[derive(Subcommand)]
+pub enum BoardCardCmd {
+    /// File a card on a board. Rank is generated (appended to the column);
+    /// execution state starts `idle`. Read-before-write: the card is built
+    /// from the reconciled board head and column, never from local state.
+    #[command(
+        after_help = "Examples:\n  buzz board card add --board clean --title 'Quote form' --description 'Build the quote intake form' --brand clean --fn build\n  buzz board card add --board clean --title 'T' --description 'D' --brand clean --fn build --list \"In Progress\" --assignee <hex-pubkey>:lead"
+    )]
+    Add {
+        /// Board id (the `d` tag).
+        #[arg(long)]
+        board: String,
+        /// Card title.
+        #[arg(long)]
+        title: String,
+        /// Card description.
+        #[arg(long)]
+        description: String,
+        /// Brand slug (locked set — validated at the write boundary).
+        #[arg(long)]
+        brand: String,
+        /// Function area: build, design, content, social, marketing, sales, research, other.
+        #[arg(long = "fn")]
+        function_area: String,
+        /// Column by id or exact title. Default: the first column.
+        #[arg(long)]
+        list: Option<String>,
+        /// Assignee as `<hex-pubkey>[:lead|reviewer|executor]`. May be repeated.
+        /// CLI-created assignees are typed `agent`; attach humans from Desktop.
+        #[arg(long = "assignee")]
+        assignees: Vec<String>,
+    },
+}
+
+#[derive(Subcommand)]
 pub enum ReposCmd {
     /// Announce a git repository (NIP-34)
     Create {
@@ -2008,6 +2089,7 @@ async fn run(cli: Cli) -> Result<(), CliError> {
         Cmd::Patches(sub) => commands::patches::dispatch(sub, &client).await,
         Cmd::Issues(sub) => commands::issues::dispatch(sub, &client).await,
         Cmd::Pr(sub) => commands::pr::dispatch(sub, &client).await,
+        Cmd::Board(sub) => commands::board::dispatch(sub, &client).await,
         Cmd::Media(sub) => commands::upload::dispatch_media(sub, &client).await,
         Cmd::Upload(sub) => commands::upload::dispatch(sub, &client).await,
         Cmd::Mem(sub) => commands::mem::dispatch(sub, &client).await,
@@ -2100,6 +2182,7 @@ mod tests {
     fn command_inventory_is_stable() {
         let expected_groups: Vec<&str> = vec![
             "agents",
+            "board",
             "canvas",
             "channels",
             "dms",
