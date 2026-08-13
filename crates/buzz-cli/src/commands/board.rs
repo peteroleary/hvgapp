@@ -1021,6 +1021,308 @@ pub async fn cmd_card_deny(
     cmd_approval(client, board_id, card_id, false, reason).await
 }
 
+/// One board the seed command knows how to create.
+#[derive(Debug, Clone, Copy)]
+struct SeedBoard {
+    id: &'static str,
+    title: &'static str,
+    brand: Option<&'static str>,
+    description: &'static str,
+}
+
+/// One card the seed command knows how to file.
+#[derive(Debug, Clone, Copy)]
+struct SeedCard {
+    board_id: &'static str,
+    title: &'static str,
+    function_area: &'static str,
+    description: &'static str,
+}
+
+/// Boards created by `buzz board seed`. The five customer-facing brands plus
+/// Unified Master for cross-brand coordination. Order matters for the CLI
+/// report; creation itself is independent.
+const SEED_BOARDS: &[SeedBoard] = &[
+    SeedBoard {
+        id: "unified-master",
+        title: "Unified Master",
+        brand: None,
+        description: "Cross-brand coordination board. Goals, loops, and work that spans the six-brand operation live here.",
+    },
+    SeedBoard {
+        id: "clean",
+        title: "Clean Startup",
+        brand: Some("clean"),
+        description: "Branson MO short-term-rental turnover cleaning: hosts, property managers, quote and booking automation.",
+    },
+    SeedBoard {
+        id: "itshvg",
+        title: "High Value Growth",
+        brand: Some("itshvg"),
+        description: "Reviews of tools, apps and AI for SMB owners already running a real business.",
+    },
+    SeedBoard {
+        id: "sober",
+        title: "MoSober",
+        brand: Some("sober"),
+        description: "More Than Sober — recovery as a founder journey: pledges, proof, coaching, community.",
+    },
+    SeedBoard {
+        id: "concrete",
+        title: "K&B Concrete",
+        brand: Some("concrete"),
+        description: "Concrete contracting plus materials sourcing: lead-gen, bidding, galleries, e-commerce.",
+    },
+    SeedBoard {
+        id: "three",
+        title: "We3Live",
+        brand: Some("three"),
+        description: "Christian lifestyle hub: satire, teaching, directory, streaming, events.",
+    },
+];
+
+/// Seed cards for the two P0 brand boards. Every card is one capability, not
+/// one page, per `PLANS/BUILD_WORKFLOW.md`. Descriptions carry the open
+/// product questions so they surface when the card is picked up.
+const SEED_CARDS: &[SeedCard] = &[
+    // Shared foundation — build once against clean, instantiate for itshvg later.
+    SeedCard {
+        board_id: "clean",
+        title: "Repo scaffold + deploy pipeline",
+        function_area: "build",
+        description: "Stand up the clean repo and its Vercel project from a single input — the repo name — so service names cannot drift apart. This is the first real exercise of the same-name-everywhere rule; whatever it takes to make it one command is the template the other four brands inherit.",
+    },
+    SeedCard {
+        board_id: "clean",
+        title: "Design foundation — tokens, type scale, logo slot",
+        function_area: "design",
+        description: "Colour tokens, type scale, spacing, and a logo slot that survives a brand not having a logo yet. Specced before any page is built; every later card consumes it rather than inventing its own values.",
+    },
+    SeedCard {
+        board_id: "clean",
+        title: "Analytics + conversion tracking baseline",
+        function_area: "build",
+        description: "Page and event tracking wired before launch, not after. Retrofitting attribution loses the first cohort permanently — the one cohort that tells you whether the launch worked.",
+    },
+    // Clean Startup — local-service archetype.
+    SeedCard {
+        board_id: "clean",
+        title: "Service catalogue as data",
+        function_area: "build",
+        description: "Model turnover cleans, deep cleans, restocking/staging, laundry and inspection reports as structured data, not hand-written pages. Every downstream surface — service pages, pricing, the quote form's service picker, service-area pages — reads from this one source. Getting it wrong is cheap now and a migration later.",
+    },
+    SeedCard {
+        board_id: "clean",
+        title: "Quote request flow",
+        function_area: "build",
+        description: "The money path: a host asks for a quote and it reaches a human. Destination today is team@thecleanstartup.com, CC pete.oleary@icloud.com. Send through a swappable adapter, never a hardcoded mailto — Pipeline (the CRM) replaces this destination once Clean Startup and HVG are live, and that must be a config change rather than a rewrite of the highest-value path on the site.",
+    },
+    SeedCard {
+        board_id: "clean",
+        title: "Booking / scheduling handoff",
+        function_area: "build",
+        description: "Let a host book a slot rather than wait for a reply. Likely an integration with an existing scheduler rather than a build — confirm which before sizing, since that choice is the difference between a day and a sprint.",
+    },
+    SeedCard {
+        board_id: "clean",
+        title: "Local SEO foundation",
+        function_area: "marketing",
+        description: "NAP consistency, LocalBusiness schema, Branson geo signals, service-area markup. For a local service business this is not polish — it is most of how the audience arrives at all.",
+    },
+    SeedCard {
+        board_id: "clean",
+        title: "Turnover-quality proof surface",
+        function_area: "content",
+        description: "Before/after galleries and inspection photos. For this brand proof is the marketing: the inspection report is a thing the host forwards to their own guest, so it sells twice. Design it as an artifact a host wants to share, not a gallery on our site.",
+    },
+    SeedCard {
+        board_id: "clean",
+        title: "Reviews and testimonials",
+        function_area: "marketing",
+        description: "Surface real host reviews. Local-service conversion leans on social proof harder than on copy — a page of testimonials outperforms a page of adjectives.",
+    },
+    SeedCard {
+        board_id: "clean",
+        title: "Service-area expansion structure",
+        function_area: "build",
+        description: "Branson first, other vacation-rental hubs later. Build the structure now — area as data, not as a hardcoded page — so launching market #2 is a content entry rather than a refactor. Cheap today, expensive the moment a second city exists.",
+    },
+    SeedCard {
+        board_id: "clean",
+        title: "Legal and ops pages",
+        function_area: "other",
+        description: "Privacy, terms, service area, contact. Unglamorous and blocking: a lead-capturing site without a privacy policy is a problem you find out about from someone else.",
+    },
+    // itshvg — content-hub archetype.
+    SeedCard {
+        board_id: "itshvg",
+        title: "Review content model",
+        function_area: "build",
+        description: "Verdict, rating, pros/cons, tested-on date, price tier, and what \"tested\" means for this brand. Do this before any review is written — get it wrong and every review published afterwards needs migrating, which is how content sites end up frozen. This is the one HVG card that is expensive to change later.",
+    },
+    SeedCard {
+        board_id: "itshvg",
+        title: "Review index and taxonomy",
+        function_area: "build",
+        description: "Browse and filter by category, price tier and verdict. Reads entirely from H1's model; if this card needs fields H1 does not have, H1 was wrong and gets fixed first.",
+    },
+    SeedCard {
+        board_id: "itshvg",
+        title: "Review structured data",
+        function_area: "marketing",
+        description: "Review / Product schema on every review. For a review site this is not SEO garnish — it is the difference between being eligible for rich results and being invisible in the surface where buying decisions start.",
+    },
+    SeedCard {
+        board_id: "itshvg",
+        title: "Newsletter capture and provider",
+        function_area: "marketing",
+        description: "Capture, double opt-in, and a provider wired end to end. Of the four channels, the newsletter is the only audience we own outright rather than rent — the others can change their algorithm on us.",
+    },
+    SeedCard {
+        board_id: "itshvg",
+        title: "Short-form and YouTube surface",
+        function_area: "content",
+        description: "Embeds and syndication so video and short-form have a home on the site instead of living only on someone else's platform. Feeds the same review model rather than a parallel one.",
+    },
+    SeedCard {
+        board_id: "itshvg",
+        title: "Affiliate disclosure and link handling",
+        function_area: "other",
+        description: "A review site with monetised links carries FTC disclosure obligations. Structural, not a footer note — disclosure needs to sit with the recommendation, and links need a single place to be managed and audited. Confirm the day-one monetisation posture before sizing: it decides whether this is a component or a link-management layer.",
+    },
+    SeedCard {
+        board_id: "itshvg",
+        title: "Lead-gen and services CTA",
+        function_area: "sales",
+        description: "Route readers to bespoke AI builds, consulting and done-for-you work. Highest-margin line HVG has, and it is the reason the content engine earns rather than just attracts.",
+    },
+    SeedCard {
+        board_id: "itshvg",
+        title: "Legal pages",
+        function_area: "other",
+        description: "Privacy, terms, disclosure, contact. Same reasoning as C8, plus the disclosure page H6 points at.",
+    },
+];
+
+/// Create the standard boards and file the seed cards. Idempotent: boards are
+/// skipped by dtag, cards are skipped when a card with the same title already
+/// exists on the reconciled board head.
+pub async fn cmd_seed(client: &BuzzClient, dry_run: bool) -> Result<(), CliError> {
+    let mut created_boards: Vec<&str> = Vec::new();
+    let mut skipped_boards: Vec<&str> = Vec::new();
+    let mut created_cards: Vec<serde_json::Value> = Vec::new();
+    let mut skipped_cards: Vec<serde_json::Value> = Vec::new();
+
+    // Pass 1: ensure every board exists. If it does not, create it with the
+    // standard five-column shape. Idempotency is by board dtag.
+    for board in SEED_BOARDS {
+        let existing = fetch_board_head(client, board.id).await?;
+        if existing.is_some() {
+            skipped_boards.push(board.id);
+            continue;
+        }
+        if dry_run {
+            created_boards.push(board.id);
+            continue;
+        }
+        let lists = build_default_lists()?;
+        let builder = build_board_event(
+            board.id,
+            board.title,
+            Some(board.description),
+            board.brand,
+            &lists,
+        )?;
+        sign_and_submit(client, builder, "relay reported board event as duplicate").await?;
+        created_boards.push(board.id);
+    }
+
+    // Pass 2: file seed cards. For idempotency we skip cards whose title already
+    // exists on the reconciled board head; card ids are random UUIDs, so title
+    // is the only stable handle seeding has.
+    for card in SEED_CARDS {
+        let board = match fetch_board_head(client, card.board_id).await? {
+            Some(b) => b,
+            None => {
+                // Should not happen — we just created it — but fail closed.
+                return Err(CliError::Other(format!(
+                    "seed board {} vanished after creation; cannot file {}",
+                    card.board_id, card.title
+                )));
+            }
+        };
+        let board_brand = board.brand_scope.as_deref().ok_or_else(|| {
+            CliError::Other(format!(
+                "seed card {:?} targets board {} which has no brand scope",
+                card.title, board.id
+            ))
+        })?;
+        let cards = fetch_board_cards(client, &board.id).await?;
+        if cards.iter().any(|c| c.title == card.title) {
+            skipped_cards.push(serde_json::json!({
+                "board": board.id,
+                "title": card.title,
+            }));
+            continue;
+        }
+        if dry_run {
+            created_cards.push(serde_json::json!({
+                "board": board.id,
+                "title": card.title,
+            }));
+            continue;
+        }
+        let list = resolve_list(&board, None)?;
+        let last_rank = cards
+            .iter()
+            .filter(|c| c.list_id == list.id)
+            .map(|c| c.rank.as_str())
+            .last();
+        let rank = rank_between(last_rank, None)?;
+        let card_id = uuid::Uuid::new_v4().to_string();
+        let me = client.keys().public_key().to_hex();
+        let builder = build_card_event(
+            &board.coordinate(),
+            &card_id,
+            card.title,
+            card.description,
+            board_brand,
+            card.function_area,
+            &[],
+            "idle",
+            &rank,
+            &list.id,
+            &me,
+        )?;
+        let event = sign_and_submit(client, builder, "relay reported card event as duplicate").await?;
+        created_cards.push(serde_json::json!({
+            "board": board.id,
+            "title": card.title,
+            "cardId": card_id,
+            "eventId": event.id.to_hex(),
+            "coordinate": format!("{KIND_BOARD_CARD}:{}:{card_id}", event.pubkey.to_hex()),
+        }));
+    }
+
+    let out = serde_json::json!({
+        "dryRun": dry_run,
+        "boards": {
+            "created": created_boards,
+            "skipped": skipped_boards,
+        },
+        "cards": {
+            "created": created_cards,
+            "skipped": skipped_cards,
+        },
+    });
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&out)
+            .map_err(|e| CliError::Other(format!("failed to serialize seed result: {e}")))?
+    );
+    Ok(())
+}
+
 pub async fn dispatch(cmd: crate::BoardCmd, client: &BuzzClient) -> Result<(), CliError> {
     use crate::{BoardCardCmd, BoardCmd};
     match cmd {
@@ -1070,6 +1372,7 @@ pub async fn dispatch(cmd: crate::BoardCmd, client: &BuzzClient) -> Result<(), C
         BoardCmd::Card(BoardCardCmd::Deny { board, card, reason }) => {
             cmd_card_deny(client, &board, &card, reason.as_deref()).await
         }
+        BoardCmd::Seed { dry_run } => cmd_seed(client, dry_run).await,
     }
 }
 
@@ -1432,6 +1735,99 @@ mod tests {
                 assert!(prev < list.rank.as_str());
             }
             prev = Some(&list.rank);
+        }
+    }
+
+    #[test]
+    fn seed_boards_are_valid() {
+        let board_ids: std::collections::HashSet<&str> =
+            SEED_BOARDS.iter().map(|b| b.id).collect();
+        assert_eq!(board_ids.len(), SEED_BOARDS.len(), "seed board ids are unique");
+        assert!(board_ids.contains("unified-master"));
+        for board in SEED_BOARDS {
+            assert!(!board.title.is_empty());
+            assert!(!board.description.is_empty());
+            if let Some(brand) = board.brand {
+                assert!(BRAND_SLUGS.contains(&brand), "{} has a locked brand", board.id);
+            }
+        }
+    }
+
+    #[test]
+    fn seed_cards_are_valid_and_target_known_boards() {
+        let board_ids: std::collections::HashSet<&str> =
+            SEED_BOARDS.iter().map(|b| b.id).collect();
+        assert_eq!(SEED_CARDS.len(), 19, "seed card count matches BOARD_SEED_CARDS.md");
+        let mut seen = std::collections::HashSet::new();
+        for card in SEED_CARDS {
+            assert!(
+                board_ids.contains(card.board_id),
+                "{} targets a known seed board",
+                card.title
+            );
+            assert!(!card.title.is_empty());
+            assert!(!card.description.is_empty());
+            assert!(
+                FUNCTION_AREAS.contains(&card.function_area),
+                "{} has a known function area",
+                card.title
+            );
+            assert!(
+                seen.insert((card.board_id, card.title)),
+                "duplicate seed card title: {}",
+                card.title
+            );
+        }
+    }
+
+    #[test]
+    fn seed_board_events_build_cleanly() {
+        for board in SEED_BOARDS {
+            let lists = build_default_lists().unwrap();
+            let event = sign(
+                build_board_event(
+                    board.id,
+                    board.title,
+                    Some(board.description),
+                    board.brand,
+                    &lists,
+                )
+                .unwrap(),
+            );
+            assert_eq!(event.kind, kind_board());
+            let snapshot = BoardSnapshot::from_event(&event).unwrap();
+            assert_eq!(snapshot.id, board.id);
+            assert_eq!(snapshot.title, board.title);
+            assert_eq!(snapshot.brand_scope, board.brand.map(str::to_owned));
+        }
+    }
+
+    #[test]
+    fn seed_card_events_build_cleanly() {
+        let owner = "cd".repeat(32);
+        let board_address = format!("{KIND_BOARD}:{owner}:clean");
+        for card in SEED_CARDS.iter().filter(|c| c.board_id == "clean") {
+            let event = sign(
+                build_card_event(
+                    &board_address,
+                    "card-id",
+                    card.title,
+                    card.description,
+                    "clean",
+                    card.function_area,
+                    &[],
+                    "idle",
+                    "n",
+                    "list-id",
+                    &owner,
+                )
+                .unwrap(),
+            );
+            assert_eq!(event.kind, kind_board_card());
+            let snapshot = CardSnapshot::from_event(&event).unwrap();
+            assert_eq!(snapshot.title, card.title);
+            assert_eq!(snapshot.function_area, card.function_area);
+            assert_eq!(snapshot.brand, "clean");
         }
     }
 }
