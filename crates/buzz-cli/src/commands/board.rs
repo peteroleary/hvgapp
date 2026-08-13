@@ -36,7 +36,9 @@ use crate::commands::rank::{compare_rank, is_valid_rank, rank_between};
 use crate::error::CliError;
 use crate::validate::validate_hex64;
 
-use buzz_core::kind::{KIND_BOARD, KIND_BOARD_CARD};
+use buzz_core::kind::{
+    KIND_BOARD, KIND_BOARD_APPROVAL_DENIED, KIND_BOARD_APPROVAL_GRANTED, KIND_BOARD_CARD,
+};
 
 /// The standard column set — one shape, everywhere (Fizz+Prop, #build
 /// 2026-08-12). Source of truth: Desktop's exported default-list module
@@ -434,6 +436,24 @@ pub async fn fetch_board_cards(
     Ok(cards)
 }
 
+/// Fetch and reconcile the head for one card id, across all authors.
+pub async fn fetch_card_head(
+    client: &BuzzClient,
+    card_id: &str,
+) -> Result<Option<CardSnapshot>, CliError> {
+    let filter = serde_json::json!({
+        "kinds": [KIND_BOARD_CARD],
+        "#d": [card_id],
+        "limit": 50,
+    });
+    let raw = client.query(&filter).await?;
+    reconcile_by_dtag(parse_events(&raw)?)
+        .into_iter()
+        .next()
+        .map(|e| CardSnapshot::from_event(&e))
+        .transpose()
+}
+
 /// Content of a kind:30623 event. Field order matches the TS `Board`
 /// interface minus `id` (`title`, `description?`, `brandScope?`, `lists`) so
 /// the serialized bytes equal Desktop's `JSON.stringify` output.
@@ -565,6 +585,53 @@ pub fn build_card_event(
     })
     .map_err(|e| CliError::Other(format!("failed to serialize card: {e}")))?;
     Ok(EventBuilder::new(kind_board_card(), content).tags(tags))
+}
+
+/// Content of a kind:50002/50003 approval decision event. Field order
+/// matches the TS `ApprovalDecision` serialization: `reason?`,
+/// `policySnapshot?`. The CLI never sets `policySnapshot`.
+#[derive(serde::Serialize)]
+struct ApprovalDecisionContent<'a> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    reason: Option<&'a str>,
+}
+
+/// Build the unsigned kind:50002 (granted) or kind:50003 (denied) approval
+/// decision event for a card, mirroring `buildApprovalDecisionEventTemplate`.
+/// `card_address` must be a valid `30624:<pubkey>:<card-id>` coordinate.
+pub fn build_approval_event(
+    card_address: &str,
+    granted: bool,
+    reason: Option<&str>,
+) -> Result<EventBuilder, CliError> {
+    if parse_card_address_dtag(card_address).is_none() {
+        return Err(CliError::Usage(format!(
+            "card address {card_address:?} is not a valid {KIND_BOARD_CARD} coordinate"
+        )));
+    }
+    let kind = if granted {
+        KIND_BOARD_APPROVAL_GRANTED
+    } else {
+        KIND_BOARD_APPROVAL_DENIED
+    };
+    let tags = vec![Tag::parse(["a", card_address]).map_err(tag_err)?];
+    let content = serde_json::to_string(&ApprovalDecisionContent { reason })
+        .map_err(|e| CliError::Other(format!("failed to serialize approval decision: {e}")))?;
+    Ok(EventBuilder::new(Kind::Custom(kind as u16), content).tags(tags))
+}
+
+/// Extract the d-tag from a `30624:<pubkey>:<dtag>` coordinate, mirroring
+/// `parseAddress(value, KIND_BOARD_CARD)`.
+fn parse_card_address_dtag(address: &str) -> Option<&str> {
+    let mut parts = address.splitn(3, ':');
+    let kind = parts.next()?;
+    let pubkey = parts.next()?;
+    let dtag = parts.next()?;
+    if kind == KIND_BOARD_CARD.to_string() && validate_hex64(pubkey).is_ok() && !dtag.is_empty() {
+        Some(dtag)
+    } else {
+        None
+    }
 }
 
 /// Build the default five columns the way Desktop's `buildDefaultLists`
@@ -891,6 +958,69 @@ pub async fn cmd_card_add(
     Ok(())
 }
 
+async fn cmd_approval(
+    client: &BuzzClient,
+    board_id: &str,
+    card_id: &str,
+    granted: bool,
+    reason: Option<&str>,
+) -> Result<(), CliError> {
+    let verb = if granted { "approve" } else { "deny" };
+
+    // Verify the board exists — the CLI commands by board id, and a decision
+    // on a non-existent board is an easy mistake to catch early.
+    let _board = fetch_board_head(client, board_id)
+        .await?
+        .ok_or_else(|| CliError::NotFound(format!("board not found: {board_id}")))?;
+
+    // Verify the card exists and belongs to the requested board. Approval
+    // events anchor by full card address, so a typo in board/card must fail
+    // here rather than writing an orphan decision.
+    let card = fetch_card_head(client, card_id)
+        .await?
+        .ok_or_else(|| CliError::NotFound(format!("card not found: {card_id}")))?;
+    if card.board_id != board_id {
+        return Err(CliError::Usage(format!(
+            "card {card_id:?} belongs to board {:?}, not {board_id:?}",
+            card.board_id
+        )));
+    }
+
+    let card_address = card.coordinate();
+    let builder = build_approval_event(&card_address, granted, reason)?;
+    let event = sign_and_submit(
+        client,
+        builder,
+        "relay reported approval decision as duplicate",
+    )
+    .await?;
+    println!("event_id   {}", event.id.to_hex());
+    println!("card       {card_address}");
+    println!("decision   {verb}");
+    if let Some(reason) = reason {
+        println!("reason     {reason}");
+    }
+    Ok(())
+}
+
+pub async fn cmd_card_approve(
+    client: &BuzzClient,
+    board_id: &str,
+    card_id: &str,
+    reason: Option<&str>,
+) -> Result<(), CliError> {
+    cmd_approval(client, board_id, card_id, true, reason).await
+}
+
+pub async fn cmd_card_deny(
+    client: &BuzzClient,
+    board_id: &str,
+    card_id: &str,
+    reason: Option<&str>,
+) -> Result<(), CliError> {
+    cmd_approval(client, board_id, card_id, false, reason).await
+}
+
 pub async fn dispatch(cmd: crate::BoardCmd, client: &BuzzClient) -> Result<(), CliError> {
     use crate::{BoardCardCmd, BoardCmd};
     match cmd {
@@ -933,6 +1063,12 @@ pub async fn dispatch(cmd: crate::BoardCmd, client: &BuzzClient) -> Result<(), C
                 &assignees,
             )
             .await
+        }
+        BoardCmd::Card(BoardCardCmd::Approve { board, card, reason }) => {
+            cmd_card_approve(client, &board, &card, reason.as_deref()).await
+        }
+        BoardCmd::Card(BoardCardCmd::Deny { board, card, reason }) => {
+            cmd_card_deny(client, &board, &card, reason.as_deref()).await
         }
     }
 }
@@ -1171,6 +1307,45 @@ mod tests {
         assert!(build_card_event(&addr, "", "t", "d", "clean", "build", &[], "idle", "n", "l", &owner).is_err());
         assert!(build_card_event(&addr, "c", "t", "d", "clean", "nope", &[], "idle", "n", "l", &owner).is_err());
         assert!(build_card_event(&addr, "c", "t", "d", "clean", "build", &[], "done", "n", "l", &owner).is_err());
+    }
+
+    #[test]
+    fn build_approval_event_granted_matches_ts_template() {
+        let owner = "cd".repeat(32);
+        let card_address = format!("30624:{owner}:card-1");
+        let event = sign(build_approval_event(&card_address, true, Some("spec signed off")).unwrap());
+        assert_eq!(event.kind, Kind::Custom(KIND_BOARD_APPROVAL_GRANTED as u16));
+        assert_eq!(tag_slices(&event), owned(&[&["a", card_address.as_str()]]));
+        // Byte-exact: TS key order is reason?, policySnapshot?.
+        assert_eq!(event.content, r#"{"reason":"spec signed off"}"#);
+    }
+
+    #[test]
+    fn build_approval_event_denied_omits_reason_when_absent() {
+        let owner = "cd".repeat(32);
+        let card_address = format!("30624:{owner}:card-1");
+        let event = sign(build_approval_event(&card_address, false, None).unwrap());
+        assert_eq!(event.kind, Kind::Custom(KIND_BOARD_APPROVAL_DENIED as u16));
+        assert_eq!(tag_slices(&event), owned(&[&["a", card_address.as_str()]]));
+        assert_eq!(event.content, "{}");
+    }
+
+    #[test]
+    fn build_approval_event_rejects_invalid_card_address() {
+        assert!(build_approval_event("30623:cd:card", true, None).is_err()); // wrong kind
+        assert!(build_approval_event("30624:not-hex:card", true, None).is_err());
+        assert!(build_approval_event("30624:cd", true, None).is_err()); // missing dtag
+    }
+
+    #[test]
+    fn parse_card_address_dtag_extracts_id() {
+        let owner = "cd".repeat(32);
+        assert_eq!(
+            parse_card_address_dtag(&format!("30624:{owner}:card-1")),
+            Some("card-1")
+        );
+        assert!(parse_card_address_dtag("30623:cd:card").is_none());
+        assert!(parse_card_address_dtag("30624:not-hex:card").is_none());
     }
 
     fn board_event(keys: &Keys, ts: u64, id: &str, title: &str) -> Event {
