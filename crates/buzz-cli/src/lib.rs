@@ -1212,6 +1212,36 @@ pub enum BoardCardCmd {
         #[arg(long = "assignee")]
         assignees: Vec<String>,
     },
+    /// Grant approval for a card. Appends a kind:50002 event.
+    #[command(
+        after_help = "Examples:\n  buzz board card approve --board clean --card <card-id>\n  buzz board card approve --board clean --card <card-id> --reason 'spec signed off'"
+    )]
+    Approve {
+        /// Board id (the `d` tag).
+        #[arg(long)]
+        board: String,
+        /// Card id (the `d` tag).
+        #[arg(long)]
+        card: String,
+        /// Optional human-readable reason.
+        #[arg(long)]
+        reason: Option<String>,
+    },
+    /// Deny approval for a card. Appends a kind:50003 event.
+    #[command(
+        after_help = "Examples:\n  buzz board card deny --board clean --card <card-id>\n  buzz board card deny --board clean --card <card-id> --reason 'needs revision'"
+    )]
+    Deny {
+        /// Board id (the `d` tag).
+        #[arg(long)]
+        board: String,
+        /// Card id (the `d` tag).
+        #[arg(long)]
+        card: String,
+        /// Optional human-readable reason.
+        #[arg(long)]
+        reason: Option<String>,
+    },
 }
 
 #[derive(Subcommand)]
