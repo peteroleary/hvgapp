@@ -1178,6 +1178,16 @@ pub enum BoardCmd {
     /// Card operations.
     #[command(subcommand)]
     Card(BoardCardCmd),
+    /// Seed the standard boards and cards. Idempotent: re-running skips
+    /// boards/cards that already exist on the reconciled head.
+    #[command(
+        after_help = "Examples:\n  buzz board seed\n  buzz board seed --dry-run"
+    )]
+    Seed {
+        /// Print the seed plan without writing anything.
+        #[arg(long, default_value_t = false)]
+        dry_run: bool,
+    },
 }
 
 #[derive(Subcommand)]
