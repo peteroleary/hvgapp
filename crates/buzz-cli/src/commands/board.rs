@@ -15,6 +15,8 @@
 //!   [--lists "Backlog,Spec'd,..."]` — refuses an existing id (any author).
 //! - `board card add --board <id> --title <t> --description <d> --brand <slug>
 //!   --fn <area> [--list <id|title>] [--assignee <hex>[:role]]...`
+//! - `board seed [--dry-run]` — create the standard boards and file the P0 seed
+//!   cards. Idempotent: skips existing boards/cards by reconciled head.
 //!
 //! ## Reconciliation (task-0 rule, spec §5.6)
 //! Boards and cards reconcile by `${kind}:${dtag}` across **all** authors:
@@ -1243,6 +1245,30 @@ pub async fn cmd_seed(client: &BuzzClient, dry_run: bool) -> Result<(), CliError
     for card in SEED_CARDS {
         let board = match fetch_board_head(client, card.board_id).await? {
             Some(b) => b,
+            None if dry_run => {
+                // The board would be created in pass 1; plan the card against
+                // its would-be shape without contacting the relay.
+                let seed = SEED_BOARDS
+                    .iter()
+                    .find(|b| b.id == card.board_id)
+                    .ok_or_else(|| {
+                        CliError::Other(format!(
+                            "seed card {:?} targets unknown board {}",
+                            card.title, card.board_id
+                        ))
+                    })?;
+                let me = client.keys().public_key().to_hex();
+                BoardSnapshot {
+                    event_id: String::new(),
+                    owner: me,
+                    id: seed.id.to_string(),
+                    title: seed.title.to_string(),
+                    description: Some(seed.description.to_string()),
+                    brand_scope: seed.brand.map(String::from),
+                    lists: build_default_lists()?,
+                    updated_at: 0,
+                }
+            }
             None => {
                 // Should not happen — we just created it — but fail closed.
                 return Err(CliError::Other(format!(
