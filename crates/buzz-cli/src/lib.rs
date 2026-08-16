@@ -1193,9 +1193,7 @@ pub enum BoardCmd {
     Card(BoardCardCmd),
     /// Seed the standard boards and cards. Idempotent: re-running skips
     /// boards/cards that already exist on the reconciled head.
-    #[command(
-        after_help = "Examples:\n  buzz board seed\n  buzz board seed --dry-run"
-    )]
+    #[command(after_help = "Examples:\n  buzz board seed\n  buzz board seed --dry-run")]
     Seed {
         /// Print the seed plan without writing anything.
         #[arg(long, default_value_t = false)]
@@ -1234,6 +1232,73 @@ pub enum BoardCardCmd {
         /// CLI-created assignees are typed `agent`; attach humans from Desktop.
         #[arg(long = "assignee")]
         assignees: Vec<String>,
+        /// Attach the card to a goal (kind:30625 `d` tag). The goal must
+        /// already exist — validated at the write boundary.
+        #[arg(long)]
+        goal: Option<String>,
+    },
+    /// Edit a card's fields against the reconciled head (across all authors).
+    /// Untouched fields — comments, createdBy, lineage, approval state — are
+    /// carried over verbatim; the CLI never rebuilds a card from flags alone.
+    #[command(
+        after_help = "Examples:\n  buzz board card set --board clean --card <card-id> --title 'New title'\n  buzz board card set --board clean --card <card-id> --execution-state running --assign lead <hex-pubkey>\n  buzz board card set --board clean --card <card-id> --goal <goal-id>"
+    )]
+    Set {
+        /// Board id (the `d` tag).
+        #[arg(long)]
+        board: String,
+        /// Card id (the `d` tag).
+        #[arg(long)]
+        card: String,
+        /// New title.
+        #[arg(long)]
+        title: Option<String>,
+        /// New description.
+        #[arg(long)]
+        description: Option<String>,
+        /// New execution state: idle, eligible, running, completed, blocked, needs_approval.
+        #[arg(long = "execution-state")]
+        execution_state: Option<String>,
+        /// Assign or re-role: `--assign <lead|reviewer|executor> <hex-pubkey>`.
+        /// May be repeated. Upserts by id.
+        #[arg(long = "assign", num_args = 2, value_names = ["ROLE", "PUBKEY"])]
+        assigns: Vec<String>,
+        /// Remove an assignee by hex pubkey. May be repeated. An id that is
+        /// not on the card is an error, not a silent pass.
+        #[arg(long = "unassign")]
+        unassigns: Vec<String>,
+        /// Attach the card to a goal (kind:30625 `d` tag). The goal must
+        /// already exist — validated at the write boundary.
+        #[arg(long)]
+        goal: Option<String>,
+    },
+    /// Move a card to another column (or reposition within one). Rank is
+    /// generated from the reconciled target column; callers never pass ranks.
+    #[command(
+        after_help = "Examples:\n  buzz board card move --board clean --card <card-id> --list \"In Progress\"\n  buzz board card move --board clean --card <card-id> --list Done --top\n  buzz board card move --board clean --card <card-id> --list \"In Review\" --after <other-card-id>"
+    )]
+    Move {
+        /// Board id (the `d` tag).
+        #[arg(long)]
+        board: String,
+        /// Card id (the `d` tag).
+        #[arg(long)]
+        card: String,
+        /// Target column, by id or exact title.
+        #[arg(long)]
+        list: String,
+        /// Place at the top of the column.
+        #[arg(long, conflicts_with_all = ["bottom", "before", "after"])]
+        top: bool,
+        /// Place at the bottom of the column (the default).
+        #[arg(long)]
+        bottom: bool,
+        /// Place before this card (must be in the target column).
+        #[arg(long, conflicts_with_all = ["bottom", "after"])]
+        before: Option<String>,
+        /// Place after this card (must be in the target column).
+        #[arg(long, conflicts_with_all = ["bottom"])]
+        after: Option<String>,
     },
     /// Grant approval for a card. Appends a kind:50002 event.
     #[command(

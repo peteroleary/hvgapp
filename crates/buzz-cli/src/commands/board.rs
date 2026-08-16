@@ -14,7 +14,12 @@
 //! - `board create --id <slug> --title <t> [--brand <slug>] [--description <d>]
 //!   [--lists "Backlog,Spec'd,..."]` — refuses an existing id (any author).
 //! - `board card add --board <id> --title <t> --description <d> --brand <slug>
-//!   --fn <area> [--list <id|title>] [--assignee <hex>[:role]]...`
+//!   --fn <area> [--list <id|title>] [--assignee <hex>[:role]]... [--goal <id>]`
+//! - `board card set --board <id> --card <id> [--title ..] [--description ..]
+//!   [--execution-state ..] [--assign <role> <hex>]... [--unassign <hex>]...
+//!   [--goal <id>]` — read-modify-write against the reconciled head.
+//! - `board card move --board <id> --card <id> --list <id|title>
+//!   [--top|--bottom|--before <card>|--after <card>]` — same head discipline.
 //! - `board seed [--dry-run]` — create the standard boards and file the P0 seed
 //!   cards. Idempotent: skips existing boards/cards by reconciled head.
 //!
@@ -40,6 +45,7 @@ use crate::validate::validate_hex64;
 
 use buzz_core::kind::{
     KIND_BOARD, KIND_BOARD_APPROVAL_DENIED, KIND_BOARD_APPROVAL_GRANTED, KIND_BOARD_CARD,
+    KIND_BOARD_GOAL,
 };
 
 /// The standard column set — one shape, everywhere (Fizz+Prop, #build
@@ -50,13 +56,8 @@ use buzz_core::kind::{
 /// both): straight ASCII apostrophe in `Spec'd`, no curly quotes, no
 /// trailing spaces. Lists are immutable from the CLI in v1, so whatever
 /// shape a board is born with is the shape it keeps.
-pub const DEFAULT_LIST_TITLES: [&str; 5] = [
-    "Backlog",
-    "Spec'd",
-    "In Progress",
-    "In Review",
-    "Done",
-];
+pub const DEFAULT_LIST_TITLES: [&str; 5] =
+    ["Backlog", "Spec'd", "In Progress", "In Review", "Done"];
 
 /// Brand slugs validated at the write boundary (`--brand` on `board create`
 /// and `board card add`). Source of truth:
@@ -70,13 +71,19 @@ pub const BRAND_SLUGS: [&str; 6] = [
 /// The Board function taxonomy (`FunctionArea` in `types/boardTypes.ts`).
 /// Mirrors `FUNCTION_AREAS` in `boardEvents.ts`.
 pub const FUNCTION_AREAS: [&str; 8] = [
-    "build", "design", "content", "social", "marketing", "sales", "research", "other",
+    "build",
+    "design",
+    "content",
+    "social",
+    "marketing",
+    "sales",
+    "research",
+    "other",
 ];
 
 /// Card execution states (`CardExecutionState` in `types/boardTypes.ts`).
-/// `card add` always writes `idle`; the set is mirrored for validation on
-/// read and for the later `card set` verb.
-#[allow(dead_code)] // wired into `card set` later
+/// `card add` always writes `idle`; `card set --execution-state` validates
+/// against this set.
 pub const CARD_EXECUTION_STATES: [&str; 6] = [
     "idle",
     "eligible",
@@ -89,6 +96,13 @@ pub const CARD_EXECUTION_STATES: [&str; 6] = [
 /// Assignee roles accepted by `--assignee <hex>[:role]`
 /// (`Assignee.role` in `types/boardTypes.ts`).
 pub const ASSIGNEE_ROLES: [&str; 3] = ["lead", "reviewer", "executor"];
+
+/// Goal frameworks (`Goal.framework` in `types/boardTypes.ts`). Mirrored for
+/// strict goal parsing — `parseGoal` drops events outside this set.
+pub const GOAL_FRAMEWORKS: [&str; 3] = ["SMART", "OKR", "PACT"];
+
+/// Goal statuses (`Goal.status` in `types/boardTypes.ts`).
+pub const GOAL_STATUSES: [&str; 5] = ["draft", "proposed", "approved", "executing", "completed"];
 
 /// Validate a `--brand` value against the locked set. Returns the slug on
 /// success so callers can use `?` and keep the value.
@@ -115,12 +129,28 @@ pub fn validate_function_area(area: &str) -> Result<&str, CliError> {
     }
 }
 
+/// Validate a `--execution-state` value against the execution-state enum.
+fn validate_execution_state(state: &str) -> Result<&str, CliError> {
+    if CARD_EXECUTION_STATES.contains(&state) {
+        Ok(state)
+    } else {
+        Err(CliError::Usage(format!(
+            "unknown execution state {state:?} — expected one of: {}",
+            CARD_EXECUTION_STATES.join(", ")
+        )))
+    }
+}
+
 fn kind_board() -> Kind {
     Kind::Custom(KIND_BOARD as u16)
 }
 
 fn kind_board_card() -> Kind {
     Kind::Custom(KIND_BOARD_CARD as u16)
+}
+
+fn kind_board_goal() -> Kind {
+    Kind::Custom(KIND_BOARD_GOAL as u16)
 }
 
 fn parse_events(json: &str) -> Result<Vec<Event>, CliError> {
@@ -131,9 +161,10 @@ fn parse_events(json: &str) -> Result<Vec<Event>, CliError> {
 /// The single `d` tag of an event, mirroring `uniqueDTag` in
 /// `boardEvents.ts`: exactly one `d` tag with a non-empty value, else None.
 fn unique_d_tag(event: &Event) -> Option<&str> {
-    let mut d_tags = event.tags.iter().filter(|t| {
-        t.as_slice().first().map(String::as_str) == Some("d")
-    });
+    let mut d_tags = event
+        .tags
+        .iter()
+        .filter(|t| t.as_slice().first().map(String::as_str) == Some("d"));
     let first = d_tags.next()?;
     if d_tags.next().is_some() {
         return None;
@@ -249,7 +280,9 @@ impl BoardSnapshot {
             let entry: BoardListEntry = serde_json::from_value(candidate.clone())
                 .map_err(|_| CliError::Other("board list entry is malformed".into()))?;
             if entry.id.is_empty() || entry.title.is_empty() || entry.rank.is_empty() {
-                return Err(CliError::Other("board list entry has an empty field".into()));
+                return Err(CliError::Other(
+                    "board list entry has an empty field".into(),
+                ));
             }
             if !seen_ids.insert(entry.id.clone()) {
                 return Err(CliError::Other("board list ids are not unique".into()));
@@ -292,6 +325,19 @@ pub struct AssigneeEntry {
     pub role: Option<String>,
 }
 
+/// One card comment, content form. Field order matches `parseComments`
+/// (`id`, `authorId`, `body`, `createdAt`) so re-emitted content is
+/// byte-identical to Desktop's.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct CardComment {
+    pub id: String,
+    #[serde(rename = "authorId")]
+    pub author_id: String,
+    pub body: String,
+    #[serde(rename = "createdAt")]
+    pub created_at: String,
+}
+
 /// Parsed view of a kind:30624 card head.
 #[derive(Debug, Clone)]
 pub struct CardSnapshot {
@@ -308,6 +354,17 @@ pub struct CardSnapshot {
     pub execution_state: String,
     pub assignees: Vec<AssigneeEntry>,
     pub created_by: String,
+    pub comments: Vec<CardComment>,
+    pub linked_git_issue: Option<String>,
+    /// Pass-through: the CLI never authors these fields, so the update path
+    /// preserves the head's value verbatim rather than re-validating shapes
+    /// it does not own. `feedForwardContext`/`approvalDecision`/`sourceLineage`
+    /// present-but-not-an-object is still a hard parse error (Desktop's
+    /// `parseCard` drops such cards).
+    pub feed_forward_context: Option<serde_json::Value>,
+    pub parent_goal_id: Option<String>,
+    pub source_lineage: Option<serde_json::Value>,
+    pub approval_decision: Option<serde_json::Value>,
     pub updated_at: u64,
 }
 
@@ -360,6 +417,32 @@ impl CardSnapshot {
             .transpose()
             .map_err(|_| CliError::Other("card assignees are malformed".into()))?
             .unwrap_or_default();
+        // `parseCard` drops a card whose comments are missing or malformed —
+        // the read path is strict so the CLI never "sees" a card Desktop
+        // wouldn't render.
+        let comments: Vec<CardComment> = content
+            .get("comments")
+            .cloned()
+            .map(serde_json::from_value)
+            .transpose()
+            .map_err(|_| CliError::Other("card comments are malformed".into()))?
+            .ok_or_else(|| CliError::Other("card content lacks comments".into()))?;
+        let optional_string = |key: &str| -> Option<String> {
+            content
+                .get(key)
+                .and_then(|v| v.as_str())
+                .filter(|s| !s.is_empty())
+                .map(str::to_owned)
+        };
+        let optional_record = |key: &str| -> Result<Option<serde_json::Value>, CliError> {
+            match content.get(key) {
+                None | Some(serde_json::Value::Null) => Ok(None),
+                Some(v) if v.is_object() => Ok(Some(v.clone())),
+                Some(_) => Err(CliError::Other(format!(
+                    "card content has a non-object {key}"
+                ))),
+            }
+        };
         Ok(Self {
             event_id: event.id.to_hex(),
             owner: event.pubkey.to_hex(),
@@ -374,6 +457,12 @@ impl CardSnapshot {
             execution_state,
             assignees,
             created_by: required_string("createdBy")?,
+            comments,
+            linked_git_issue: optional_string("linkedGitIssue"),
+            feed_forward_context: optional_record("feedForwardContext")?,
+            parent_goal_id: optional_string("parentGoalId"),
+            source_lineage: optional_record("sourceLineage")?,
+            approval_decision: optional_record("approvalDecision")?,
             updated_at: event.created_at.as_secs(),
         })
     }
@@ -469,23 +558,6 @@ struct BoardContent<'a> {
     lists: &'a [BoardListEntry],
 }
 
-/// Content of a kind:30624 event as `card add` writes it. Field order
-/// matches the TS `Card` interface minus the indexed fields; the optionals
-/// `card add` never sets (`linkedGitIssue`, `feedForwardContext`, …) sit
-/// between these fields in TS but are omitted by `JSON.stringify` when
-/// undefined, so their absence here is byte-identical.
-#[derive(serde::Serialize)]
-struct CardContent<'a> {
-    title: &'a str,
-    description: &'a str,
-    assignees: &'a [AssigneeEntry],
-    #[serde(rename = "executionState")]
-    execution_state: &'a str,
-    #[serde(rename = "createdBy")]
-    created_by: &'a str,
-    comments: &'a [serde_json::Value],
-}
-
 fn tag_err(e: impl std::fmt::Display) -> CliError {
     CliError::Other(format!("failed to build tag: {e}"))
 }
@@ -527,6 +599,7 @@ pub fn build_board_event(
 /// Build the unsigned kind:30624 event for `card add`, mirroring
 /// `buildCardEventTemplate` (without feed-rule lineage, which the CLI never
 /// sets). Pure for testability.
+#[allow(clippy::too_many_arguments)]
 pub fn build_card_event(
     board_address: &str,
     card_id: &str,
@@ -539,6 +612,43 @@ pub fn build_card_event(
     rank: &str,
     list_id: &str,
     created_by: &str,
+) -> Result<EventBuilder, CliError> {
+    build_card_event_full(
+        board_address,
+        card_id,
+        title,
+        description,
+        brand,
+        function_area,
+        assignees,
+        execution_state,
+        rank,
+        list_id,
+        created_by,
+        None,
+    )
+}
+
+/// `build_card_event` with an optional goal attach (`--goal`). A fresh card
+/// has no comments, lineage, linked issue, or approval decision, so the
+/// content is the update shape with every pass-through field absent — which
+/// serializes byte-identically to the plain create shape when `parent_goal_id`
+/// is `None` (optionals sit between the required fields in TS but are
+/// omitted by `JSON.stringify` when undefined).
+#[allow(clippy::too_many_arguments)]
+pub fn build_card_event_full(
+    board_address: &str,
+    card_id: &str,
+    title: &str,
+    description: &str,
+    brand: &str,
+    function_area: &str,
+    assignees: &[AssigneeEntry],
+    execution_state: &str,
+    rank: &str,
+    list_id: &str,
+    created_by: &str,
+    parent_goal_id: Option<&str>,
 ) -> Result<EventBuilder, CliError> {
     if parse_board_address_dtag(board_address).is_none() {
         return Err(CliError::Usage(format!(
@@ -577,13 +687,18 @@ pub fn build_card_event(
         );
     }
     tags.push(Tag::parse(["rank", rank]).map_err(tag_err)?);
-    let content = serde_json::to_string(&CardContent {
+    let content = serde_json::to_string(&CardUpdateContent {
         title,
         description,
         assignees,
         execution_state,
+        linked_git_issue: None,
         created_by,
+        feed_forward_context: None,
         comments: &[],
+        parent_goal_id,
+        source_lineage: None,
+        approval_decision: None,
     })
     .map_err(|e| CliError::Other(format!("failed to serialize card: {e}")))?;
     Ok(EventBuilder::new(kind_board_card(), content).tags(tags))
@@ -636,6 +751,315 @@ fn parse_card_address_dtag(address: &str) -> Option<&str> {
     }
 }
 
+/// Fields `card set` / `card move` can change. `None` means "keep the head's
+/// value"; `Some` replaces it — an explicitly empty assignee list is a real
+/// change (unassign-everyone), not a no-op.
+#[derive(Debug, Default)]
+pub struct CardChanges {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub execution_state: Option<String>,
+    pub list_id: Option<String>,
+    pub rank: Option<String>,
+    pub assignees: Option<Vec<AssigneeEntry>>,
+    pub parent_goal_id: Option<String>,
+}
+
+impl CardChanges {
+    pub fn is_empty(&self) -> bool {
+        self.title.is_none()
+            && self.description.is_none()
+            && self.execution_state.is_none()
+            && self.list_id.is_none()
+            && self.rank.is_none()
+            && self.assignees.is_none()
+            && self.parent_goal_id.is_none()
+    }
+}
+
+/// Content of a kind:30624 update event — what Desktop's `updateCard`
+/// produces by spreading the *parsed* card (`{ ...current, ...changes }`)
+/// and dropping the indexed fields in `buildCardEventTemplate`. Field order
+/// is `parseCard`'s re-insertion order, so the serialized bytes equal
+/// Desktop's `JSON.stringify` output. Pure for testability.
+#[derive(serde::Serialize)]
+struct CardUpdateContent<'a> {
+    title: &'a str,
+    description: &'a str,
+    assignees: &'a [AssigneeEntry],
+    #[serde(rename = "executionState")]
+    execution_state: &'a str,
+    #[serde(rename = "linkedGitIssue", skip_serializing_if = "Option::is_none")]
+    linked_git_issue: Option<&'a str>,
+    #[serde(rename = "createdBy")]
+    created_by: &'a str,
+    #[serde(rename = "feedForwardContext", skip_serializing_if = "Option::is_none")]
+    feed_forward_context: Option<&'a serde_json::Value>,
+    comments: &'a [CardComment],
+    #[serde(rename = "parentGoalId", skip_serializing_if = "Option::is_none")]
+    parent_goal_id: Option<&'a str>,
+    #[serde(rename = "sourceLineage", skip_serializing_if = "Option::is_none")]
+    source_lineage: Option<&'a serde_json::Value>,
+    #[serde(rename = "approvalDecision", skip_serializing_if = "Option::is_none")]
+    approval_decision: Option<&'a serde_json::Value>,
+}
+
+/// Build the unsigned kind:30624 event for `card set` / `card move`,
+/// mirroring `updateCard` → `buildCardEventTemplate`: the changes are
+/// applied to the reconciled head and every untouched field is carried over
+/// — comments, createdBy, linked issue, feed-rule lineage, approval state.
+/// Pure for testability; the caller supplies the fetched head.
+pub fn build_card_update_event(
+    board_address: &str,
+    head: &CardSnapshot,
+    changes: &CardChanges,
+) -> Result<EventBuilder, CliError> {
+    if parse_board_address_dtag(board_address).is_none() {
+        return Err(CliError::Usage(format!(
+            "board address {board_address:?} is not a valid {KIND_BOARD} coordinate"
+        )));
+    }
+    let title = changes.title.as_deref().unwrap_or(&head.title);
+    let description = changes.description.as_deref().unwrap_or(&head.description);
+    let execution_state = changes
+        .execution_state
+        .as_deref()
+        .unwrap_or(&head.execution_state);
+    let list_id = changes.list_id.as_deref().unwrap_or(&head.list_id);
+    let rank = changes.rank.as_deref().unwrap_or(&head.rank);
+    let assignees = changes.assignees.as_ref().unwrap_or(&head.assignees);
+    let parent_goal_id = changes
+        .parent_goal_id
+        .as_deref()
+        .or(head.parent_goal_id.as_deref());
+    if head.id.is_empty()
+        || title.is_empty()
+        || description.is_empty()
+        || list_id.is_empty()
+        || !is_valid_rank(rank)
+        || !FUNCTION_AREAS.contains(&head.function_area.as_str())
+        || !CARD_EXECUTION_STATES.contains(&execution_state)
+        || Some(head.board_id.as_str()) != parse_board_address_dtag(board_address)
+    {
+        return Err(CliError::Usage(
+            "card fields do not satisfy the board event contract".into(),
+        ));
+    }
+    let mut tags = vec![
+        Tag::parse(["d", head.id.as_str()]).map_err(tag_err)?,
+        Tag::parse(["a", board_address]).map_err(tag_err)?,
+        Tag::parse(["l", list_id]).map_err(tag_err)?,
+        Tag::parse(["t", &format!("brand:{}", head.brand)]).map_err(tag_err)?,
+        Tag::parse(["t", &format!("fn:{}", head.function_area)]).map_err(tag_err)?,
+    ];
+    for assignee in assignees {
+        // Always 4 elements; role is "" when unset (`assignee.role ?? ""`).
+        tags.push(
+            Tag::parse([
+                "p",
+                assignee.id.as_str(),
+                "",
+                assignee.role.as_deref().unwrap_or(""),
+            ])
+            .map_err(tag_err)?,
+        );
+    }
+    tags.push(Tag::parse(["rank", rank]).map_err(tag_err)?);
+    // Feed-rule lineage is re-emitted from the head. Like
+    // `buildCardEventTemplate`, a lineage carrying only one of
+    // ruleId/triggerEventId is a hard error — writing it would produce a
+    // card the Desktop parser drops.
+    if let Some(lineage) = &head.source_lineage {
+        let rule_id = lineage.get("ruleId").and_then(|v| v.as_str());
+        let trigger_id = lineage.get("triggerEventId").and_then(|v| v.as_str());
+        match (rule_id, trigger_id) {
+            (Some(rule_id), Some(trigger_id)) => {
+                tags.push(Tag::parse(["feedRule", rule_id, trigger_id]).map_err(tag_err)?);
+                tags.push(Tag::parse(["e", trigger_id]).map_err(tag_err)?);
+            }
+            _ => {
+                return Err(CliError::Other(
+                    "feed-rule lineage requires both a rule and trigger event id".into(),
+                ));
+            }
+        }
+    }
+    let content = serde_json::to_string(&CardUpdateContent {
+        title,
+        description,
+        assignees,
+        execution_state,
+        linked_git_issue: head.linked_git_issue.as_deref(),
+        created_by: &head.created_by,
+        feed_forward_context: head.feed_forward_context.as_ref(),
+        comments: &head.comments,
+        parent_goal_id,
+        source_lineage: head.source_lineage.as_ref(),
+        approval_decision: head.approval_decision.as_ref(),
+    })
+    .map_err(|e| CliError::Other(format!("failed to serialize card update: {e}")))?;
+    Ok(EventBuilder::new(kind_board_card(), content).tags(tags))
+}
+
+/// Where a moved card lands in its target column.
+#[derive(Debug)]
+pub enum MovePosition {
+    Top,
+    Bottom,
+    Before(String),
+    After(String),
+}
+
+/// Compute the rank for a card entering `column` (cards currently in the
+/// target list, excluding the moving card) at `position`. Anchoring off a
+/// card that is not in the column is an error, not a silent append.
+pub fn compute_move_rank(
+    column: &[CardSnapshot],
+    position: &MovePosition,
+) -> Result<String, CliError> {
+    let mut ordered: Vec<&CardSnapshot> = column.iter().collect();
+    ordered.sort_by(|l, r| {
+        compare_rank(
+            (&l.rank, l.updated_at, &l.id),
+            (&r.rank, r.updated_at, &r.id),
+        )
+    });
+    let at = |id: &str| -> Result<usize, CliError> {
+        ordered
+            .iter()
+            .position(|c| c.id == id)
+            .ok_or_else(|| CliError::Usage(format!("no card {id:?} in the target column")))
+    };
+    let (lower, upper) = match position {
+        MovePosition::Top => (None, ordered.first().map(|c| c.rank.as_str())),
+        MovePosition::Bottom => (ordered.last().map(|c| c.rank.as_str()), None),
+        MovePosition::Before(id) => {
+            let i = at(id)?;
+            let lower = i.checked_sub(1).map(|j| ordered[j].rank.as_str());
+            (lower, Some(ordered[i].rank.as_str()))
+        }
+        MovePosition::After(id) => {
+            let i = at(id)?;
+            let upper = ordered.get(i + 1).map(|c| c.rank.as_str());
+            (Some(ordered[i].rank.as_str()), upper)
+        }
+    };
+    rank_between(lower, upper)
+}
+
+/// Parse a `--assign <role> <pubkey>` pair. CLI-created assignees are typed
+/// `agent`, same as `--assignee` on `card add`.
+fn parse_assign_pair(role: &str, id: &str) -> Result<AssigneeEntry, CliError> {
+    if !ASSIGNEE_ROLES.contains(&role) {
+        return Err(CliError::Usage(format!(
+            "unknown assignee role {role:?} — expected one of: {}",
+            ASSIGNEE_ROLES.join(", ")
+        )));
+    }
+    validate_hex64(id)
+        .map_err(|_| CliError::Usage(format!("assignee id {id:?} is not a 64-hex pubkey")))?;
+    Ok(AssigneeEntry {
+        kind: "agent".to_owned(),
+        id: id.to_owned(),
+        role: Some(role.to_owned()),
+    })
+}
+
+/// Upsert an assignee by id: re-assigning replaces the role in place, a new
+/// id appends. Order is preserved so re-emitted `p` tags stay stable.
+fn apply_assign(existing: &[AssigneeEntry], entry: AssigneeEntry) -> Vec<AssigneeEntry> {
+    let mut out = existing.to_vec();
+    match out.iter_mut().find(|a| a.id == entry.id) {
+        Some(slot) => slot.role = entry.role,
+        None => out.push(entry),
+    }
+    out
+}
+
+/// Remove an assignee by id. An unknown id is a hard error — a typo silently
+/// passing would leave the caller believing someone came off the card.
+fn apply_unassign(existing: &[AssigneeEntry], id: &str) -> Result<Vec<AssigneeEntry>, CliError> {
+    if !existing.iter().any(|a| a.id == id) {
+        return Err(CliError::Usage(format!(
+            "card has no assignee {id:?} to remove"
+        )));
+    }
+    Ok(existing.iter().filter(|a| a.id != id).cloned().collect())
+}
+
+/// Parsed view of a kind:30625 goal head. Kept to the fields the CLI reads
+/// today; the `board goal` verb extends this when it lands.
+#[allow(dead_code)] // read by tests now, by the `board goal` verb next
+pub struct GoalSnapshot {
+    pub id: String,
+    pub brand_scope: String,
+}
+
+impl GoalSnapshot {
+    /// Parse a kind:30625 event, strict where `parseGoal` is: d tag present,
+    /// brandScope non-empty, framework and status in their enums,
+    /// proposedCards an array.
+    pub fn from_event(event: &Event) -> Result<Self, CliError> {
+        if event.kind != kind_board_goal() {
+            return Err(CliError::Other(format!(
+                "expected kind:{KIND_BOARD_GOAL}, got {}",
+                event.kind.as_u16()
+            )));
+        }
+        let id = unique_d_tag(event)
+            .ok_or_else(|| CliError::Other("goal event lacks a unique d tag".into()))?;
+        let content: serde_json::Value = serde_json::from_str(&event.content)
+            .map_err(|e| CliError::Other(format!("goal content is not JSON: {e}")))?;
+        let required = |key: &str| -> Result<String, CliError> {
+            content
+                .get(key)
+                .and_then(|v| v.as_str())
+                .filter(|s| !s.is_empty())
+                .map(str::to_owned)
+                .ok_or_else(|| CliError::Other(format!("goal content lacks {key}")))
+        };
+        let framework = required("framework")?;
+        if !GOAL_FRAMEWORKS.contains(&framework.as_str()) {
+            return Err(CliError::Other(format!(
+                "goal event has unknown framework {framework:?}"
+            )));
+        }
+        let status = required("status")?;
+        if !GOAL_STATUSES.contains(&status.as_str()) {
+            return Err(CliError::Other(format!(
+                "goal event has unknown status {status:?}"
+            )));
+        }
+        if !content.get("proposedCards").is_some_and(|v| v.is_array()) {
+            return Err(CliError::Other(
+                "goal content lacks a proposedCards array".into(),
+            ));
+        }
+        Ok(Self {
+            id: id.to_owned(),
+            brand_scope: required("brandScope")?,
+        })
+    }
+}
+
+/// Fetch and reconcile the head for one goal id, across all authors.
+pub async fn fetch_goal_head(
+    client: &BuzzClient,
+    goal_id: &str,
+) -> Result<Option<GoalSnapshot>, CliError> {
+    let filter = serde_json::json!({
+        "kinds": [KIND_BOARD_GOAL],
+        "#d": [goal_id],
+        "limit": 50,
+    });
+    let raw = client.query(&filter).await?;
+    reconcile_by_dtag(parse_events(&raw)?)
+        .into_iter()
+        .next()
+        .map(|e| GoalSnapshot::from_event(&e))
+        .transpose()
+}
+
 /// Build the default five columns the way Desktop's `buildDefaultLists`
 /// does: UUID v4 ids, ranks from chained `rankBetween(last, null)`.
 pub fn build_default_lists() -> Result<Vec<BoardListEntry>, CliError> {
@@ -670,11 +1094,7 @@ fn lists_from_titles(
 /// otherwise birth an untitled column the CLI can never fix — lists are
 /// immutable in v1).
 fn parse_lists_csv(csv: &str) -> Result<Vec<String>, CliError> {
-    let titles: Vec<String> = csv
-        .split(',')
-        .map(str::trim)
-        .map(str::to_owned)
-        .collect();
+    let titles: Vec<String> = csv.split(',').map(str::trim).map(str::to_owned).collect();
     if titles.iter().any(|t| t.is_empty()) {
         return Err(CliError::Usage(format!(
             "--lists {csv:?} contains an empty title"
@@ -699,11 +1119,8 @@ fn parse_assignee(raw: &str) -> Result<AssigneeEntry, CliError> {
         }
         None => (raw, None),
     };
-    validate_hex64(id).map_err(|_| {
-        CliError::Usage(format!(
-            "assignee id {id:?} is not a 64-hex pubkey"
-        ))
-    })?;
+    validate_hex64(id)
+        .map_err(|_| CliError::Usage(format!("assignee id {id:?} is not a 64-hex pubkey")))?;
     Ok(AssigneeEntry {
         kind: "agent".to_owned(),
         id: id.to_owned(),
@@ -906,6 +1323,7 @@ pub async fn cmd_card_add(
     function_area: &str,
     list: Option<&str>,
     assignees: &[String],
+    goal: Option<&str>,
 ) -> Result<(), CliError> {
     if title.is_empty() {
         return Err(CliError::Usage("--title cannot be empty".into()));
@@ -919,6 +1337,13 @@ pub async fn cmd_card_add(
         .iter()
         .map(|a| parse_assignee(a))
         .collect::<Result<Vec<_>, _>>()?;
+    // A dangling parentGoalId is invisible-broken the same way a brand typo
+    // is — validate the goal exists at the write boundary.
+    if let Some(goal_id) = goal {
+        fetch_goal_head(client, goal_id)
+            .await?
+            .ok_or_else(|| CliError::NotFound(format!("goal not found: {goal_id}")))?;
+    }
 
     // Read-before-write: the board head (reconciled across authors) supplies
     // the `a` coordinate and the list set; the card ranks off the reconciled
@@ -938,7 +1363,7 @@ pub async fn cmd_card_add(
     let card_id = uuid::Uuid::new_v4().to_string();
     let board_address = board.coordinate();
     let me = client.keys().public_key().to_hex();
-    let builder = build_card_event(
+    let builder = build_card_event_full(
         &board_address,
         &card_id,
         title,
@@ -950,13 +1375,20 @@ pub async fn cmd_card_add(
         &rank,
         &list.id,
         &me,
+        goal,
     )?;
     let event = sign_and_submit(client, builder, "relay reported card event as duplicate").await?;
     println!("event_id   {}", event.id.to_hex());
-    println!("coordinate {KIND_BOARD_CARD}:{}:{card_id}", event.pubkey.to_hex());
+    println!(
+        "coordinate {KIND_BOARD_CARD}:{}:{card_id}",
+        event.pubkey.to_hex()
+    );
     println!("board      {board_address}");
     println!("list       {} ({})", list.title, list.id);
     println!("rank       {rank}");
+    if let Some(goal_id) = goal {
+        println!("goal       {goal_id}");
+    }
     Ok(())
 }
 
@@ -1021,6 +1453,137 @@ pub async fn cmd_card_deny(
     reason: Option<&str>,
 ) -> Result<(), CliError> {
     cmd_approval(client, board_id, card_id, false, reason).await
+}
+
+/// Fetch the board head and the card head, and verify the card belongs to
+/// the board — the shared read-before-write prelude for the update verbs.
+async fn fetch_card_for_update(
+    client: &BuzzClient,
+    board_id: &str,
+    card_id: &str,
+) -> Result<(BoardSnapshot, CardSnapshot), CliError> {
+    let board = fetch_board_head(client, board_id)
+        .await?
+        .ok_or_else(|| CliError::NotFound(format!("board not found: {board_id}")))?;
+    let card = fetch_card_head(client, card_id)
+        .await?
+        .ok_or_else(|| CliError::NotFound(format!("card not found: {card_id}")))?;
+    if card.board_id != board.id {
+        return Err(CliError::Usage(format!(
+            "card {card_id:?} belongs to board {:?}, not {board_id:?}",
+            card.board_id
+        )));
+    }
+    Ok((board, card))
+}
+
+#[allow(clippy::too_many_arguments)]
+pub async fn cmd_card_set(
+    client: &BuzzClient,
+    board_id: &str,
+    card_id: &str,
+    title: Option<&str>,
+    description: Option<&str>,
+    execution_state: Option<&str>,
+    assigns: &[String],
+    unassigns: &[String],
+    goal: Option<&str>,
+) -> Result<(), CliError> {
+    if let Some(title) = title {
+        if title.is_empty() {
+            return Err(CliError::Usage("--title cannot be empty".into()));
+        }
+    }
+    if let Some(description) = description {
+        if description.is_empty() {
+            return Err(CliError::Usage("--description cannot be empty".into()));
+        }
+    }
+    let execution_state = execution_state.map(validate_execution_state).transpose()?;
+    if let Some(goal_id) = goal {
+        fetch_goal_head(client, goal_id)
+            .await?
+            .ok_or_else(|| CliError::NotFound(format!("goal not found: {goal_id}")))?;
+    }
+
+    // Read-before-write: mutate the reconciled head (across all authors),
+    // never CLI-supplied state, so comments/lineage/approval survive.
+    let (board, card) = fetch_card_for_update(client, board_id, card_id).await?;
+
+    let mut changes = CardChanges {
+        title: title.map(str::to_owned),
+        description: description.map(str::to_owned),
+        execution_state: execution_state.map(str::to_owned),
+        parent_goal_id: goal.map(str::to_owned),
+        ..Default::default()
+    };
+    if !assigns.is_empty() || !unassigns.is_empty() {
+        let mut assignees = card.assignees.clone();
+        for pair in assigns.chunks_exact(2) {
+            assignees = apply_assign(&assignees, parse_assign_pair(&pair[0], &pair[1])?);
+        }
+        for id in unassigns {
+            assignees = apply_unassign(&assignees, id)?;
+        }
+        changes.assignees = Some(assignees);
+    }
+    if changes.is_empty() {
+        return Err(CliError::Usage(
+            "nothing to change — pass at least one of --title, --description, \
+             --execution-state, --assign, --unassign, --goal"
+                .into(),
+        ));
+    }
+
+    let board_address = board.coordinate();
+    let builder = build_card_update_event(&board_address, &card, &changes)?;
+    let event = sign_and_submit(client, builder, "relay reported card event as duplicate").await?;
+    println!("event_id   {}", event.id.to_hex());
+    println!(
+        "coordinate {KIND_BOARD_CARD}:{}:{card_id}",
+        event.pubkey.to_hex()
+    );
+    println!("board      {board_address}");
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+pub async fn cmd_card_move(
+    client: &BuzzClient,
+    board_id: &str,
+    card_id: &str,
+    list: &str,
+    position: MovePosition,
+) -> Result<(), CliError> {
+    let (board, card) = fetch_card_for_update(client, board_id, card_id).await?;
+    let list = resolve_list(&board, Some(list))?;
+
+    // Rank off the reconciled target column, excluding the moving card
+    // itself — within-column moves must not anchor off their own head.
+    let cards = fetch_board_cards(client, &board.id).await?;
+    let column: Vec<CardSnapshot> = cards
+        .into_iter()
+        .filter(|c| c.list_id == list.id && c.id != card.id)
+        .collect();
+    let rank = compute_move_rank(&column, &position)?;
+
+    let changes = CardChanges {
+        list_id: Some(list.id.clone()),
+        rank: Some(rank.clone()),
+        ..Default::default()
+    };
+    let board_address = board.coordinate();
+    let builder = build_card_update_event(&board_address, &card, &changes)?;
+    let event = sign_and_submit(client, builder, "relay reported card event as duplicate").await?;
+    println!("event_id   {}", event.id.to_hex());
+    println!(
+        "coordinate {KIND_BOARD_CARD}:{}:{card_id}",
+        event.pubkey.to_hex()
+    );
+    println!("board      {board_address}");
+    println!("list       {} ({})", list.title, list.id);
+    println!("rank       {rank}");
+    Ok(())
 }
 
 /// One board the seed command knows how to create.
@@ -1326,7 +1889,8 @@ pub async fn cmd_seed(client: &BuzzClient, dry_run: bool) -> Result<(), CliError
             &list.id,
             &me,
         )?;
-        let event = sign_and_submit(client, builder, "relay reported card event as duplicate").await?;
+        let event =
+            sign_and_submit(client, builder, "relay reported card event as duplicate").await?;
         created_cards.push(serde_json::json!({
             "board": board.id,
             "title": card.title,
@@ -1385,6 +1949,7 @@ pub async fn dispatch(cmd: crate::BoardCmd, client: &BuzzClient) -> Result<(), C
             function_area,
             list,
             assignees,
+            goal,
         }) => {
             cmd_card_add(
                 client,
@@ -1395,15 +1960,65 @@ pub async fn dispatch(cmd: crate::BoardCmd, client: &BuzzClient) -> Result<(), C
                 &function_area,
                 list.as_deref(),
                 &assignees,
+                goal.as_deref(),
             )
             .await
         }
-        BoardCmd::Card(BoardCardCmd::Approve { board, card, reason }) => {
-            cmd_card_approve(client, &board, &card, reason.as_deref()).await
+        BoardCmd::Card(BoardCardCmd::Set {
+            board,
+            card,
+            title,
+            description,
+            execution_state,
+            assigns,
+            unassigns,
+            goal,
+        }) => {
+            cmd_card_set(
+                client,
+                &board,
+                &card,
+                title.as_deref(),
+                description.as_deref(),
+                execution_state.as_deref(),
+                &assigns,
+                &unassigns,
+                goal.as_deref(),
+            )
+            .await
         }
-        BoardCmd::Card(BoardCardCmd::Deny { board, card, reason }) => {
-            cmd_card_deny(client, &board, &card, reason.as_deref()).await
+        BoardCmd::Card(BoardCardCmd::Move {
+            board,
+            card,
+            list,
+            top,
+            bottom,
+            before,
+            after,
+        }) => {
+            let position = if top {
+                MovePosition::Top
+            } else if let Some(id) = before {
+                MovePosition::Before(id)
+            } else if let Some(id) = after {
+                MovePosition::After(id)
+            } else {
+                // `--bottom` is also the default when no position flag is given.
+                let _ = bottom;
+                MovePosition::Bottom
+            };
+            cmd_card_move(client, &board, &card, &list, position).await
         }
+        BoardCmd::Card(BoardCardCmd::Approve {
+            board,
+            card,
+            reason,
+        }) => cmd_card_approve(client, &board, &card, reason.as_deref()).await,
+        BoardCmd::Card(BoardCardCmd::Deny {
+            board,
+            card,
+            reason,
+        }) => cmd_card_deny(client, &board, &card, reason.as_deref()).await,
         BoardCmd::Seed { dry_run } => cmd_seed(client, dry_run).await,
     }
 }
@@ -1457,8 +2072,7 @@ mod tests {
     #[test]
     fn brand_slugs_match_fixture() {
         let fixture_slugs = string_array(&vectors(), "brandSlugs");
-        let mut rust_slugs: Vec<String> =
-            BRAND_SLUGS.iter().map(|s| s.to_string()).collect();
+        let mut rust_slugs: Vec<String> = BRAND_SLUGS.iter().map(|s| s.to_string()).collect();
         rust_slugs.sort_unstable();
         assert_eq!(rust_slugs, fixture_slugs);
     }
@@ -1486,11 +2100,7 @@ mod tests {
     }
 
     fn tag_slices(event: &Event) -> Vec<Vec<String>> {
-        event
-            .tags
-            .iter()
-            .map(|t| t.as_slice().to_vec())
-            .collect()
+        event.tags.iter().map(|t| t.as_slice().to_vec()).collect()
     }
 
     fn owned(expected: &[&[&str]]) -> Vec<Vec<String>> {
@@ -1621,11 +2231,17 @@ mod tests {
             )
             .unwrap(),
         );
-        assert!(tag_slices(&event)
-            .iter()
-            .any(|t| t == &vec!["p".to_string(), "ab".repeat(32), String::new(), String::new()]));
+        assert!(tag_slices(&event).iter().any(|t| t
+            == &vec![
+                "p".to_string(),
+                "ab".repeat(32),
+                String::new(),
+                String::new()
+            ]));
         // role key omitted from content when unset (TS: `role?` undefined).
-        assert!(event.content.contains(r#""assignees":[{"type":"agent","id":"#));
+        assert!(event
+            .content
+            .contains(r#""assignees":[{"type":"agent","id":"#));
         assert!(!event.content.contains("role"));
     }
 
@@ -1634,21 +2250,86 @@ mod tests {
         let owner = "cd".repeat(32);
         let addr = format!("30623:{owner}:b");
         let base = |rank: &str| {
-            build_card_event(&addr, "c", "t", "d", "clean", "build", &[], "idle", rank, "l", &owner)
+            build_card_event(
+                &addr,
+                "c",
+                "t",
+                "d",
+                "clean",
+                "build",
+                &[],
+                "idle",
+                rank,
+                "l",
+                &owner,
+            )
         };
         assert!(base("na").is_err()); // invalid rank
         assert!(base("").is_err());
-        assert!(build_card_event("30624:x:y", "c", "t", "d", "clean", "build", &[], "idle", "n", "l", &owner).is_err());
-        assert!(build_card_event(&addr, "", "t", "d", "clean", "build", &[], "idle", "n", "l", &owner).is_err());
-        assert!(build_card_event(&addr, "c", "t", "d", "clean", "nope", &[], "idle", "n", "l", &owner).is_err());
-        assert!(build_card_event(&addr, "c", "t", "d", "clean", "build", &[], "done", "n", "l", &owner).is_err());
+        assert!(build_card_event(
+            "30624:x:y",
+            "c",
+            "t",
+            "d",
+            "clean",
+            "build",
+            &[],
+            "idle",
+            "n",
+            "l",
+            &owner
+        )
+        .is_err());
+        assert!(build_card_event(
+            &addr,
+            "",
+            "t",
+            "d",
+            "clean",
+            "build",
+            &[],
+            "idle",
+            "n",
+            "l",
+            &owner
+        )
+        .is_err());
+        assert!(build_card_event(
+            &addr,
+            "c",
+            "t",
+            "d",
+            "clean",
+            "nope",
+            &[],
+            "idle",
+            "n",
+            "l",
+            &owner
+        )
+        .is_err());
+        assert!(build_card_event(
+            &addr,
+            "c",
+            "t",
+            "d",
+            "clean",
+            "build",
+            &[],
+            "done",
+            "n",
+            "l",
+            &owner
+        )
+        .is_err());
     }
 
     #[test]
     fn build_approval_event_granted_matches_ts_template() {
         let owner = "cd".repeat(32);
         let card_address = format!("30624:{owner}:card-1");
-        let event = sign(build_approval_event(&card_address, true, Some("spec signed off")).unwrap());
+        let event =
+            sign(build_approval_event(&card_address, true, Some("spec signed off")).unwrap());
         assert_eq!(event.kind, Kind::Custom(KIND_BOARD_APPROVAL_GRANTED as u16));
         assert_eq!(tag_slices(&event), owned(&[&["a", card_address.as_str()]]));
         // Byte-exact: TS key order is reason?, policySnapshot?.
@@ -1772,24 +2453,34 @@ mod tests {
 
     #[test]
     fn seed_boards_are_valid() {
-        let board_ids: std::collections::HashSet<&str> =
-            SEED_BOARDS.iter().map(|b| b.id).collect();
-        assert_eq!(board_ids.len(), SEED_BOARDS.len(), "seed board ids are unique");
+        let board_ids: std::collections::HashSet<&str> = SEED_BOARDS.iter().map(|b| b.id).collect();
+        assert_eq!(
+            board_ids.len(),
+            SEED_BOARDS.len(),
+            "seed board ids are unique"
+        );
         assert!(board_ids.contains("unified-master"));
         for board in SEED_BOARDS {
             assert!(!board.title.is_empty());
             assert!(!board.description.is_empty());
             if let Some(brand) = board.brand {
-                assert!(BRAND_SLUGS.contains(&brand), "{} has a locked brand", board.id);
+                assert!(
+                    BRAND_SLUGS.contains(&brand),
+                    "{} has a locked brand",
+                    board.id
+                );
             }
         }
     }
 
     #[test]
     fn seed_cards_are_valid_and_target_known_boards() {
-        let board_ids: std::collections::HashSet<&str> =
-            SEED_BOARDS.iter().map(|b| b.id).collect();
-        assert_eq!(SEED_CARDS.len(), 19, "seed card count matches BOARD_SEED_CARDS.md");
+        let board_ids: std::collections::HashSet<&str> = SEED_BOARDS.iter().map(|b| b.id).collect();
+        assert_eq!(
+            SEED_CARDS.len(),
+            19,
+            "seed card count matches BOARD_SEED_CARDS.md"
+        );
         let mut seen = std::collections::HashSet::new();
         for card in SEED_CARDS {
             assert!(
@@ -1861,5 +2552,240 @@ mod tests {
             assert_eq!(snapshot.function_area, card.function_area);
             assert_eq!(snapshot.brand, "clean");
         }
+    }
+
+    // --- card set / move (update path) ---
+
+    fn snap(id: &str, rank: &str) -> CardSnapshot {
+        CardSnapshot {
+            event_id: String::new(),
+            owner: "cd".repeat(32),
+            id: id.to_owned(),
+            board_id: "b".into(),
+            list_id: "l".into(),
+            rank: rank.to_owned(),
+            brand: "clean".into(),
+            function_area: "build".into(),
+            title: format!("title-{id}"),
+            description: "d".into(),
+            execution_state: "idle".into(),
+            assignees: vec![],
+            created_by: "cd".repeat(32),
+            linked_git_issue: None,
+            feed_forward_context: None,
+            comments: vec![],
+            parent_goal_id: None,
+            source_lineage: None,
+            approval_decision: None,
+            updated_at: 0,
+        }
+    }
+
+    /// A fully-loaded head event the way Desktop stores it — every optional
+    /// content field present, keys deliberately out of contract order to
+    /// prove the update rebuilds content in `parseCard` spread order, not in
+    /// the order the head happened to store.
+    fn rich_card_event(keys: &Keys) -> Event {
+        let assignee = "ab".repeat(32);
+        let author = "cd".repeat(32);
+        let trigger = "ef".repeat(32);
+        let content = format!(
+            r#"{{"comments":[{{"id":"c1","authorId":"{author}","body":"hi","createdAt":"2026-08-13T00:00:00Z"}}],"title":"Old title","approvalDecision":{{"state":"approved"}},"description":"Old desc","assignees":[{{"type":"agent","id":"{assignee}","role":"lead"}}],"executionState":"running","parentGoalId":"goal-1","createdBy":"{author}","linkedGitIssue":"buzz://issue?id=abc","sourceLineage":{{"ruleId":"rule-1","triggerEventId":"{trigger}"}},"feedForwardContext":{{"note":"from rule"}}}}"#
+        );
+        let owner = "cd".repeat(32);
+        EventBuilder::new(kind_board_card(), content)
+            .tags(vec![
+                Tag::parse(["d", "card-1"]).unwrap(),
+                Tag::parse(["a", &format!("30623:{owner}:b")]).unwrap(),
+                Tag::parse(["l", "l-backlog"]).unwrap(),
+                Tag::parse(["t", "brand:clean"]).unwrap(),
+                Tag::parse(["t", "fn:build"]).unwrap(),
+                Tag::parse(["p", &assignee, "", "lead"]).unwrap(),
+                Tag::parse(["rank", "n"]).unwrap(),
+                Tag::parse(["feedRule", "rule-1", &trigger]).unwrap(),
+                Tag::parse(["e", &trigger]).unwrap(),
+            ])
+            .sign_with_keys(keys)
+            .unwrap()
+    }
+
+    /// The update path preserves every field the CLI did not touch and emits
+    /// content in Desktop's update order: `updateCard` spreads the *parsed*
+    /// card, so optionals sit where `parseCard` re-inserts them —
+    /// linkedGitIssue before createdBy, feedForwardContext before comments,
+    /// parentGoalId/sourceLineage/approvalDecision after. Comments re-emit in
+    /// `parseComments` order (id, authorId, body, createdAt), not the order
+    /// the head happened to store.
+    #[test]
+    fn card_update_preserves_head_fields_in_ts_order() {
+        let keys = Keys::generate();
+        let head = CardSnapshot::from_event(&rich_card_event(&keys)).unwrap();
+        let owner = "cd".repeat(32);
+        let changes = CardChanges {
+            title: Some("New title".into()),
+            ..Default::default()
+        };
+        let event =
+            sign(build_card_update_event(&format!("30623:{owner}:b"), &head, &changes).unwrap());
+        let assignee = "ab".repeat(32);
+        let author = "cd".repeat(32);
+        let trigger = "ef".repeat(32);
+        assert_eq!(
+            event.content,
+            format!(
+                r#"{{"title":"New title","description":"Old desc","assignees":[{{"type":"agent","id":"{assignee}","role":"lead"}}],"executionState":"running","linkedGitIssue":"buzz://issue?id=abc","createdBy":"{author}","feedForwardContext":{{"note":"from rule"}},"comments":[{{"id":"c1","authorId":"{author}","body":"hi","createdAt":"2026-08-13T00:00:00Z"}}],"parentGoalId":"goal-1","sourceLineage":{{"ruleId":"rule-1","triggerEventId":"{trigger}"}},"approvalDecision":{{"state":"approved"}}}}"#
+            )
+        );
+        // Tags unchanged, including the re-emitted feed-rule lineage pair.
+        assert_eq!(
+            tag_slices(&event),
+            owned(&[
+                &["d", "card-1"],
+                &["a", &format!("30623:{owner}:b")],
+                &["l", "l-backlog"],
+                &["t", "brand:clean"],
+                &["t", "fn:build"],
+                &["p", &assignee, "", "lead"],
+                &["rank", "n"],
+                &["feedRule", "rule-1", &trigger],
+                &["e", &trigger],
+            ])
+        );
+    }
+
+    /// TS `buildCardEventTemplate` throws when lineage has only one of
+    /// ruleId / triggerEventId; the CLI mirrors that instead of writing a
+    /// half-lineage the Desktop parser would drop the card over.
+    #[test]
+    fn card_update_rejects_half_lineage() {
+        let keys = Keys::generate();
+        let mut head = CardSnapshot::from_event(&rich_card_event(&keys)).unwrap();
+        head.source_lineage = Some(serde_json::json!({"ruleId": "rule-1"}));
+        let owner = "cd".repeat(32);
+        let changes = CardChanges::default();
+        assert!(build_card_update_event(&format!("30623:{owner}:b"), &head, &changes).is_err());
+    }
+
+    /// A goal attach on the update path lands after `comments`, matching
+    /// where `parseCard` re-inserts parentGoalId.
+    #[test]
+    fn card_update_attaches_goal() {
+        let keys = Keys::generate();
+        let mut head = CardSnapshot::from_event(&rich_card_event(&keys)).unwrap();
+        head.parent_goal_id = None;
+        head.source_lineage = None;
+        head.approval_decision = None;
+        head.linked_git_issue = None;
+        head.feed_forward_context = None;
+        let owner = "cd".repeat(32);
+        let changes = CardChanges {
+            parent_goal_id: Some("goal-9".into()),
+            ..Default::default()
+        };
+        let event =
+            sign(build_card_update_event(&format!("30623:{owner}:b"), &head, &changes).unwrap());
+        assert!(event.content.ends_with(r#","parentGoalId":"goal-9"}"#));
+        assert!(!tag_slices(&event).iter().any(|t| t[0] == "feedRule"));
+    }
+
+    #[test]
+    fn card_changes_is_empty_only_when_all_none() {
+        assert!(CardChanges::default().is_empty());
+        assert!(!CardChanges {
+            rank: Some("m".into()),
+            ..Default::default()
+        }
+        .is_empty());
+        // An explicitly emptied assignee list is a change, not a no-op.
+        assert!(!CardChanges {
+            assignees: Some(vec![]),
+            ..Default::default()
+        }
+        .is_empty());
+    }
+
+    #[test]
+    fn apply_assign_upserts_by_id() {
+        let hex_a = "ab".repeat(32);
+        let hex_b = "cd".repeat(32);
+        let existing = vec![AssigneeEntry {
+            kind: "agent".into(),
+            id: hex_a.clone(),
+            role: None,
+        }];
+        // Re-assigning the same id replaces the role in place.
+        let updated = apply_assign(&existing, parse_assignee(&format!("{hex_a}:lead")).unwrap());
+        assert_eq!(updated.len(), 1);
+        assert_eq!(updated[0].role.as_deref(), Some("lead"));
+        // A new id appends, preserving order.
+        let updated = apply_assign(&updated, parse_assignee(&hex_b).unwrap());
+        assert_eq!(updated.len(), 2);
+        assert_eq!(updated[1].id, hex_b);
+    }
+
+    #[test]
+    fn apply_unassign_removes_or_errors() {
+        let hex_a = "ab".repeat(32);
+        let existing = vec![AssigneeEntry {
+            kind: "agent".into(),
+            id: hex_a.clone(),
+            role: Some("lead".into()),
+        }];
+        assert!(apply_unassign(&existing, &hex_a).unwrap().is_empty());
+        // Unknown id is a hard error — a typo silently passing would leave
+        // the caller believing a person came off the card.
+        assert!(apply_unassign(&existing, &"ff".repeat(32)).is_err());
+    }
+
+    #[test]
+    fn parse_assign_pair_requires_known_role_and_hex() {
+        let hex = "ab".repeat(32);
+        let entry = parse_assign_pair("reviewer", &hex).unwrap();
+        assert_eq!(entry.role.as_deref(), Some("reviewer"));
+        assert!(parse_assign_pair("boss", &hex).is_err());
+        assert!(parse_assign_pair("lead", "not-hex").is_err());
+    }
+
+    #[test]
+    fn compute_move_rank_positions() {
+        let column = vec![snap("a", "n"), snap("b", "p")];
+        let top = compute_move_rank(&column, &MovePosition::Top).unwrap();
+        assert!(is_valid_rank(&top) && top.as_str() < "n");
+        let bottom = compute_move_rank(&column, &MovePosition::Bottom).unwrap();
+        assert!(is_valid_rank(&bottom) && bottom.as_str() > "p");
+        let before_b = compute_move_rank(&column, &MovePosition::Before("b".into())).unwrap();
+        assert!(is_valid_rank(&before_b) && before_b.as_str() > "n" && before_b.as_str() < "p");
+        let after_a = compute_move_rank(&column, &MovePosition::After("a".into())).unwrap();
+        assert!(is_valid_rank(&after_a) && after_a.as_str() > "n" && after_a.as_str() < "p");
+        // Anchoring off a card that is not in the column is an error, not a
+        // silent append.
+        assert!(compute_move_rank(&column, &MovePosition::Before("zzz".into())).is_err());
+        // Empty column: every absolute position degenerates to the first rank.
+        let empty: Vec<CardSnapshot> = vec![];
+        assert_eq!(
+            compute_move_rank(&empty, &MovePosition::Top).unwrap(),
+            compute_move_rank(&empty, &MovePosition::Bottom).unwrap()
+        );
+    }
+
+    fn goal_event(keys: &Keys, framework: &str) -> Event {
+        EventBuilder::new(
+            Kind::Custom(KIND_BOARD_GOAL as u16),
+            format!(
+                r#"{{"brandScope":"clean","framework":"{framework}","status":"approved","proposedCards":[]}}"#
+            ),
+        )
+        .tags(vec![Tag::parse(["d", "goal-1"]).unwrap()])
+        .sign_with_keys(keys)
+        .unwrap()
+    }
+
+    #[test]
+    fn goal_snapshot_mirrors_parse_goal_strictness() {
+        let keys = Keys::generate();
+        let ok = GoalSnapshot::from_event(&goal_event(&keys, "OKR")).unwrap();
+        assert_eq!(ok.id, "goal-1");
+        assert_eq!(ok.brand_scope, "clean");
+        assert!(GoalSnapshot::from_event(&goal_event(&keys, "BOGUS")).is_err());
     }
 }
