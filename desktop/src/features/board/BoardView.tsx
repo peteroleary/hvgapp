@@ -1,13 +1,7 @@
 import type React from "react";
 import { useState } from "react";
 
-import type {
-  AutonomyPolicy,
-  Board,
-  Card,
-  FeedRule,
-  Goal,
-} from "./types/boardTypes";
+import type { Board, Card, FeedRule, Goal } from "./types/boardTypes";
 import { BoardCardModal } from "./ui/BoardCardModal";
 import { BoardColumn } from "./ui/BoardColumn";
 import { BoardFeedRulesModal } from "./ui/BoardFeedRulesModal";
@@ -19,7 +13,7 @@ export interface BoardViewProps {
   boards?: Array<{ id: string; title: string }>;
   cards: Card[];
   goals?: Goal[];
-  autonomyPolicies: AutonomyPolicy[];
+  approvalPendingByCardId?: Readonly<Record<string, boolean>>;
   feedRules?: FeedRule[];
   onSelectBoard?: (boardId: string) => void;
   onNewBoard?: () => void;
@@ -36,7 +30,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
   boards = [],
   cards,
   goals = [],
-  autonomyPolicies,
+  approvalPendingByCardId = {},
   feedRules = [],
   onSelectBoard,
   onNewBoard,
@@ -47,7 +41,11 @@ export const BoardView: React.FC<BoardViewProps> = ({
   onApproveGoal,
   onRejectGoal,
 }) => {
-  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const selectedCard = cards.find((card) => card.id === selectedCardId) ?? null;
+  const selectedRequiresApproval = selectedCard
+    ? (approvalPendingByCardId[selectedCard.id] ?? false)
+    : false;
   const [isFeedRulesOpen, setIsFeedRulesOpen] = useState(false);
   const [composerListId, setComposerListId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"columns" | "goals" | "feedRules">(
@@ -151,8 +149,8 @@ export const BoardView: React.FC<BoardViewProps> = ({
                   listId={list.id}
                   title={list.title}
                   cards={listCards}
-                  autonomyPolicies={autonomyPolicies}
-                  onSelectCard={(card) => setSelectedCard(card)}
+                  approvalPendingByCardId={approvalPendingByCardId}
+                  onSelectCard={(card) => setSelectedCardId(card.id)}
                   onAddCard={
                     onAddCard
                       ? (listId) => setComposerListId(listId)
@@ -189,9 +187,9 @@ export const BoardView: React.FC<BoardViewProps> = ({
       {/* Card Detail Modal Drawer */}
       <BoardCardModal
         card={selectedCard}
-        autonomyPolicies={autonomyPolicies}
+        requiresApproval={selectedRequiresApproval}
         isOpen={Boolean(selectedCard)}
-        onClose={() => setSelectedCard(null)}
+        onClose={() => setSelectedCardId(null)}
         onApproveCard={onApproveCard}
         onRejectCard={onRejectCard}
         onAddComment={onAddComment}

@@ -131,7 +131,7 @@ export function BoardScreen() {
   return (
     <>
       <BoardView
-        autonomyPolicies={state.autonomyPolicies.map((entity) => entity.policy)}
+        approvalPendingByCardId={state.approvalPendingByCardId}
         board={boardEntity.board}
         boards={state.boards.map((entity) => ({
           id: entity.board.id,

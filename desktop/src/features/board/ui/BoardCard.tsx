@@ -1,14 +1,13 @@
 import type React from "react";
 
-import { evaluateAutonomy } from "../types/boardTypes";
-import type { AutonomyPolicy, Card } from "../types/boardTypes";
+import type { Card } from "../types/boardTypes";
 import { BRAND_TOKENS, brandDisplayName } from "./brandTokens";
 
 export { BRAND_TOKENS, brandDisplayName };
 
 export interface BoardCardProps {
   card: Card;
-  autonomyPolicies: AutonomyPolicy[];
+  requiresApproval: boolean;
   onSelectCard: (card: Card) => void;
 }
 
@@ -25,10 +24,9 @@ export const FUNCTION_TOKENS: Record<string, string> = {
 
 export const BoardCard: React.FC<BoardCardProps> = ({
   card,
-  autonomyPolicies,
+  requiresApproval,
   onSelectCard,
 }) => {
-  const requiresApproval = evaluateAutonomy(card, autonomyPolicies);
   const isRejected = card.approvalDecision?.state === "rejected";
 
   const brandStyle = BRAND_TOKENS[card.brand] || {

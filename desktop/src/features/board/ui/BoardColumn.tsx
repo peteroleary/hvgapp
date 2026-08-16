@@ -1,13 +1,13 @@
 import type React from "react";
 
-import type { AutonomyPolicy, Card } from "../types/boardTypes";
+import type { Card } from "../types/boardTypes";
 import { BoardCard } from "./BoardCard";
 
 export interface BoardColumnProps {
   listId: string;
   title: string;
   cards: Card[];
-  autonomyPolicies: AutonomyPolicy[];
+  approvalPendingByCardId: Readonly<Record<string, boolean>>;
   onSelectCard: (card: Card) => void;
   onAddCard?: (listId: string) => void;
 }
@@ -16,7 +16,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
   listId,
   title,
   cards,
-  autonomyPolicies,
+  approvalPendingByCardId,
   onSelectCard,
   onAddCard,
 }) => {
@@ -48,7 +48,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
           <BoardCard
             key={card.id}
             card={card}
-            autonomyPolicies={autonomyPolicies}
+            requiresApproval={approvalPendingByCardId[card.id] ?? false}
             onSelectCard={onSelectCard}
           />
         ))}
