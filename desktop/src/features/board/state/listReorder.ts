@@ -18,7 +18,7 @@ export function reorderLists<T extends BoardList>(
     return null;
   }
 
-  const newLists = arrayMove(lists, activeIndex, overIndex);
+  const newLists = arrayMove([...lists], activeIndex, overIndex);
   const movedIndex = overIndex;
   const before = movedIndex === 0 ? null : newLists[movedIndex - 1].rank;
   const after =

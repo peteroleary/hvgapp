@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import type React from "react";
 
 import type { Card } from "../types/boardTypes";
@@ -9,6 +10,7 @@ export interface BoardCardProps {
   card: Card;
   requiresApproval: boolean;
   onSelectCard: (card: Card) => void;
+  isDragging?: boolean;
 }
 
 export const FUNCTION_TOKENS: Record<string, string> = {
@@ -22,123 +24,131 @@ export const FUNCTION_TOKENS: Record<string, string> = {
   other: "text-slate-400 bg-slate-900 border-slate-700/40",
 };
 
-export const BoardCard: React.FC<BoardCardProps> = ({
-  card,
-  requiresApproval,
-  onSelectCard,
-}) => {
-  const isRejected = card.approvalDecision?.state === "rejected";
+export const BoardCard = forwardRef<
+  HTMLDivElement,
+  BoardCardProps & React.HTMLAttributes<HTMLDivElement>
+>(
+  (
+    { card, requiresApproval, onSelectCard, isDragging, className, ...rest },
+    ref,
+  ) => {
+    const isRejected = card.approvalDecision?.state === "rejected";
 
-  const brandStyle = BRAND_TOKENS[card.brand] || {
-    badge: "bg-muted text-muted-foreground border-border",
-    border: "border-border",
-  };
+    const brandStyle = BRAND_TOKENS[card.brand] || {
+      badge: "bg-muted text-muted-foreground border-border",
+      border: "border-border",
+    };
 
-  const functionStyle =
-    FUNCTION_TOKENS[card.functionArea] || FUNCTION_TOKENS.other;
+    const functionStyle =
+      FUNCTION_TOKENS[card.functionArea] || FUNCTION_TOKENS.other;
 
-  let cardStateStyle = "bg-card border-border/80 hover:border-primary/50";
-  if (isRejected) {
-    cardStateStyle =
-      "bg-rose-950/20 border-2 border-rose-600/80 shadow-[0_0_12px_rgba(225,29,72,0.2)]";
-  } else if (requiresApproval) {
-    cardStateStyle =
-      "bg-amber-950/10 border-2 border-amber-500/70 shadow-[0_0_12px_rgba(245,158,11,0.15)]";
-  } else if (card.executionState === "blocked") {
-    cardStateStyle =
-      "bg-rose-950/10 border-l-4 border-l-rose-500 border-border/60";
-  } else if (card.executionState === "running") {
-    cardStateStyle = "border-primary/80 ring-1 ring-primary/30";
-  } else if (card.executionState === "completed") {
-    cardStateStyle = "opacity-75 bg-muted/20 border-border/40";
-  }
+    let cardStateStyle = "bg-card border-border/80 hover:border-primary/50";
+    if (isRejected) {
+      cardStateStyle =
+        "bg-rose-950/20 border-2 border-rose-600/80 shadow-[0_0_12px_rgba(225,29,72,0.2)]";
+    } else if (requiresApproval) {
+      cardStateStyle =
+        "bg-amber-950/10 border-2 border-amber-500/70 shadow-[0_0_12px_rgba(245,158,11,0.15)]";
+    } else if (card.executionState === "blocked") {
+      cardStateStyle =
+        "bg-rose-950/10 border-l-4 border-l-rose-500 border-border/60";
+    } else if (card.executionState === "running") {
+      cardStateStyle = "border-primary/80 ring-1 ring-primary/30";
+    } else if (card.executionState === "completed") {
+      cardStateStyle = "opacity-75 bg-muted/20 border-border/40";
+    }
 
-  return (
-    // biome-ignore lint/a11y/useSemanticElements: card wrapper contains block-level children, cannot be a <button>
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={() => onSelectCard(card)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelectCard(card);
-        }
-      }}
-      className={`group relative rounded-md p-3 shadow-sm transition-all cursor-pointer ${cardStateStyle}`}
-    >
-      {/* Top Bar */}
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <span
-          className={`text-badge font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border ${brandStyle.badge}`}
-        >
-          {brandDisplayName(card.brand)}
-        </span>
-
-        {isRejected ? (
-          <span className="inline-flex items-center gap-1 text-badge font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border bg-rose-950/60 text-rose-300 border-rose-600/70 animate-pulse">
-            🚫 Rejected
+    return (
+      // biome-ignore lint/a11y/useSemanticElements: card wrapper contains block-level children, cannot be a <button>
+      <div
+        ref={ref}
+        role="button"
+        tabIndex={0}
+        onClick={() => onSelectCard(card)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelectCard(card);
+          }
+        }}
+        className={`group relative rounded-md p-3 shadow-sm transition-all cursor-pointer ${cardStateStyle} ${isDragging ? "opacity-40 ring-2 ring-primary/50 z-50" : ""} ${className ?? ""}`}
+        {...rest}
+      >
+        {/* Top Bar */}
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <span
+            className={`text-badge font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded border ${brandStyle.badge}`}
+          >
+            {brandDisplayName(card.brand)}
           </span>
-        ) : requiresApproval ? (
-          <span className="inline-flex items-center gap-1 text-badge font-semibold px-1.5 py-0.5 rounded border bg-amber-950/40 text-amber-300 border-amber-700/50">
-            🛡️ Needs Approval
-          </span>
-        ) : null}
-      </div>
 
-      {/* Title */}
-      <h4 className="text-sm font-medium text-foreground line-clamp-2 hover:text-primary mb-1.5">
-        {card.title}
-      </h4>
-
-      {/* Linked Git Issue / Source Lineage */}
-      <div className="flex flex-wrap items-center gap-2 mb-2 text-2xs text-muted-foreground">
-        {card.linkedGitIssue && (
-          <span className="font-mono bg-muted/60 px-1 py-0.5 rounded">
-            git:#{card.linkedGitIssue}
-          </span>
-        )}
-        {card.sourceLineage && (
-          <span className="bg-muted/40 px-1 py-0.5 rounded text-3xs">
-            ↖ From: {card.sourceLineage.fromBoardTitle}
-          </span>
-        )}
-      </div>
-
-      {/* Bottom Bar: Assignees & Metadata */}
-      <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/40 mt-2">
-        {/* Assignee Avatar Stack */}
-        <div className="flex items-center -space-x-1.5 overflow-hidden">
-          {card.assignees.map((assignee) => (
-            <div
-              key={assignee.id}
-              title={`${assignee.id} (${assignee.role || "assignee"})`}
-              className="relative inline-flex items-center justify-center w-5 h-5 rounded-full bg-sidebar-accent text-sidebar-foreground border border-background text-badge font-bold"
-            >
-              {assignee.id.slice(0, 2).toUpperCase()}
-              <span
-                className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-background ${
-                  assignee.type === "agent" ? "bg-amber-400" : "bg-blue-400"
-                }`}
-              />
-            </div>
-          ))}
+          {isRejected ? (
+            <span className="inline-flex items-center gap-1 text-badge font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border bg-rose-950/60 text-rose-300 border-rose-600/70 animate-pulse">
+              🚫 Rejected
+            </span>
+          ) : requiresApproval ? (
+            <span className="inline-flex items-center gap-1 text-badge font-semibold px-1.5 py-0.5 rounded border bg-amber-950/40 text-amber-300 border-amber-700/50">
+              🛡️ Needs Approval
+            </span>
+          ) : null}
         </div>
 
-        {/* Function Tag & Comment Count */}
-        <div className="flex items-center gap-1.5 text-2xs">
-          <span
-            className={`px-1.5 py-0.5 rounded border text-badge font-medium capitalize ${functionStyle}`}
-          >
-            {card.functionArea}
-          </span>
-          {card.comments.length > 0 && (
-            <span className="text-muted-foreground flex items-center gap-0.5">
-              💬 {card.comments.length}
+        {/* Title */}
+        <h4 className="text-sm font-medium text-foreground line-clamp-2 hover:text-primary mb-1.5">
+          {card.title}
+        </h4>
+
+        {/* Linked Git Issue / Source Lineage */}
+        <div className="flex flex-wrap items-center gap-2 mb-2 text-2xs text-muted-foreground">
+          {card.linkedGitIssue && (
+            <span className="font-mono bg-muted/60 px-1 py-0.5 rounded">
+              git:#{card.linkedGitIssue}
+            </span>
+          )}
+          {card.sourceLineage && (
+            <span className="bg-muted/40 px-1 py-0.5 rounded text-3xs">
+              ↖ From: {card.sourceLineage.fromBoardTitle}
             </span>
           )}
         </div>
+
+        {/* Bottom Bar: Assignees & Metadata */}
+        <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/40 mt-2">
+          {/* Assignee Avatar Stack */}
+          <div className="flex items-center -space-x-1.5 overflow-hidden">
+            {card.assignees.map((assignee) => (
+              <div
+                key={assignee.id}
+                title={`${assignee.id} (${assignee.role || "assignee"})`}
+                className="relative inline-flex items-center justify-center w-5 h-5 rounded-full bg-sidebar-accent text-sidebar-foreground border border-background text-badge font-bold"
+              >
+                {assignee.id.slice(0, 2).toUpperCase()}
+                <span
+                  className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-background ${
+                    assignee.type === "agent" ? "bg-amber-400" : "bg-blue-400"
+                  }`}
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Function Tag & Comment Count */}
+          <div className="flex items-center gap-1.5 text-2xs">
+            <span
+              className={`px-1.5 py-0.5 rounded border text-badge font-medium capitalize ${functionStyle}`}
+            >
+              {card.functionArea}
+            </span>
+            {card.comments.length > 0 && (
+              <span className="text-muted-foreground flex items-center gap-0.5">
+                💬 {card.comments.length}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  },
+);
+
+BoardCard.displayName = "BoardCard";
