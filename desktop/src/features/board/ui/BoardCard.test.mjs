@@ -90,7 +90,7 @@ test("BoardCardModal shows auto-authorized when requiresApproval is false", () =
 });
 
 test("BoardColumn derives requiresApproval from approvalPendingByCardId map", () => {
-  const html = renderToStaticMarkup(
+  const grantedHtml = renderToStaticMarkup(
     React.createElement(BoardColumn, {
       listId: "backlog",
       title: "Backlog",
@@ -99,5 +99,16 @@ test("BoardColumn derives requiresApproval from approvalPendingByCardId map", ()
       onSelectCard: () => {},
     }),
   );
-  notContains(html, "Needs Approval");
+  notContains(grantedHtml, "Needs Approval");
+
+  const pendingHtml = renderToStaticMarkup(
+    React.createElement(BoardColumn, {
+      listId: "backlog",
+      title: "Backlog",
+      cards: [MINIMAL_CARD],
+      approvalPendingByCardId: { "card-1": true },
+      onSelectCard: () => {},
+    }),
+  );
+  contains(pendingHtml, "Needs Approval");
 });

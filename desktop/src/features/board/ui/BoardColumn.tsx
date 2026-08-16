@@ -7,7 +7,7 @@ export interface BoardColumnProps {
   listId: string;
   title: string;
   cards: Card[];
-  approvalPendingByCardId: Readonly<Record<string, boolean>>;
+  approvalPendingByCardId?: Readonly<Record<string, boolean>>;
   onSelectCard: (card: Card) => void;
   onAddCard?: (listId: string) => void;
 }
@@ -16,7 +16,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
   listId,
   title,
   cards,
-  approvalPendingByCardId,
+  approvalPendingByCardId = {},
   onSelectCard,
   onAddCard,
 }) => {
