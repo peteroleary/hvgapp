@@ -64,7 +64,7 @@ pub const DEFAULT_LIST_TITLES: [&str; 5] = [
 /// card no brand filter ever returns — invisible, not broken — so anything
 /// outside this set is a hard error, not a warning.
 pub const BRAND_SLUGS: [&str; 6] = [
-    "clean", "itshvg", "sober", "concrete", "three", "hvg-app",
+    "clean", "itshvg", "lhfyc", "gomarco", "three", "hvg-app",
 ];
 
 /// The Board function taxonomy (`FunctionArea` in `types/boardTypes.ts`).
@@ -1064,20 +1064,20 @@ const SEED_BOARDS: &[SeedBoard] = &[
         description: "Reviews of tools, apps and AI for SMB owners already running a real business.",
     },
     SeedBoard {
-        id: "sober",
-        title: "MoSober",
-        brand: Some("sober"),
-        description: "More Than Sober — recovery as a founder journey: pledges, proof, coaching, community.",
+        id: "lhfyc",
+        title: "Look How Far You've Come",
+        brand: Some("lhfyc"),
+        description: "Milestone-based peer accountability and escrow crowdfunding: daily habit verification, pledges, proof, community.",
     },
     SeedBoard {
-        id: "concrete",
-        title: "K&B Concrete",
-        brand: Some("concrete"),
-        description: "Concrete contracting plus materials sourcing: lead-gen, bidding, galleries, e-commerce.",
+        id: "gomarco",
+        title: "Go Marco",
+        brand: Some("gomarco"),
+        description: "Group travel intelligence: live voice Powwows, loyalty and card reward consolidation, community trip research.",
     },
     SeedBoard {
         id: "three",
-        title: "We3Live",
+        title: "We 3 Live",
         brand: Some("three"),
         description: "Christian lifestyle hub: satire, teaching, directory, streaming, events.",
     },
@@ -1502,18 +1502,18 @@ mod tests {
             rank: "n".into(),
         }];
         let event = sign(
-            build_board_event("kb-board", "K&B Concrete", None, Some("concrete"), &lists)
+            build_board_event("clean-board", "Clean Startup", None, Some("clean"), &lists)
                 .unwrap(),
         );
         assert_eq!(event.kind, kind_board());
         assert_eq!(
             tag_slices(&event),
-            owned(&[&["d", "kb-board"], &["t", "brand:concrete"]])
+            owned(&[&["d", "clean-board"], &["t", "brand:clean"]])
         );
         // Byte-exact: TS key order is title, description?, brandScope?, lists.
         assert_eq!(
             event.content,
-            r#"{"title":"K&B Concrete","brandScope":"concrete","lists":[{"id":"list-1","title":"Backlog","rank":"n"}]}"#
+            r#"{"title":"Clean Startup","brandScope":"clean","lists":[{"id":"list-1","title":"Backlog","rank":"n"}]}"#
         );
     }
 
