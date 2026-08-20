@@ -69,6 +69,7 @@ export function BoardScreen() {
           </p>
           <button
             type="button"
+            data-testid="new-board"
             onClick={() => setIsCreateBoardOpen(true)}
             className="mt-4 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-2xs font-semibold hover:bg-primary/90 transition-colors"
           >
