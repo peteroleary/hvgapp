@@ -15,3 +15,4 @@ export * from "./agents/index.ts";
 export * from "./workflows/index.ts";
 export * from "./validate.ts";
 export * from "./project.ts";
+export * from "./deployment.ts";
