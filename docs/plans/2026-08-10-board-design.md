@@ -17,12 +17,18 @@ Board is the operational Kanban for the entire six-brand operation (and any bran
 
 ### Card
 
+> Revised 2026-08-19: the `brand` enumeration below tracks the current locked
+> slug set in `desktop/src/features/board/ui/brandTokens.ts`. The portfolio
+> changed after this document was written — `sober` was retired in favour of
+> `lhfyc` (Look How Far You've Come), `concrete` was removed, and `gomarco`
+> (Go Marco) was added. The rest of this document is unchanged.
+
 ```
 {
   id: string,
   title: string,
   description: string,
-  brand: string,               // HVG | MoSober | Clean Startup | We3Live | K&B | hvg.app | future brands
+  brand: string,               // slug: itshvg | gomarco | lhfyc | clean | three | hvg-app | future brands
   function: string,             // build | design | content | social | marketing | sales | research | other
   assignees: [{ type: 'agent' | 'human', id: string, role?: string }],
   status: string,                // free-form label tied to listId, not the approval gate

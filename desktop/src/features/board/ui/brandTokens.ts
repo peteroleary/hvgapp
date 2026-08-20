@@ -5,12 +5,23 @@
  *
  * Slugs follow the locked brand nomenclature (peter, #build 2026-08-12):
  * one name per brand on every service — repo, Vercel, Firebase, GCP, board.
- * `hvg-app` is the Buzz platform itself, not a brand site.
+ * `hvg-app` is the Buzz platform itself, not a brand site; "High Value
+ * Growth" (`itshvg`) is the consumer media brand. The two are separate
+ * entities and must never be conflated.
+ *
+ * Portfolio revision (2026-08-19): `sober` was retired and replaced by
+ * `lhfyc` (Look How Far You've Come, lhfyc.xyz), `concrete` was removed from
+ * the portfolio, and `gomarco` was added. `lhfyc` deliberately does not use
+ * Tailwind's amber ramp — amber-500 is the forbidden `#f59e0b` token, and the
+ * brand's visual direction is dignified and high-trust rather than warm.
+ *
+ * This set is mirrored by `config/agent-os/src/brands.ts`; the two registries
+ * must agree on the slug set.
  */
 export const BRAND_TOKENS: Record<string, { badge: string; border: string }> = {
-  sober: {
-    badge: "bg-amber-950/40 text-amber-300 border-amber-700/50",
-    border: "border-amber-600",
+  lhfyc: {
+    badge: "bg-indigo-950/40 text-indigo-300 border-indigo-700/50",
+    border: "border-indigo-500",
   },
   clean: {
     badge: "bg-emerald-950/40 text-emerald-300 border-emerald-700/50",
@@ -24,9 +35,9 @@ export const BRAND_TOKENS: Record<string, { badge: string; border: string }> = {
     badge: "bg-blue-950/40 text-blue-300 border-blue-700/50",
     border: "border-blue-500",
   },
-  concrete: {
-    badge: "bg-stone-800 text-stone-200 border-stone-600",
-    border: "border-stone-400",
+  gomarco: {
+    badge: "bg-cyan-950/40 text-cyan-300 border-cyan-700/50",
+    border: "border-cyan-500",
   },
   "hvg-app": {
     badge: "bg-yellow-950/40 text-yellow-300 border-yellow-700/50",
@@ -35,11 +46,11 @@ export const BRAND_TOKENS: Record<string, { badge: string; border: string }> = {
 };
 
 export const BRAND_DISPLAY_NAMES: Record<string, string> = {
-  sober: "MoSober",
+  lhfyc: "Look How Far You've Come",
   clean: "Clean Startup",
-  three: "We3Live",
-  itshvg: "HVG",
-  concrete: "K&B Concrete",
+  three: "We 3 Live",
+  itshvg: "High Value Growth",
+  gomarco: "Go Marco",
   "hvg-app": "hvg.app",
 };
 
