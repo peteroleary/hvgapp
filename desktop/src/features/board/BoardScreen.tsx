@@ -9,15 +9,7 @@ import { useBoardLiveUpdates, useBoardStateQuery } from "./state/useBoardStore";
 import type { BoardList } from "./types/boardTypes";
 import { BoardCreateModal, type BoardDraft } from "./ui/BoardCreateModal";
 import type { CardDraft } from "./ui/CardComposerModal";
-
-/**
- * New boards start from the standard five-list operational template.
- * `Spec'd` is the workflow's spec gate made visible: nothing enters build
- * without a signed spec. This set is the single column shape shared with
- * the `buzz board` CLI default (PLANS/BUZZ_BOARD_CLI.md) — change it in
- * both places or not at all, and byte-exactly: straight apostrophe.
- */
-const DEFAULT_LIST_TITLES = ["Backlog", "Spec'd", "In Progress", "In Review", "Done"];
+import { DEFAULT_LIST_TITLES } from "./ui/boardListDefaults";
 
 function buildDefaultLists(): BoardList[] {
   let rank: string | null = null;
@@ -139,7 +131,7 @@ export function BoardScreen() {
   return (
     <>
       <BoardView
-        autonomyPolicies={state.autonomyPolicies.map((entity) => entity.policy)}
+        approvalPendingByCardId={state.approvalPendingByCardId}
         board={boardEntity.board}
         boards={state.boards.map((entity) => ({
           id: entity.board.id,

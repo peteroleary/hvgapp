@@ -1,13 +1,12 @@
 import type React from "react";
 import { useState } from "react";
 
-import { evaluateAutonomy } from "../types/boardTypes";
-import type { AutonomyPolicy, Card } from "../types/boardTypes";
+import type { Card } from "../types/boardTypes";
 import { BRAND_TOKENS, brandDisplayName, FUNCTION_TOKENS } from "./BoardCard";
 
 export interface BoardCardModalProps {
   card: Card | null;
-  autonomyPolicies: AutonomyPolicy[];
+  requiresApproval: boolean;
   isOpen: boolean;
   onClose: () => void;
   onApproveCard?: (cardId: string) => void;
@@ -17,7 +16,7 @@ export interface BoardCardModalProps {
 
 export const BoardCardModal: React.FC<BoardCardModalProps> = ({
   card,
-  autonomyPolicies,
+  requiresApproval,
   isOpen,
   onClose,
   onApproveCard,
@@ -30,7 +29,6 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
 
   if (!isOpen || !card) return null;
 
-  const requiresApproval = evaluateAutonomy(card, autonomyPolicies);
   const isRejected = card.approvalDecision?.state === "rejected";
   const brandStyle = BRAND_TOKENS[card.brand] || {
     badge: "bg-muted text-muted-foreground",
