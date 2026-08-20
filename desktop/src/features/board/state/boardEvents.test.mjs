@@ -13,7 +13,10 @@ import {
 const goldenVectors = JSON.parse(
   readFileSync(
     fileURLToPath(
-      new URL("./fixtures/boardReconciliationGoldenVectors.json", import.meta.url),
+      new URL(
+        "./fixtures/boardReconciliationGoldenVectors.json",
+        import.meta.url,
+      ),
     ),
     "utf8",
   ),
@@ -116,10 +119,7 @@ function approvalEvent({
     kind,
     pubkey,
     createdAt,
-    tags: [
-      ["a", cardAddress],
-      ...approvers.map((pubkey) => ["p", pubkey]),
-    ],
+    tags: [["a", cardAddress], ...approvers.map((pubkey) => ["p", pubkey])],
     content: {},
   });
 }
@@ -262,20 +262,20 @@ test("buildCardEventTemplate writes the Board contract's addressable and indexed
 
 test("buildBoardEventTemplate indexes the board's brand scope for relay filters", () => {
   const branded = buildBoardEventTemplate({
-    id: "kb-board",
-    title: "K&B Concrete",
-    brandScope: "concrete",
+    id: "clean-board",
+    title: "Clean Startup",
+    brandScope: "clean",
     lists: [{ id: "backlog", title: "Backlog", rank: "n" }],
   });
 
   assert.equal(branded.kind, 30623);
   assert.deepEqual(branded.tags, [
-    ["d", "kb-board"],
-    ["t", "brand:concrete"],
+    ["d", "clean-board"],
+    ["t", "brand:clean"],
   ]);
   assert.deepEqual(JSON.parse(branded.content), {
-    title: "K&B Concrete",
-    brandScope: "concrete",
+    title: "Clean Startup",
+    brandScope: "clean",
     lists: [{ id: "backlog", title: "Backlog", rank: "n" }],
   });
 
@@ -590,7 +590,6 @@ test("golden vectors match reconciled state", () => {
           `${scenario.name}: rank mismatch for ${expectedCard.id}`,
         );
       }
-
     }
 
     assert.equal(

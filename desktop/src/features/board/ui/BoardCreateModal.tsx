@@ -73,7 +73,7 @@ export const BoardCreateModal: React.FC<BoardCreateModalProps> = ({
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. K&B Concrete"
+              placeholder="e.g. Clean Startup"
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary/60"
             />
           </label>
