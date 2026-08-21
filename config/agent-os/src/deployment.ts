@@ -1,8 +1,8 @@
 import type { AgentId } from "./types.ts";
 
 /**
- * How the 14 Agent OS agents map onto the personas already living in the
- * Buzz desktop store, and which model string each one runs.
+ * How the Agent OS agents map onto the personas living in the Buzz desktop
+ * store, and which model string each one runs.
  *
  * The 14 are a rename/re-mandate of the existing bee-themed workforce, not a
  * new set: keeping each agent's persona record (and therefore its Nostr
@@ -23,7 +23,7 @@ export interface DeploymentTarget {
   /** Harness-resolvable model id. */
   readonly model: string;
   /** ACP runtime that owns this model. */
-  readonly runtime: "claude" | "codex" | "kimi" | "goose";
+  readonly runtime: "claude" | "codex" | "kimi" | "goose" | "grok" | "cursor";
   readonly provider: string | null;
   /** Set when the harness model is a stand-in for the spec's nominal model. */
   readonly specModel: string | null;
@@ -70,9 +70,9 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
     agent: "top",
     personaId: "74b13684-4e7c-4646-a8fe-62d511e4a81a",
     formerName: "Comb",
-    model: "kimi-code/kimi-for-coding-highspeed",
-    runtime: "kimi",
-    provider: null,
+    model: "grok-4.6",
+    runtime: "grok",
+    provider: "xai",
     specModel: null,
   },
   {
@@ -97,9 +97,9 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
     agent: "luda",
     personaId: "979c807b-0b58-4094-bf3e-dd0dc2fda425",
     formerName: "Nectar",
-    model: "gemini-3.6-flash",
-    runtime: "goose",
-    provider: "google",
+    model: "grok-4.6",
+    runtime: "grok",
+    provider: "xai",
     specModel: "Gemini 3.7 Flash",
   },
   {
@@ -133,27 +133,63 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
     agent: "pata",
     personaId: "builtin:bumble",
     formerName: "Bumble",
-    model: "gemini-3.6-flash",
-    runtime: "goose",
-    provider: "google",
+    model: "grok-4.6",
+    runtime: "grok",
+    provider: "xai",
     specModel: "Gemini 3.7 Flash",
   },
   {
     agent: "boo",
     personaId: "1e169326-247e-4563-9971-edb77b4b78a2",
     formerName: "Waggle",
-    model: "sonnet",
-    runtime: "claude",
-    provider: null,
+    model: "grok-4.6",
+    runtime: "grok",
+    provider: "xai",
     specModel: null,
   },
   {
     agent: "nicki",
     personaId: "f10e36eb-1fc0-406d-81a5-59a93b053b69",
     formerName: "Willow",
-    model: "gemini-3.6-flash",
-    runtime: "goose",
+    model: "gemini-3.7-flash",
+    runtime: "cursor",
     provider: "google",
     specModel: "Gemini 3.7 Flash",
+  },
+  {
+    agent: "tip",
+    personaId: "agentos:tip",
+    formerName: null,
+    model: "grok-4.6",
+    runtime: "grok",
+    provider: "xai",
+    specModel: null,
+  },
+  {
+    agent: "von",
+    personaId: "agentos:von",
+    formerName: null,
+    model: "grok-4.6",
+    runtime: "grok",
+    provider: "xai",
+    specModel: null,
+  },
+  {
+    agent: "cardi",
+    personaId: "agentos:cardi",
+    formerName: null,
+    model: "opus[1m]",
+    runtime: "claude",
+    provider: "anthropic",
+    specModel: "Claude Opus 5",
+  },
+  {
+    agent: "andre",
+    personaId: "agentos:andre",
+    formerName: null,
+    model: "grok-4.6",
+    runtime: "grok",
+    provider: "xai",
+    specModel: null,
   },
 ];

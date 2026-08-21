@@ -1379,6 +1379,492 @@
         "three"
       ],
       "provisioned": false
+    },
+    {
+      "id": "railway",
+      "displayName": "Railway",
+      "category": "engineering",
+      "kind": "mcp",
+      "description": "Railway project, service, deployment, variable, and domain management.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "read",
+        "write",
+        "execute"
+      ],
+      "tools": [
+        "list_services",
+        "deploy",
+        "get_logs",
+        "set_variables",
+        "list_domains"
+      ],
+      "requiredEnv": [
+        "RAILWAY_TOKEN"
+      ],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "vercel",
+      "displayName": "Vercel",
+      "category": "engineering",
+      "kind": "mcp",
+      "description": "Vercel project deployment, env vars, domains, and analytics for brand web surfaces.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "read",
+        "write",
+        "execute"
+      ],
+      "tools": [
+        "deploy_to_vercel",
+        "list_deployments",
+        "get_runtime_logs",
+        "get_project"
+      ],
+      "requiredEnv": [
+        "VERCEL_TOKEN"
+      ],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "github-actions",
+      "displayName": "GitHub Actions",
+      "category": "engineering",
+      "kind": "mcp",
+      "description": "CI/CD workflow dispatch, run inspection, and release automation.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "read",
+        "write",
+        "execute"
+      ],
+      "tools": [
+        "dispatch_workflow",
+        "list_runs",
+        "get_run_logs"
+      ],
+      "requiredEnv": [
+        "GITHUB_TOKEN"
+      ],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "playwright",
+      "displayName": "Playwright",
+      "category": "engineering",
+      "kind": "mcp",
+      "description": "Browser automation for end-to-end and visual regression testing.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "read",
+        "execute"
+      ],
+      "tools": [
+        "browser_navigate",
+        "browser_click",
+        "browser_snapshot",
+        "browser_take_screenshot"
+      ],
+      "requiredEnv": [],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "flutter-driver",
+      "displayName": "Flutter Driver",
+      "category": "engineering",
+      "kind": "mcp",
+      "description": "Flutter widget and integration test execution against simulators and devices.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "read",
+        "execute"
+      ],
+      "tools": [
+        "run_widget_tests",
+        "run_integration_tests",
+        "screenshot_device"
+      ],
+      "requiredEnv": [],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "app-store-connect",
+      "displayName": "App Store Connect",
+      "category": "engineering",
+      "kind": "mcp",
+      "description": "iOS build upload, TestFlight distribution, and App Store review status.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "read",
+        "write"
+      ],
+      "tools": [
+        "upload_build",
+        "list_testflight_groups",
+        "get_review_status"
+      ],
+      "requiredEnv": [
+        "ASC_KEY_ID",
+        "ASC_ISSUER_ID"
+      ],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "play-console",
+      "displayName": "Google Play Console",
+      "category": "engineering",
+      "kind": "mcp",
+      "description": "Android release track management and Play Store review status.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "read",
+        "write"
+      ],
+      "tools": [
+        "upload_bundle",
+        "promote_track",
+        "get_review_status"
+      ],
+      "requiredEnv": [
+        "PLAY_SERVICE_ACCOUNT_JSON"
+      ],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "flutter-tooling",
+      "displayName": "Flutter Tooling",
+      "category": "engineering",
+      "kind": "mcp",
+      "description": "Flutter build, analyze, and dependency management across mobile targets.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "read",
+        "execute"
+      ],
+      "tools": [
+        "flutter_build",
+        "flutter_analyze",
+        "flutter_pub"
+      ],
+      "requiredEnv": [],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "threat-model",
+      "displayName": "Threat Model",
+      "category": "safety-platform",
+      "kind": "mcp",
+      "description": "Structured threat modeling, data-flow mapping, and trust-boundary analysis.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "read",
+        "execute"
+      ],
+      "tools": [
+        "map_data_flow",
+        "enumerate_threats",
+        "score_risk"
+      ],
+      "requiredEnv": [],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "policy-registry",
+      "displayName": "Policy Registry",
+      "category": "safety-platform",
+      "kind": "mcp",
+      "description": "Retention schedules, consent records, sub-processor inventory, and policy versioning.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "read",
+        "write"
+      ],
+      "tools": [
+        "get_policy",
+        "record_consent",
+        "list_subprocessors"
+      ],
+      "requiredEnv": [],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "release-runbook-skills",
+      "displayName": "Release Runbook Skills",
+      "category": "engineering",
+      "kind": "skills",
+      "description": "Deploy sequencing, pin management, rollback procedure, and post-deploy verification.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "execute"
+      ],
+      "tools": [],
+      "requiredEnv": [],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "migration-ordering-skills",
+      "displayName": "Migration Ordering Skills",
+      "category": "engineering",
+      "kind": "skills",
+      "description": "Detects migration version collisions against a deployed database before release.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "execute"
+      ],
+      "tools": [],
+      "requiredEnv": [],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "e2e-authoring-skills",
+      "displayName": "E2E Authoring Skills",
+      "category": "engineering",
+      "kind": "skills",
+      "description": "Playwright and Flutter end-to-end spec authoring with stable selectors and animation waits.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "execute"
+      ],
+      "tools": [],
+      "requiredEnv": [],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "regression-triage-skills",
+      "displayName": "Regression Triage Skills",
+      "category": "engineering",
+      "kind": "skills",
+      "description": "Failure bisection, flake detection, and quarantine policy for test suites.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "execute"
+      ],
+      "tools": [],
+      "requiredEnv": [],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "data-classification-skills",
+      "displayName": "Data Classification Skills",
+      "category": "safety-platform",
+      "kind": "skills",
+      "description": "Field-level PII classification, sensitivity tiering, and retention assignment.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "execute"
+      ],
+      "tools": [],
+      "requiredEnv": [],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "consent-flow-skills",
+      "displayName": "Consent Flow Skills",
+      "category": "safety-platform",
+      "kind": "skills",
+      "description": "Consent capture, disclosure copy review, and revocation flow design.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "execute"
+      ],
+      "tools": [],
+      "requiredEnv": [],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "incident-response-skills",
+      "displayName": "Incident Response Skills",
+      "category": "safety-platform",
+      "kind": "skills",
+      "description": "Breach triage, notification obligations, and coordinated disclosure.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "execute"
+      ],
+      "tools": [],
+      "requiredEnv": [],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "mobile-release-skills",
+      "displayName": "Mobile Release Skills",
+      "category": "engineering",
+      "kind": "skills",
+      "description": "Provisioning, signing, store metadata, and review-rejection remediation.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "execute"
+      ],
+      "tools": [],
+      "requiredEnv": [],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
+    },
+    {
+      "id": "device-permission-skills",
+      "displayName": "Device Permission Skills",
+      "category": "engineering",
+      "kind": "skills",
+      "description": "Runtime permission prompts, background execution, and battery-impact review.",
+      "endpoint": null,
+      "defaultPermissions": [
+        "execute"
+      ],
+      "tools": [],
+      "requiredEnv": [],
+      "scopes": [
+        "hvgapp",
+        "itshvg",
+        "gomarco",
+        "lhfyc",
+        "clean",
+        "three"
+      ],
+      "provisioned": false
     }
   ],
   "agentBindings": {
@@ -1512,6 +1998,50 @@
       ],
       "skills": [
         "anti-predator-rules-skills"
+      ]
+    },
+    "tip": {
+      "mcpServers": [
+        "railway",
+        "vercel",
+        "github-actions"
+      ],
+      "skills": [
+        "release-runbook-skills",
+        "migration-ordering-skills"
+      ]
+    },
+    "von": {
+      "mcpServers": [
+        "playwright",
+        "flutter-driver",
+        "github-actions"
+      ],
+      "skills": [
+        "e2e-authoring-skills",
+        "regression-triage-skills"
+      ]
+    },
+    "cardi": {
+      "mcpServers": [
+        "threat-model",
+        "policy-registry"
+      ],
+      "skills": [
+        "data-classification-skills",
+        "consent-flow-skills",
+        "incident-response-skills"
+      ]
+    },
+    "andre": {
+      "mcpServers": [
+        "flutter-tooling",
+        "app-store-connect",
+        "play-console"
+      ],
+      "skills": [
+        "mobile-release-skills",
+        "device-permission-skills"
       ]
     }
   }

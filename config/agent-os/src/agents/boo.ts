@@ -7,8 +7,8 @@ export const BOO: AgentConfig = {
   moniker: "Gangsta Boo",
   artistPersona:
     "Gangsta Boo (The Trailblazing Queen of Schema & Search Dominance)",
-  assignedModel: MODELS.claudeSonnet5,
-  provider: "anthropic",
+  assignedModel: MODELS.grok46,
+  provider: "xai",
   coreMandate:
     "SEO, GEO & AI Search Optimization. Conducts schema validation, entity graph audits, and search readiness sweeps via claude-seo.",
   mcpServers: ["claude-seo", "jsonld-schema-validator", "serp-intel"],

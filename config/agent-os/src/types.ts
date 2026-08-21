@@ -2,7 +2,7 @@
  * Core type surface for the Buzz Agent OS.
  *
  * This layer is the authoritative, source-controlled specification of the
- * 14-agent workforce: identity, mandate, system prompt, tool/MCP/skill
+ * 18-agent workforce: identity, mandate, system prompt, tool/MCP/skill
  * bindings, and routing. It is deliberately additive and separate from the
  * desktop persona store (`AgentDefinition` in
  * `desktop/src-tauri/src/managed_agents/types.rs`), which is runtime state
@@ -19,7 +19,7 @@ export type PlatformSlug = "hvgapp";
 /** Anything an agent can be scoped to: the platform, or one of the 5 brands. */
 export type ScopeSlug = PlatformSlug | BrandSlug;
 
-/** Stable identifiers for the 14 agents. */
+/** Stable identifiers for the 18 agents. */
 export type AgentId =
   | "icbm"
   | "juve"
@@ -34,7 +34,11 @@ export type AgentId =
   | "pimp"
   | "pata"
   | "boo"
-  | "nicki";
+  | "nicki"
+  | "tip"
+  | "von"
+  | "cardi"
+  | "andre";
 
 /**
  * Opaque, harness-specific model identifier. Buzz stores and passes these
@@ -49,7 +53,8 @@ export type ProviderId =
   | "openai"
   | "google"
   | "moonshot"
-  | "databricks";
+  | "databricks"
+  | "xai";
 
 /** Category buckets used by the MCP registry. */
 export type McpCategory =

@@ -20,4 +20,5 @@ export const MODELS = {
   kimiCoding27: modelId("kimi-2.7-coding-high-speed"),
   codex56Sol: modelId("codex-5.6-sol"),
   gemini37Flash: modelId("gemini-3.7-flash"),
+  grok46: modelId("grok-4.6"),
 } as const;

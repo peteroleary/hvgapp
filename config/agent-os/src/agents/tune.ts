@@ -18,8 +18,8 @@ export const TUNE: AgentConfig = {
     "Async stack trace analysis",
   ],
   routingRules: {
-    inboundSources: ["juve", "otto", "top", "boo", "slim"],
-    handoffTargets: ["top", "otto", "slim"],
+    inboundSources: ["juve", "otto", "top", "boo", "slim", "von", "andre"],
+    handoffTargets: ["top", "otto", "slim", "von", "andre"],
     escalatesTo: ["otto"],
     requiresHumanApproval: false,
   },

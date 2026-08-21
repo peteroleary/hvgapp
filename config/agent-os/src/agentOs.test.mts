@@ -12,9 +12,9 @@ import {
   nextState,
 } from "./workflows/index.ts";
 
-test("the workforce is exactly 14 agents with unique ids", () => {
-  assert.equal(AGENTS.length, 14);
-  assert.equal(new Set(AGENT_IDS).size, 14);
+test("the workforce is exactly 18 agents with unique ids", () => {
+  assert.equal(AGENTS.length, 18);
+  assert.equal(new Set(AGENT_IDS).size, 18);
 });
 
 test("every agent declares the full required config surface", () => {

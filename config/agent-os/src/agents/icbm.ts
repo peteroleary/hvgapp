@@ -25,8 +25,8 @@ export const ICBM: AgentConfig = {
     "Enterprise IP licensing",
   ],
   routingRules: {
-    inboundSources: ["peter", "juve", "pimp", "ivy", "pata"],
-    handoffTargets: ["juve", "pimp", "ivy", "otto"],
+    inboundSources: ["peter", "juve", "pimp", "ivy", "pata", "cardi", "tip"],
+    handoffTargets: ["juve", "pimp", "ivy", "otto", "cardi"],
     escalatesTo: [],
     requiresHumanApproval: true,
   },

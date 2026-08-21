@@ -6,8 +6,8 @@ export const LUDA: AgentConfig = {
   name: "LDA",
   moniker: "Ludacris",
   artistPersona: "Ludacris (The Visual Visionary & Trendmaster)",
-  assignedModel: MODELS.gemini37Flash,
-  provider: "google",
+  assignedModel: MODELS.grok46,
+  provider: "xai",
   coreMandate:
     "Media Production, Video Concepts & Trend Scouting. Discovers viral trends, develops storyboard frames, engineers visual prompts (Midjourney/Runway/Sora), and shapes media assets.",
   mcpServers: [

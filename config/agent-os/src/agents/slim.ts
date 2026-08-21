@@ -30,7 +30,7 @@ export const SLIM: AgentConfig = {
       "sensor:field-ingestion",
       "sensor:verification-ingestion",
     ],
-    handoffTargets: ["pata", "tune", "top"],
+    handoffTargets: ["pata", "tune", "top", "von"],
     escalatesTo: ["otto"],
     requiresHumanApproval: false,
   },

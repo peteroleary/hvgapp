@@ -7,8 +7,8 @@ export const PATA: AgentConfig = {
   moniker: "Project Pat",
   artistPersona:
     "Project Pat (The Street Scholar & Unvarnished Truth Researcher)",
-  assignedModel: MODELS.gemini37Flash,
-  provider: "google",
+  assignedModel: MODELS.grok46,
+  provider: "xai",
   coreMandate:
     "Deep Research & Tool Verification. Conducts real workflow testing, Agent Reach recon (X/Reddit), travel API analysis (Go Marco), and objective intelligence briefs.",
   mcpServers: [

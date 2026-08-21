@@ -6,8 +6,8 @@ export const TOP: AgentConfig = {
   name: "YBY",
   moniker: "NBA YoungBoy",
   artistPersona: "NBA YoungBoy (The Prolific, High-Speed Hitmaker)",
-  assignedModel: MODELS.kimiCoding27,
-  provider: "moonshot",
+  assignedModel: MODELS.grok46,
+  provider: "xai",
   coreMandate:
     "Build Support & Relentless Implementation. Rapidly builds UI components, unit test suites, and bug fixes from verified specifications.",
   mcpServers: ["playwright-jest-runner", "git-pr-automation"],
@@ -18,8 +18,8 @@ export const TOP: AgentConfig = {
     "Atomic pull requests",
   ],
   routingRules: {
-    inboundSources: ["juve", "otto", "tune", "roo"],
-    handoffTargets: ["slim", "boo"],
+    inboundSources: ["juve", "otto", "tune", "roo", "von"],
+    handoffTargets: ["slim", "boo", "von"],
     escalatesTo: ["tune", "otto"],
     requiresHumanApproval: false,
   },

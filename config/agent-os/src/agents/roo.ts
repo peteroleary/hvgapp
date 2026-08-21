@@ -20,7 +20,7 @@ export const ROO: AgentConfig = {
   ],
   routingRules: {
     inboundSources: ["juve", "otto", "tune", "luda", "kodak"],
-    handoffTargets: ["top", "otto", "tune", "luda", "kodak", "ivy"],
+    handoffTargets: ["top", "otto", "tune", "luda", "kodak", "ivy", "andre"],
     escalatesTo: ["juve"],
     requiresHumanApproval: false,
   },
