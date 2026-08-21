@@ -175,9 +175,9 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
     specModel: null,
   },
   {
-    agent: "cardi",
+    agent: "mia",
     personaId: "agentos:cardi",
-    formerName: null,
+    formerName: "CAR",
     model: "opus[1m]",
     runtime: "claude",
     provider: "anthropic",

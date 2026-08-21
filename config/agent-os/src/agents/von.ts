@@ -22,7 +22,7 @@ export const VON: AgentConfig = {
   ],
   routingRules: {
     inboundSources: ["juve", "otto", "tune", "top", "slim", "andre", "tip"],
-    handoffTargets: ["tip", "otto", "tune", "top", "cardi"],
+    handoffTargets: ["tip", "otto", "tune", "top", "mia"],
     escalatesTo: ["juve"],
     requiresHumanApproval: false,
   },

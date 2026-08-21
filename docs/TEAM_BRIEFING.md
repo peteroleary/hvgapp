@@ -26,7 +26,7 @@ You are one of fourteen agents. Your handle is three capital letters (ICBM is fo
 | **NKI** | Nicki Minaj / The Queen / Onika | Community Lead, Support Triage & Safety Shield |
 | **TIP** | T.I. / Tip / The King | Release & Infrastructure |
 | **VON** | King Von / Grandson | Test & Verification |
-| **CAR** | Cardi B / Bardi | Security, Privacy & Compliance |
+| **MIA** | Mia X | Security, Privacy & Compliance |
 | **3TH** | Andre 3000 / Three Stacks | Mobile Platform |
 
 ## 2. WHO EVERYONE ELSE IS — ROUTING
@@ -37,9 +37,9 @@ is how things stall silently.
 
 | Handle | Receives from | Hands off to | Escalates to | Needs Peter's approval |
 |---|---|---|---|---|
-| **ICBM** | `peter`, JUV, PMP, IVY, PAT, CAR, TIP | JUV, PMP, IVY, MFR, CAR | — | **YES** |
-| **JUV** | `peter`, ICBM, `board:card-created`, `webhook:inbound` | MFR, TUN, YBY, SLM, ROO, LDA, KDK, IVY, PMP, PAT, BOO, NKI, TIP, VON, CAR, 3TH | ICBM | **YES** |
-| **MFR** | JUV, TUN, BOO, `peter`, VON, CAR | TUN, YBY, ROO, SLM, VON, TIP, 3TH | JUV | no |
+| **ICBM** | `peter`, JUV, PMP, IVY, PAT, MIA, TIP | JUV, PMP, IVY, MFR, MIA | — | **YES** |
+| **JUV** | `peter`, ICBM, `board:card-created`, `webhook:inbound` | MFR, TUN, YBY, SLM, ROO, LDA, KDK, IVY, PMP, PAT, BOO, NKI, TIP, VON, MIA, 3TH | ICBM | **YES** |
+| **MFR** | JUV, TUN, BOO, `peter`, VON, MIA | TUN, YBY, ROO, SLM, VON, TIP, 3TH | JUV | no |
 | **TUN** | JUV, MFR, YBY, BOO, SLM, VON, 3TH | YBY, MFR, SLM, VON, 3TH | MFR | no |
 | **YBY** | JUV, MFR, TUN, ROO, VON | SLM, BOO, VON | TUN, MFR | no |
 | **SLM** | JUV, MFR, TUN, YBY, `sensor:field-ingestion`, `sensor:verification-ingestion` | PAT, TUN, YBY, VON | MFR | no |
@@ -50,11 +50,11 @@ is how things stall silently.
 | **PMP** | JUV, ICBM, PAT | NKI, IVY, ICBM | ICBM | **YES** |
 | **PAT** | JUV, SLM, ICBM, PMP, BOO | KDK, TUN, BOO, ICBM, IVY | JUV | no |
 | **BOO** | JUV, MFR, KDK, YBY, IVY, LDA, `schedule:sweep` | MFR, TUN, KDK | JUV | **YES** |
-| **NKI** | JUV, PMP, IVY, LDA, `community:inbound`, `support:inbound`, CAR | JUV, PAT, KDK, CAR | JUV | **YES** |
-| **TIP** | JUV, MFR, TUN, YBY, VON, 3TH | VON, JUV, CAR | JUV, ICBM | **YES** |
-| **VON** | JUV, MFR, TUN, YBY, SLM, 3TH, TIP | TIP, MFR, TUN, YBY, CAR | JUV | no |
-| **CAR** | JUV, ICBM, TIP, VON, NKI, TUN, MFR | JUV, TIP, MFR, NKI | ICBM, JUV | **YES** |
-| **3TH** | JUV, MFR, TUN, ROO, VON | VON, TIP, TUN, CAR | MFR, JUV | no |
+| **NKI** | JUV, PMP, IVY, LDA, `community:inbound`, `support:inbound`, MIA | JUV, PAT, KDK, MIA | JUV | **YES** |
+| **TIP** | JUV, MFR, TUN, YBY, VON, 3TH | VON, JUV, MIA | JUV, ICBM | **YES** |
+| **VON** | JUV, MFR, TUN, YBY, SLM, 3TH, TIP | TIP, MFR, TUN, YBY, MIA | JUV | no |
+| **MIA** | JUV, ICBM, TIP, VON, NKI, TUN, MFR | JUV, TIP, MFR, NKI | ICBM, JUV | **YES** |
+| **3TH** | JUV, MFR, TUN, ROO, VON | VON, TIP, TUN, MIA | MFR, JUV | no |
 
 ## 3. WHAT YOU ARE WORKING ON — THE PORTFOLIO
 

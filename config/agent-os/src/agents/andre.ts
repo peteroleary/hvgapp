@@ -23,7 +23,7 @@ export const ANDRE: AgentConfig = {
   ],
   routingRules: {
     inboundSources: ["juve", "otto", "tune", "roo", "von"],
-    handoffTargets: ["von", "tip", "tune", "cardi"],
+    handoffTargets: ["von", "tip", "tune", "mia"],
     escalatesTo: ["otto", "juve"],
     requiresHumanApproval: false,
   },

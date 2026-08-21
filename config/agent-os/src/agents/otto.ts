@@ -23,7 +23,7 @@ export const OTTO: AgentConfig = {
     "High-concurrency systems design",
   ],
   routingRules: {
-    inboundSources: ["juve", "tune", "boo", "peter", "von", "cardi"],
+    inboundSources: ["juve", "tune", "boo", "peter", "von", "mia"],
     handoffTargets: ["tune", "top", "roo", "slim", "von", "tip", "andre"],
     escalatesTo: ["juve"],
     requiresHumanApproval: false,

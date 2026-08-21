@@ -23,7 +23,7 @@ export const TIP: AgentConfig = {
   ],
   routingRules: {
     inboundSources: ["juve", "otto", "tune", "top", "von", "andre"],
-    handoffTargets: ["von", "juve", "cardi"],
+    handoffTargets: ["von", "juve", "mia"],
     escalatesTo: ["juve", "icbm"],
     requiresHumanApproval: true,
   },

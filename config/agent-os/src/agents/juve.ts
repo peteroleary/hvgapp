@@ -38,7 +38,7 @@ export const JUVE: AgentConfig = {
       "nicki",
       "tip",
       "von",
-      "cardi",
+      "mia",
       "andre",
     ],
     escalatesTo: ["icbm"],

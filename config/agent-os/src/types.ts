@@ -37,7 +37,7 @@ export type AgentId =
   | "nicki"
   | "tip"
   | "von"
-  | "cardi"
+  | "mia"
   | "andre";
 
 /**
