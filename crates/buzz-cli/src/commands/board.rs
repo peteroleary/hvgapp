@@ -1041,8 +1041,8 @@ struct SeedCard {
     description: &'static str,
 }
 
-/// Boards created by `buzz board seed`. The five customer-facing brands plus
-/// Unified Master for cross-brand coordination. Order matters for the CLI
+/// Boards created by `buzz board seed`. The five customer-facing brands, the
+/// `hvg-app` platform board, plus Unified Master for cross-brand coordination. Order matters for the CLI
 /// report; creation itself is independent.
 const SEED_BOARDS: &[SeedBoard] = &[
     SeedBoard {
@@ -1050,6 +1050,12 @@ const SEED_BOARDS: &[SeedBoard] = &[
         title: "Unified Master",
         brand: None,
         description: "Cross-brand coordination board. Goals, loops, and work that spans the six-brand operation live here.",
+    },
+    SeedBoard {
+        id: "hvg-app",
+        title: "hvg.app",
+        brand: Some("hvg-app"),
+        description: "The Buzz operating platform itself: relay, desktop, agent harness, board, and the pipelines the team runs on. Platform work, not brand work.",
     },
     SeedBoard {
         id: "clean",

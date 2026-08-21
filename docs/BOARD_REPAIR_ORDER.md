@@ -1,6 +1,6 @@
 # WORK ORDER — REPAIR THE BOARDS AND CARDS
 
-**Routed to:** JUV (owner) · OTO + TUN (build) · YBY (implementation) · PAT (verification)
+**Routed to:** JUV (owner) · MFR + TUN (build) · YBY (implementation) · PAT (verification)
 **Scope:** `hvg-app` · **Approval gate:** Peter, before anything destructive
 
 You built these boards. They are now wrong, and you are correcting them.
@@ -9,11 +9,12 @@ You built these boards. They are now wrong, and you are correcting them.
 
 ## 1. THE CORRECT END STATE
 
-Exactly six boards, no others:
+Exactly seven boards, no others:
 
 | Board id (`d` tag) | Title | Brand slug |
 |---|---|---|
 | `unified-master` | Unified Master | *(none — cross-brand)* |
+| `hvg-app` | hvg.app | `hvg-app` |
 | `itshvg` | High Value Growth | `itshvg` |
 | `gomarco` | Go Marco | `gomarco` |
 | `lhfyc` | Look How Far You've Come | `lhfyc` |
@@ -33,7 +34,7 @@ data was never migrated, so the relay is expected to still hold:
 - a `sober` board titled **MoSober** — retired name, must not appear anywhere
 - a `concrete` board titled **K&B Concrete** — brand removed from the portfolio
 - a `three` board titled **We3Live** — should be **We 3 Live**
-- **no** `lhfyc` board and **no** `gomarco` board
+- **no** `lhfyc`, `gomarco`, or `hvg-app` board
 - cards tagged `brand:sober` / `brand:concrete` — slugs the registry no longer knows
 
 **Do not assume this list is accurate. Verify it first.** It is derived from the
@@ -74,9 +75,10 @@ exact ids — no summaries.
 Once PAT reports, create only the boards that genuinely do not exist:
 `buzz board create --id lhfyc --title "Look How Far You've Come" --brand lhfyc`
 `buzz board create --id gomarco --title 'Go Marco' --brand gomarco`
+`buzz board create --id hvg-app --title 'hvg.app' --brand hvg-app`
 If `board create` refuses, the board already exists — say so, do not force it.
 
-**Task 3 — OTO + TUN: design and build the missing verbs.**
+**Task 3 — MFR + TUN: design and build the missing verbs.**
 The repair cannot finish without them. Spec and implement, in `buzz-cli`:
 - `board set --id <id> [--title] [--description] [--brand]` — republish the
   30623 head for an existing id. This is the one that fixes titles.
@@ -95,7 +97,7 @@ deleted.** If a card has no obvious home, park it on `unified-master` and list i
 for Peter.
 
 **Task 5 — PAT: verify.**
-Re-run the Task 1 diagnosis. Definition of done: exactly the six boards in §1,
+Re-run the Task 1 diagnosis. Definition of done: exactly the seven boards in §1,
 correct titles, zero cards on a slug outside the locked set, zero occurrences of
 `MoSober` or `K&B Concrete` anywhere in board or card content.
 
@@ -112,9 +114,11 @@ correct titles, zero cards on a slug outside the locked set, zero occurrences of
 
 ---
 
-## 6. OPEN QUESTION FOR PETER
+## 6. DECIDED — PLATFORM BOARD
 
-There is no `hvg-app` board, but the Platform Build Flow is scoped `hvg-app`.
-Platform work currently has nowhere to go except `unified-master`. Ask Peter
-whether he wants a seventh board for the platform, or whether platform work
-belongs on `unified-master`. **Do not create it on your own initiative.**
+Peter has ruled: the portfolio keeps **both** `unified-master` and a separate
+`hvg-app` board. Platform work — relay, desktop, agent harness, board, pipelines
+— goes on `hvg-app`. `unified-master` stays for cross-brand coordination and for
+parking cards that have no clear home.
+
+`hvg-app` is already in the seed set, so `buzz board seed` will create it.

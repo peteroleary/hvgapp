@@ -2,9 +2,9 @@ import { OWNED_BY_PETER, ownedBy, type WorkflowDefinition } from "./types.ts";
 
 /**
  * Platform Build Flow (hvg.app):
- * JUV ➔ OTO & TUN ➔ ROO ➔ YBY ➔ SLM ➔ BOO ➔ Peter (Approval).
+ * JUV ➔ MFR & TUN ➔ ROO ➔ YBY ➔ SLM ➔ BOO ➔ Peter (Approval).
  *
- * OTO and TUN hold the architecture state concurrently by design — the
+ * MFR and TUN hold the architecture state concurrently by design — the
  * agent specs require two senior perspectives before either writes code.
  */
 export const PLATFORM_BUILD: WorkflowDefinition = {
@@ -29,7 +29,7 @@ export const PLATFORM_BUILD: WorkflowDefinition = {
       name: "Architecture & Spec",
       owner: ownedBy("otto", "tune"),
       description:
-        "OTO and TUN plan together and produce an unambiguous spec. Neither decides alone.",
+        "MFR and TUN plan together and produce an unambiguous spec. Neither decides alone.",
       on: { advance: "design", reject: "route", escalate: "route" },
       terminal: false,
     },
