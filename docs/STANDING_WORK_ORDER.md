@@ -84,7 +84,7 @@ Diagnosed against the live relay. These are facts, not the code-derived guesses 
 
 ---
 
-## 3. FOUR THINGS THAT WILL STOP YOU
+## 3. FIVE THINGS THAT WILL STOP YOU
 
 1. **Every plan in `.buzz/PLANS/` is orphaned.** Owned by **Fizz, Prop, Bloom, Comb, Comet** —
    none exist on the current roster. **Remap every owner to a live handle first**, or you are
@@ -103,9 +103,33 @@ Diagnosed against the live relay. These are facts, not the code-derived guesses 
 
 4. **You cannot edit a board.** Shipped CLI is `board ls | get | create | card add | card approve
    | card deny`. No `board set`, no `board retire`, no `card set`. The verbs exist in **PR #18**
-   (`pheartkeys/hvgapp`, +1003 lines, opened 2026-08-16) with **failing Docker builds, no review,
-   untouched five days.** The installed `Buzz.app` binary also predates commit `4e813855` — its
-   seed set has no `hvgapp` board.
+   (`pheartkeys/hvgapp`, +1003 lines, opened 2026-08-16, branch `prop/board-card-set`), unreviewed
+   for five days. The installed `Buzz.app` binary also predates commit `4e813855` — its seed set
+   has no `hvgapp` board.
+
+   **PR #18's red CI is NOT the PR's fault. It needs REVIEW, not rescue.** See blocker 5. Its Rust
+   compiles; the failure is downstream in an unrelated registry push. Read the 1003 lines on their
+   merits — CI cannot tell you whether they are correct, because CI is broken for everyone.
+
+5. **CI has been red on `main` for every commit, for days — including docs-only commits.** The
+   `Docker image` workflow fails on every push. Diagnosed 2026-08-21:
+
+   ```
+   ERROR: error writing layer blob: denied: permission_denied:
+          The requested installation does not exist.
+   ```
+
+   **Root cause:** `.github/workflows/docker.yml:79` defaults to
+   `IMAGE_NAME: ghcr.io/block/buzz` — **Block's namespace, upstream of this fork.** This repo's
+   `GITHUB_TOKEN` has `packages: write` for its own namespace and none for Block's. The
+   push-gateway job is worse: lines ~390 and ~404-405 **hardcode** `ghcr.io/block/buzz-push-gateway`
+   and its buildcache, ignoring the variable entirely.
+
+   **The fix:** set repo variable `GHCR_IMAGE` to this fork's namespace, then replace the hardcoded
+   `ghcr.io/block/*` refs in the push-gateway job with the same variable.
+
+   **This is the failure that cost the week.** A signal that is always red cannot report anything.
+   PR #18 sat five days because its red looked normal. Fix the alarm before trusting any test result.
 
 ---
 
@@ -150,8 +174,14 @@ before anyone touches a keyboard.** Agreeing in chat and dispersing is not conve
 Nothing else starts until this lands.
 
 - **Convene:** MFR, TUN, TIP, VON, ICBM, JUV → one-page repair plan naming who does what.
-- **MFR + TUN** spec, **YBY** implements: rescue PR #18. Green the Docker builds, land
-  `board set`, `board retire`, `card set`, `card set --goal`.
+- **TIP — FIRST, BEFORE ANYTHING ELSE: fix CI.** It has been red on `main` for every commit
+  including docs-only ones (blocker 5). Set the `GHCR_IMAGE` repo variable to this fork's
+  namespace and de-hardcode the `ghcr.io/block/*` refs in `docker.yml`'s push-gateway job.
+  **Nothing downstream can be trusted until a green build means something.**
+- **MFR + TUN review PR #18** — 1003 lines of Rust written by Prop, who no longer exists. It is
+  **unreviewed, not broken**; its red CI was blocker 5, not the code. Read it on its merits.
+  Land `board set`, `board retire`, `card set`, `card set --goal`. **YBY** implements only what
+  review says is missing — do not rewrite what already works.
 - **VON** tests. **TIP** cuts a Buzz.app build so the installed binary matches source.
 - **TUN executes the migration writes** — he holds `845798e3…`, the key that wrote every brand
   board and all 19 cards. A write from any other key forks the head instead of updating it.

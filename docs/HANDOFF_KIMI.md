@@ -213,11 +213,42 @@ board, so `buzz board seed` creates six boards, not seven.
   **Added to Phase 0, owned by TIP** (`STANDING_WORK_ORDER.md` §5).
 - **No `buzz huddle` at all.** Huddles are Desktop-only.
 
-### PR #18 — the unblock for everything
+### PR #18 — unreviewed, NOT broken
 
 `pheartkeys/hvgapp#18` — "card set/move verbs and `--goal` attach", branch `prop/board-card-set`,
-+1003 / −83 in `crates/buzz-cli/`, opened 2026-08-16. **Docker image builds FAILING** (linux/amd64,
-linux/arm64, push gateway). No review. Untouched 5 days. **Rescuing this is Phase 0's critical path.**
++1003 / −83 in `crates/buzz-cli/`, opened 2026-08-16. **No review. Untouched 5 days.**
+
+**Its red CI is not its fault.** Written by Prop, who no longer exists on the roster, so it needs
+1003 lines of human/agent review on the merits — CI cannot vouch for it either way. **Review, do
+not rescue.** Do not let anyone rewrite code that may already work.
+
+### CI is red on `main` for EVERY commit — this is the real blocker
+
+The `Docker image` workflow has failed on every push to `main` for days, **including docs-only
+commits**. Diagnosed 2026-08-21:
+
+```
+ERROR: error writing layer blob: denied: permission_denied:
+       The requested installation does not exist.
+```
+
+**Root cause:** `.github/workflows/docker.yml:79` —
+
+```yaml
+IMAGE_NAME: ${{ vars.GHCR_IMAGE != '' && vars.GHCR_IMAGE || 'ghcr.io/block/buzz' }}
+```
+
+The default is **`ghcr.io/block/buzz`** — Block's namespace, upstream of this fork. This repo's
+`GITHUB_TOKEN` carries `packages: write` for its own namespace and none for Block's. The
+push-gateway job is worse: `~:390` and `~:404-405` **hardcode** `ghcr.io/block/buzz-push-gateway`
+and its buildcache, bypassing the variable entirely.
+
+**Fix:** set repo variable `GHCR_IMAGE` to this fork's namespace, then de-hardcode the
+`ghcr.io/block/*` refs in the push-gateway job.
+
+**This is what cost the week.** A signal that is always red reports nothing — PR #18 sat five days
+because its red looked normal. **TIP fixes this first, before any other Phase 0 work.** No test
+result downstream means anything until a green build is meaningful.
 
 ### Huddle — shipped, with two holes
 

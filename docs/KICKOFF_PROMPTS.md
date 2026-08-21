@@ -12,7 +12,7 @@ STAND UP. New structure, new rules, work starts today.
 Read these three, in order, before you reply:
   docs/STANDING_WORK_ORDER.md   — the rules, the goal, the phases
   docs/SQUADS.md                — your squad, your lead, your service
-  docs/WORKFLOW.md              — the eight stages and the huddle map
+  docs/WORKFLOW.md              — the nine stages and the huddle map
 
 THE RULE THAT CHANGED: you no longer stop and wait for Peter. Your "Needs Peter's
 approval" column is void. Seven ACTIONS are gated (STANDING_WORK_ORDER §0) — money,
@@ -77,18 +77,34 @@ KEYS — boards reconcile by id. Writing from the wrong key FORKS the head.
 
 THE WORK:
   1. PAT   — re-verify the state above against the relay. Report exact ids, no summaries.
-  2. MFR+TUN spec, YBY implements — rescue PR #18 (pheartkeys/hvgapp, +1003 lines,
-             opened 2026-08-16, Docker builds RED, no review, 5 days stale).
+  2. TIP FIRST — FIX CI BEFORE ANYTHING ELSE. The "Docker image" workflow has failed
+             on EVERY push to main for days, including docs-only commits. Error:
+               "error writing layer blob: denied: permission_denied:
+                The requested installation does not exist."
+             Root cause: .github/workflows/docker.yml:79 defaults IMAGE_NAME to
+             ghcr.io/block/buzz — Block's namespace, upstream of this fork. Our token
+             cannot write there. The push-gateway job also HARDCODES
+             ghcr.io/block/buzz-push-gateway and its buildcache (~lines 390, 404-405),
+             ignoring the variable.
+             Fix: set repo variable GHCR_IMAGE to this fork's namespace, then replace
+             the hardcoded ghcr.io/block/* refs with that variable.
+             A signal that is always red reports nothing. This is why PR #18 sat for
+             five days — its red looked normal.
+  3. MFR+TUN REVIEW PR #18 (pheartkeys/hvgapp, +1003 lines, branch prop/board-card-set,
+             opened 2026-08-16). It is UNREVIEWED, NOT BROKEN — the red CI was the
+             registry problem above, not this code. Prop wrote it and Prop no longer
+             exists, so read all 1003 lines on their merits; CI cannot vouch for them.
              Land: board set, board retire, card set, card set --goal.
-  3. VON   — test it. TIP — cut a Buzz.app build; the installed binary predates
+             YBY implements only what review finds missing. Do not rewrite what works.
+  4. VON   — test it. TIP — cut a Buzz.app build; the installed binary predates
              commit 4e813855 and its seed set has no hvgapp board.
-  4. TUN   — create hvgapp, gomarco, lhfyc. Rename three. Retire concrete + sober.
+  5. TUN   — create hvgapp, gomarco, lhfyc. Rename three. Retire concrete + sober.
              Delete the 5 junk cards.
      YBY   — normalise unified-master from 4 columns to 5 (it is missing "Spec'd").
-  5. MFR+TUN — ALSO spec `buzz huddle`. There is no CLI support for huddles; headless
+  6. MFR+TUN — ALSO spec `buzz huddle`. There is no CLI support for huddles; headless
              agents cannot convene or join one. Same trap the board had. Spec it while
              the CLI is already open (WORKFLOW.md §7 gap 1).
-  6. TIP+ICBM+JUV — stand up the feed-rule executor as a SERVICE with three owners.
+  7. TIP+ICBM+JUV — stand up the feed-rule executor as a SERVICE with three owners.
              Comet was the single designated executor and has been unreachable since
              2026-08-11. That failure mode does not repeat.
 
