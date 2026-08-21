@@ -3,7 +3,7 @@ import type { AgentConfig } from "../types.ts";
 
 export const JUVE: AgentConfig = {
   id: "juve",
-  name: "Juve",
+  name: "JUV",
   moniker: "Juvenile",
   artistPersona: "Juvenile (The 400 Degreez General & Platform Anchor)",
   assignedModel: MODELS.gpt5,

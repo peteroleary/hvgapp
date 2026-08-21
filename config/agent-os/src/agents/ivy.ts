@@ -3,7 +3,7 @@ import type { AgentConfig } from "../types.ts";
 
 export const IVY: AgentConfig = {
   id: "ivy",
-  name: "Ivy",
+  name: "IVY",
   moniker: "Boosie Badazz",
   artistPersona: "Boosie Badazz (The Independent Hustle & Direct-to-Fan Mogul)",
   assignedModel: MODELS.gpt5,

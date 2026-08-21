@@ -3,7 +3,7 @@ import type { AgentConfig } from "../types.ts";
 
 export const OTTO: AgentConfig = {
   id: "otto",
-  name: "Otto",
+  name: "OTO",
   moniker: "Mannie Fresh",
   artistPersona: "Mannie Fresh (The Master Producer & Sonic Architect)",
   assignedModel: MODELS.claudeOpus5,

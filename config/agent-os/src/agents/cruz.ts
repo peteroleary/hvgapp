@@ -3,7 +3,7 @@ import type { AgentConfig } from "../types.ts";
 
 export const CRUZ: AgentConfig = {
   id: "cruz",
-  name: "Cruz",
+  name: "CRZ",
   moniker: "Pastor Troy",
   artistPersona: "Pastor Troy (The Voice of Conviction & Universal Pen)",
   assignedModel: MODELS.claudeFable5,

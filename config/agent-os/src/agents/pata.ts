@@ -3,7 +3,7 @@ import type { AgentConfig } from "../types.ts";
 
 export const PATA: AgentConfig = {
   id: "pata",
-  name: "Pata",
+  name: "PAT",
   moniker: "Project Pat",
   artistPersona:
     "Project Pat (The Street Scholar & Unvarnished Truth Researcher)",

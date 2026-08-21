@@ -3,7 +3,7 @@ import type { AgentConfig } from "../types.ts";
 
 export const ROO: AgentConfig = {
   id: "roo",
-  name: "Roo",
+  name: "ROO",
   moniker: "Ryan Charles",
   artistPersona: "Ryan Charles (The Jiggy Western Stylist & Visual Innovator)",
   assignedModel: MODELS.claudeOpus5,

@@ -3,7 +3,7 @@ import type { AgentConfig } from "../types.ts";
 
 export const BOO: AgentConfig = {
   id: "boo",
-  name: "Boo",
+  name: "BOO",
   moniker: "Gangsta Boo",
   artistPersona:
     "Gangsta Boo (The Trailblazing Queen of Schema & Search Dominance)",

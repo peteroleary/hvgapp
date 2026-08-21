@@ -16,7 +16,9 @@ import type { AgentId } from "./types.ts";
  */
 export interface DeploymentTarget {
   readonly agent: AgentId;
-  /** Display name of the persona this agent replaces; null for a new persona. */
+  /** Stable persona id in the desktop store — the durable join key. */
+  readonly personaId: string;
+  /** Display name of the persona this agent replaced, for provenance only. */
   readonly formerName: string | null;
   /** Harness-resolvable model id. */
   readonly model: string;
@@ -30,6 +32,7 @@ export interface DeploymentTarget {
 export const DEPLOYMENT: readonly DeploymentTarget[] = [
   {
     agent: "icbm",
+    personaId: "agentos:icbm",
     formerName: null,
     model: "opus[1m]",
     runtime: "claude",
@@ -38,6 +41,7 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
   },
   {
     agent: "juve",
+    personaId: "336878e0-a248-4a45-86a4-ea031ebb3c33",
     formerName: "Comet",
     model: "gpt-5.6-terra[high]",
     runtime: "codex",
@@ -46,6 +50,7 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
   },
   {
     agent: "otto",
+    personaId: "builtin:fizz",
     formerName: "Fizz",
     model: "opus[1m]",
     runtime: "claude",
@@ -54,6 +59,7 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
   },
   {
     agent: "tune",
+    personaId: "7674d4cd-1a48-43f9-b4f1-5281f8ff0f43",
     formerName: "Prop",
     model: "kimi-code/k3",
     runtime: "kimi",
@@ -62,6 +68,7 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
   },
   {
     agent: "top",
+    personaId: "74b13684-4e7c-4646-a8fe-62d511e4a81a",
     formerName: "Comb",
     model: "kimi-code/kimi-for-coding-highspeed",
     runtime: "kimi",
@@ -70,6 +77,7 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
   },
   {
     agent: "slim",
+    personaId: "79b32b10-bd71-4732-8949-554540929489",
     formerName: "Slim",
     model: "gpt-5.6-terra[high]",
     runtime: "codex",
@@ -78,6 +86,7 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
   },
   {
     agent: "roo",
+    personaId: "f9acb68c-11ef-4288-9e3e-f0acfd2e1af2",
     formerName: "Bloom",
     model: "opus[1m]",
     runtime: "claude",
@@ -86,6 +95,7 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
   },
   {
     agent: "luda",
+    personaId: "979c807b-0b58-4094-bf3e-dd0dc2fda425",
     formerName: "Nectar",
     model: "gemini-3.6-flash",
     runtime: "goose",
@@ -94,6 +104,7 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
   },
   {
     agent: "cruz",
+    personaId: "builtin:honey",
     formerName: "Honey",
     model: "sonnet",
     runtime: "claude",
@@ -102,6 +113,7 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
   },
   {
     agent: "ivy",
+    personaId: "98dbd9bb-335a-4679-8a7d-019fbd3f9bcb",
     formerName: "Sage",
     model: "gpt-5.6-terra[high]",
     runtime: "codex",
@@ -110,6 +122,7 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
   },
   {
     agent: "pimp",
+    personaId: "a3fb790d-0487-44dd-be01-645393f80636",
     formerName: "Scout",
     model: "kimi-code/k3",
     runtime: "kimi",
@@ -118,6 +131,7 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
   },
   {
     agent: "pata",
+    personaId: "builtin:bumble",
     formerName: "Bumble",
     model: "gemini-3.6-flash",
     runtime: "goose",
@@ -126,6 +140,7 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
   },
   {
     agent: "boo",
+    personaId: "1e169326-247e-4563-9971-edb77b4b78a2",
     formerName: "Waggle",
     model: "sonnet",
     runtime: "claude",
@@ -134,6 +149,7 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
   },
   {
     agent: "mia",
+    personaId: "f10e36eb-1fc0-406d-81a5-59a93b053b69",
     formerName: "Willow",
     model: "gemini-3.6-flash",
     runtime: "goose",

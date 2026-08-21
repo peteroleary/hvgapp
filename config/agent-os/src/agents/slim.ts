@@ -3,7 +3,7 @@ import type { AgentConfig } from "../types.ts";
 
 export const SLIM: AgentConfig = {
   id: "slim",
-  name: "Slim",
+  name: "SLM",
   moniker: "Soulja Slim",
   artistPersona: "Soulja Slim (The Cut-Throat Soldier & Precision Marksman)",
   assignedModel: MODELS.codex56Sol,

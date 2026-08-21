@@ -3,7 +3,7 @@ import type { AgentConfig } from "../types.ts";
 
 export const LUDA: AgentConfig = {
   id: "luda",
-  name: "Luda",
+  name: "LDA",
   moniker: "Ludacris",
   artistPersona: "Ludacris (The Visual Visionary & Trendmaster)",
   assignedModel: MODELS.gemini37Flash,

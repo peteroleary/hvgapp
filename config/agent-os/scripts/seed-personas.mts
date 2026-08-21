@@ -105,12 +105,12 @@ for (const target of DEPLOYMENT) {
     continue;
   }
 
-  const def = store.find(
-    (r) => r.slug && (r.display_name ?? r.name) === target.formerName,
-  );
+  // Match on the stable persona id, not the display name: names are the thing
+  // this script rewrites, so keying on them would make it a one-shot.
+  const def = store.find((r) => r.slug === target.personaId);
   if (!def) {
     changes.push(
-      `  ! ${agent.name.padEnd(6)} SKIPPED — no persona named "${target.formerName}"`,
+      `  ! ${agent.name.padEnd(6)} SKIPPED — no persona id ${target.personaId}`,
     );
     continue;
   }
@@ -119,7 +119,7 @@ for (const target of DEPLOYMENT) {
   Object.assign(def, shared);
   renamedPersonaIds.set(personaId, agent.name);
   changes.push(
-    `  ~ ${target.formerName.padEnd(7)} -> ${agent.name.padEnd(6)} ${target.model}`,
+    `  ~ ${(target.formerName ?? "—").padEnd(7)} -> ${agent.name.padEnd(6)} ${target.model}`,
   );
 }
 

@@ -3,7 +3,7 @@ import type { AgentConfig } from "../types.ts";
 
 export const TOP: AgentConfig = {
   id: "top",
-  name: "Top",
+  name: "TOP",
   moniker: "NBA YoungBoy",
   artistPersona: "NBA YoungBoy (The Prolific, High-Speed Hitmaker)",
   assignedModel: MODELS.kimiCoding27,

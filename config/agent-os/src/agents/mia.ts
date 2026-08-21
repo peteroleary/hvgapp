@@ -3,7 +3,7 @@ import type { AgentConfig } from "../types.ts";
 
 export const MIA: AgentConfig = {
   id: "mia",
-  name: "Mia",
+  name: "MIA",
   moniker: "Mia X",
   artistPersona: "Mia X (The Biggest Momma & Uncompromising Guardian)",
   assignedModel: MODELS.gemini37Flash,

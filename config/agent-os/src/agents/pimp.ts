@@ -3,7 +3,7 @@ import type { AgentConfig } from "../types.ts";
 
 export const PIMP: AgentConfig = {
   id: "pimp",
-  name: "Pimp",
+  name: "PMP",
   moniker: "Pimp C",
   artistPersona: "Pimp C (The King of B2B Leverage & Trill Partnerships)",
   assignedModel: MODELS.kimiK3,

@@ -3,7 +3,7 @@ import type { AgentConfig } from "../types.ts";
 
 export const TUNE: AgentConfig = {
   id: "tune",
-  name: "Tune",
+  name: "TUN",
   moniker: "Tunechi",
   artistPersona: "Lil Wayne / Tunechi (The Lyrical Genius & Code Virtuoso)",
   assignedModel: MODELS.kimiK3,
