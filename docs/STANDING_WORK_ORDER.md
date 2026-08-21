@@ -264,6 +264,13 @@ finished your part.
 
 ## 7. REPORTING
 
+- **Terse by default, in every message, on every surface.** Answer first, one line. No preamble,
+  no restating the ask, no play-by-play of what you just did. Tables over prose. Status is one
+  line. Anything longer than ~10 lines goes in a file or on the card, linked — not in the channel.
+- **Work that isn't pushed doesn't exist.** Every work product lands in git the moment it's
+  usable: drafts, plans, and research commit + push to the `nest` repo (the relay remote); code
+  and docs land on `main` of `pheartkeys/hvgapp` via PR (docs may go direct). No local-only work,
+  no "I'll push it later" — an unpushed draft is indistinguishable from no draft.
 - **JUV posts one consolidated status per day** to `#build`: what moved, what is blocked, what
   ships next. One message, not eighteen.
 - Everyone else posts **on state change only.**

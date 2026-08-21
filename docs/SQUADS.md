@@ -9,7 +9,7 @@
 
 | Term | Meaning |
 |---|---|
-| **Team** | All 18 agents. One team, always. |
+| **Team** | All 19 agents. One team, always. |
 | **Squad** | A standing group with a shared capability, a lead, and one service it runs. Six squads. |
 | **Command** | ICBM + JUV. Not a squad — they route across squads and own the goal. |
 | **Home squad** | Every agent has exactly one. Permanent. |
@@ -26,10 +26,10 @@
 | **Research & Data** | PAT | PAT, SLM | Ingestion — `sensor:field-ingestion`, `sensor:verification-ingestion` |
 | **Creative** | ROO | ROO, KDK, LDA | Asset + publishing pipeline ⚠️ *no trigger yet — §7* |
 | **Growth** | PMP | PMP, IVY, BOO | Search sweep — `schedule:sweep` |
-| **Trust & Safety** | MIA | MIA, NKI | Inbound — `community:inbound`, `support:inbound` |
+| **Trust & Safety** | MIA | MIA, NKI, DEE | Inbound — `community:inbound`, `support:inbound` |
 | **Ship** | TIP | TIP, VON | Feed-rule executor + release |
 
-18 agents. Command is 2. Six squads hold 16.
+19 agents. Command is 2. Six squads hold 17.
 
 **Six of the seven services already exist** as inbound sources in `TEAM_BRIEFING.md` §2. The
 routing table was already squad-shaped; nobody had named it. Only Ship's feed-rule executor is
@@ -124,14 +124,16 @@ Video, animatics, hooks, trend scouting (LDA).
 search, schema (BOO).
 **Gate.** Spending money and signing anything needs Peter.
 
-### Trust & Safety — MIA (lead), NKI
+### Trust & Safety — MIA (lead), NKI, DEE
 **Purpose.** Protect the user and the business. Independent of everyone they review.
 **Runs.** Inbound: `community:inbound`, `support:inbound`.
 **Delivers.** Security, privacy, compliance review (MIA). Community, support triage, moderation,
-crisis paging (NKI).
+crisis paging (NKI). Ethical and theological review, `three` stewardship (DEE).
+**DEE.** Model `opus[1m]`, no tools — the model is the check (`TEAM_BRIEFING.md` §1). His
+co-writing with KDK and LDA on `three` scripts is a handoff, not membership.
 **Independence.** **Never attaches to Build, Creative, or Growth.**
 **Standing rule.** Crisis outranks everything. NKI pages Peter immediately and does not wait.
-**Owns the gates on.** `lhfyc` escrow, `clean` in-home capture consent, `three` IP.
+**Owns the gates on.** `lhfyc` escrow, `clean` in-home capture consent, `three` IP (MIA legal/compliance, DEE ethical/theological).
 
 ### Ship — TIP (lead), VON
 **Purpose.** The last gate. Nothing reaches a user without passing through here.
@@ -167,6 +169,7 @@ Home squad in **bold**. `→` means attached for that phase only.
 | NKI | **Trust** | — | Trust | Trust | Trust | Trust | Trust |
 | TIP | **Ship** | **Ship** | Ship | Ship | Ship | Ship | Ship |
 | VON | **Ship** | **Ship** *(verifies done)* | Ship | Ship | Ship | Ship | Ship |
+| DEE | **Trust** | — *(not yet created)* | Trust | — | — | Trust | **Trust** *(`three` gate)* |
 
 **Phase 4 brand split.** Three brands in parallel, squads split across them:
 
