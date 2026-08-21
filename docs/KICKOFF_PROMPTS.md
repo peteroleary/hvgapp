@@ -10,9 +10,13 @@ Three posts. A goes to `#general`. B goes to `#build`. C goes to each squad chan
 STAND UP. New structure, new rules, work starts today.
 
 Read these three, in order, before you reply:
-  docs/STANDING_WORK_ORDER.md   — the rules, the goal, the phases
-  docs/SQUADS.md                — your squad, your lead, your service
-  docs/WORKFLOW.md              — the nine stages and the huddle map
+  ~/Desktop/hvgapp/docs/STANDING_WORK_ORDER.md   — the rules, the goal, the phases
+  ~/Desktop/hvgapp/docs/SQUADS.md                — your squad, your lead, your service
+  ~/Desktop/hvgapp/docs/WORKFLOW.md              — the nine stages and the huddle map
+  ~/Desktop/hvgapp/docs/TOOLING.md               — how you get tools (S3 Equip)
+
+IGNORE ~/Desktop/hvgapp/docs/AGENT_CONFIG_PROMPT.md — superseded, it describes a
+14-agent roster. TEAM_BRIEFING.md is the roster of record.
 
 THE RULE THAT CHANGED: you no longer stop and wait for Peter. Your "Needs Peter's
 approval" column is void. Seven ACTIONS are gated (STANDING_WORK_ORDER §0) — money,
@@ -132,7 +136,7 @@ WHY DRAFT AND NOT FILE: `card add` works today, but there is no `card set` — a
 filed now cannot be edited, ever, until PR #18 lands. So we draft now and file the
 moment the verb exists. Phase 1b is the filing pass.
 
-WRITE TO: .buzz/PLANS/CARDS_<SQUAD>_<BRAND>.md — one file per squad per brand.
+WRITE TO: ~/.buzz/PLANS/CARDS_<SQUAD>_<BRAND>.md — one file per squad per brand.
 
 COVER YOUR TRACK, FOR EVERY BRAND:
   Command        ICBM PMP    strategy, positioning, audience, offer, pricing
@@ -162,10 +166,10 @@ RULES:
   - Cite sources with dates.
 
 MINE FIRST, DO NOT START BLANK:
-  .buzz/PLANS/BOARD_SEED_CARDS.md          19 written cards for clean + itshvg
-  .buzz/PLANS/BOARD_SEED_PRIORITY_BRANDS.md the archetype thesis
-  .buzz/PLANS/BUILD_WORKFLOW.md §7          card granularity rule
-  .buzz/RESEARCH/BRAND_DEFINITIONS.md       brand truth (MoSober/K&B sections are dead)
+  ~/.buzz/PLANS/BOARD_SEED_CARDS.md          19 written cards for clean + itshvg
+  ~/.buzz/PLANS/BOARD_SEED_PRIORITY_BRANDS.md the archetype thesis
+  ~/.buzz/PLANS/BUILD_WORKFLOW.md §7          card granularity rule
+  ~/.buzz/RESEARCH/BRAND_DEFINITIONS.md       brand truth (MoSober/K&B sections are dead)
 
 TWO SPECIAL CASES:
   gomarco — ICBM + PMP author the flow and product definition FIRST. It is the only

@@ -1,3 +1,16 @@
+> ## ⚠️ SUPERSEDED — HISTORICAL RECORD ONLY
+>
+> This is the prompt that **generated** the current Agent OS. It describes a **14-agent**
+> roster; the live roster is **18** (plus DEE pending). Its brand definitions still hold,
+> but its roster, tasks, and MCP bindings do not.
+>
+> **Do not execute this. Do not send it to the team.**
+>
+> Roster of record: `TEAM_BRIEFING.md` · Rules of record: `STANDING_WORK_ORDER.md` ·
+> Structure: `SQUADS.md` · Pipeline: `WORKFLOW.md` · Tools: `TOOLING.md`
+>
+> Marked superseded 2026-08-21.
+
 # SYSTEM DIRECTIVE: BUZZ WORKSPACE AGENT OS UPGRADE & REFACTORING
 
 **Session Role:** Principal Systems Architect & Build Lead (Otto / Claude Opus)  
