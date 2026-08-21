@@ -24,7 +24,7 @@ export const TOP: AgentConfig = {
     requiresHumanApproval: false,
   },
   scopeMandates: {
-    "hvg-app":
+    hvgapp:
       "Build the workspace board components, card drag-and-drop mechanics, tool review layouts, and settings modals.",
     itshvg:
       "Build the personal growth resource hubs, interactive assessment forms, and software review comparison tables.",

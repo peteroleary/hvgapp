@@ -24,7 +24,7 @@ export const TUNE: AgentConfig = {
     requiresHumanApproval: false,
   },
   scopeMandates: {
-    "hvg-app":
+    hvgapp:
       "Write the complex state machines, authentication cascades, and real-time sync adapters that keep the workspace instant.",
     itshvg:
       "Build the tool-testing harness, benchmark scoring algorithms, and dynamic resource calculators.",

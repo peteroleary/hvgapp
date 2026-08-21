@@ -24,7 +24,7 @@ export const PIMP: AgentConfig = {
     requiresHumanApproval: true,
   },
   scopeMandates: {
-    "hvg-app":
+    hvgapp:
       "Negotiate enterprise workspace integrations, developer partner tiers, and B2B ecosystem alliances.",
     itshvg:
       "Negotiate high-tier software vendor partnerships, executive mastermind sponsorships, and media syndication deals.",

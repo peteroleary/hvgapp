@@ -31,7 +31,7 @@ export const ICBM: AgentConfig = {
     requiresHumanApproval: true,
   },
   scopeMandates: {
-    "hvg-app":
+    hvgapp:
       "Govern multi-tenant monetization, enterprise licensing structures, and capital allocation across the agent workforce.",
     itshvg:
       "Structure media monetization, mastermind offerings, and software affiliate models, turning personal growth and entrepreneurial insight into high-margin media assets.",

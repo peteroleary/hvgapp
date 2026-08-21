@@ -25,7 +25,7 @@ export const ROO: AgentConfig = {
     requiresHumanApproval: false,
   },
   scopeMandates: {
-    "hvg-app":
+    hvgapp:
       "High-density, professional, low-distraction interface built for speed, clear hierarchy, and seamless agent orchestration.",
     itshvg:
       "Clean, practical, modern, and inspiring visual design built for busy entrepreneurs and founders seeking growth.",

@@ -8,7 +8,7 @@ import type { BrandSlug, PlatformSlug, ScopeSlug } from "./types.ts";
  * keys. Kept in lockstep with `desktop/src/features/board/ui/brandTokens.ts`
  * — the board registry and this one must agree on the slug set.
  *
- * `hvg-app` is the Buzz operating platform itself, not a consumer brand.
+ * `hvgapp` is the Buzz operating platform itself, not a consumer brand.
  * "High Value Growth" (`itshvg`) is the consumer media brand; the two are
  * distinct entities and must never be conflated.
  */
@@ -20,7 +20,7 @@ export interface BrandSpec {
   readonly summary: string;
 }
 
-export const PLATFORM_SLUG: PlatformSlug = "hvg-app";
+export const PLATFORM_SLUG: PlatformSlug = "hvgapp";
 
 export const BRAND_SLUGS: readonly BrandSlug[] = [
   "itshvg",
@@ -36,8 +36,8 @@ export const SCOPE_SLUGS: readonly ScopeSlug[] = [
 ] as const;
 
 export const BRANDS: Readonly<Record<ScopeSlug, BrandSpec>> = {
-  "hvg-app": {
-    slug: "hvg-app",
+  hvgapp: {
+    slug: "hvgapp",
     displayName: "hvg.app",
     domain: "hvg.app",
     kind: "platform",

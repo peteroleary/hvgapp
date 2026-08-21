@@ -35,7 +35,7 @@ export const SLIM: AgentConfig = {
     requiresHumanApproval: false,
   },
   scopeMandates: {
-    "hvg-app":
+    hvgapp:
       "Optimize workspace state sync algorithms, real-time JSON diffing, and database query latency.",
     itshvg:
       "Optimize tool evaluation scoring models and data aggregation engines for high-volume benchmark reports.",

@@ -22,7 +22,7 @@
         "AGENT_REACH_API_KEY"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -53,7 +53,7 @@
         "BROWSERBASE_PROJECT_ID"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "clean"
@@ -79,7 +79,7 @@
         "SERP_INTEL_API_KEY"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -107,7 +107,7 @@
       ],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -135,7 +135,7 @@
         "MARKET_INTEL_API_KEY"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -264,7 +264,7 @@
       ],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "clean",
         "gomarco"
       ],
@@ -321,7 +321,7 @@
         "STRIPE_SECRET_KEY"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -352,7 +352,7 @@
         "STRIPE_CONNECT_ACCOUNT_ID"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "lhfyc",
         "three",
         "clean"
@@ -404,7 +404,7 @@
         "PORTFOLIO_ANALYTICS_TOKEN"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -432,7 +432,7 @@
         "CAP_TABLE_API_KEY"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -539,7 +539,7 @@
       ],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -567,7 +567,7 @@
         "FIGMA_ACCESS_TOKEN"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -616,7 +616,7 @@
       ],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -644,7 +644,7 @@
       ],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -674,7 +674,7 @@
         "KUBECONFIG"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -703,7 +703,7 @@
         "GITHUB_TOKEN"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -732,7 +732,7 @@
         "DATABASE_URL"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -758,7 +758,7 @@
       ],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -785,7 +785,7 @@
       ],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -813,7 +813,7 @@
       ],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -839,7 +839,7 @@
       ],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -868,7 +868,7 @@
         "GITHUB_TOKEN"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -897,7 +897,7 @@
         "APOLLO_API_KEY"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "clean",
@@ -923,7 +923,7 @@
       ],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "clean",
@@ -949,7 +949,7 @@
       ],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -979,7 +979,7 @@
         "CRISIS_NLP_TOKEN"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -1007,7 +1007,7 @@
         "ESCALATION_WEBHOOK_SECRET"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -1037,7 +1037,7 @@
         "DISCORD_BOT_TOKEN"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -1071,7 +1071,7 @@
         "BUZZ_AUTH_TAG"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -1101,7 +1101,7 @@
         "GITHUB_TOKEN"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -1131,7 +1131,7 @@
         "RESEND_API_KEY"
       ],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -1153,7 +1153,7 @@
       "tools": [],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -1175,7 +1175,7 @@
       "tools": [],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -1197,7 +1197,7 @@
       "tools": [],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -1219,7 +1219,7 @@
       "tools": [],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -1241,7 +1241,7 @@
       "tools": [],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -1263,7 +1263,7 @@
       "tools": [],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -1304,7 +1304,7 @@
       "tools": [],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -1326,7 +1326,7 @@
       "tools": [],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -1348,7 +1348,7 @@
       "tools": [],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",
@@ -1371,7 +1371,7 @@
       "tools": [],
       "requiredEnv": [],
       "scopes": [
-        "hvg-app",
+        "hvgapp",
         "itshvg",
         "gomarco",
         "lhfyc",

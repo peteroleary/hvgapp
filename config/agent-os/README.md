@@ -23,7 +23,7 @@ narrows a config down to the subset the store actually carries, for seeding.
 | Path | Contents |
 |------|----------|
 | `src/types.ts` | Core type surface — `AgentConfig`, `McpServerSpec`, `RoutingRules` |
-| `src/brands.ts` | The platform (`hvg-app`) and five consumer brands |
+| `src/brands.ts` | The platform (`hvgapp`) and five consumer brands |
 | `src/models.ts` | Opaque model identifier constants |
 | `src/mcpRegistry.ts` | Declarative MCP + skill-pack registry (source of truth) |
 | `src/agents/` | One file per agent, 14 total |
@@ -54,7 +54,7 @@ and the relay-indexed `brand:<slug>` tag. `src/brands.ts` and
 `desktop/src/features/board/ui/brandTokens.ts` must agree on the slug set;
 both are pinned by tests.
 
-`hvg-app` is the Buzz operating platform. `itshvg` ("High Value Growth") is
+`hvgapp` is the Buzz operating platform. `itshvg` ("High Value Growth") is
 the consumer media brand. They are separate entities and must never be
 conflated.
 

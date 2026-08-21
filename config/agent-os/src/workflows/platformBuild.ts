@@ -10,7 +10,7 @@ import { OWNED_BY_PETER, ownedBy, type WorkflowDefinition } from "./types.ts";
 export const PLATFORM_BUILD: WorkflowDefinition = {
   id: "platform-build",
   name: "Platform Build Flow",
-  scope: "hvg-app",
+  scope: "hvgapp",
   description:
     "Turns a platform goal into shipped, search-ready hvg.app functionality behind a human approval gate.",
   initial: "route",

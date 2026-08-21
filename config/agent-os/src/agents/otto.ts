@@ -29,7 +29,7 @@ export const OTTO: AgentConfig = {
     requiresHumanApproval: false,
   },
   scopeMandates: {
-    "hvg-app":
+    hvgapp:
       "Architect the core multi-tenant SaaS infrastructure, agent execution harnesses, and real-time board collaboration websockets.",
     itshvg:
       "Design the interactive tool comparison engine, benchmark data store, and high-performance publishing CMS.",

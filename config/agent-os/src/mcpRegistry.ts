@@ -27,7 +27,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read"],
     tools: ["search_platform", "fetch_thread", "track_trend", "profile_lookup"],
     requiredEnv: ["AGENT_REACH_API_KEY"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -41,7 +41,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read", "execute"],
     tools: ["open_session", "run_flow", "capture_screenshot", "extract_dom"],
     requiredEnv: ["BROWSERBASE_API_KEY", "BROWSERBASE_PROJECT_ID"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "clean"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "clean"],
     provisioned: false,
   },
   {
@@ -55,7 +55,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read"],
     tools: ["rank_track", "cluster_intent", "backlink_profile"],
     requiredEnv: ["SERP_INTEL_API_KEY"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -69,7 +69,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read", "execute"],
     tools: ["seo_audit", "seo_technical", "seo_schema", "seo_geo"],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: true,
   },
   {
@@ -83,7 +83,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read"],
     tools: ["comp_search", "multiple_lookup", "exit_model"],
     requiredEnv: ["MARKET_INTEL_API_KEY"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
 
@@ -164,7 +164,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["execute"],
     tools: ["compress_sensor", "pack_binary", "accelerate_vector"],
     requiredEnv: [],
-    scopes: ["hvg-app", "clean", "gomarco"],
+    scopes: ["hvgapp", "clean", "gomarco"],
     provisioned: false,
   },
 
@@ -203,7 +203,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read", "write"],
     tools: ["create_price", "model_tier", "list_disputes", "fee_report"],
     requiredEnv: ["STRIPE_SECRET_KEY"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -222,7 +222,7 @@ const SERVERS: readonly McpServerSpec[] = [
       "escrow_release",
     ],
     requiredEnv: ["STRIPE_SECRET_KEY", "STRIPE_CONNECT_ACCOUNT_ID"],
-    scopes: ["hvg-app", "lhfyc", "three", "clean"],
+    scopes: ["hvgapp", "lhfyc", "three", "clean"],
     provisioned: false,
   },
   {
@@ -249,7 +249,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read"],
     tools: ["pnl_rollup", "burn_rate", "capital_efficiency"],
     requiredEnv: ["PORTFOLIO_ANALYTICS_URL", "PORTFOLIO_ANALYTICS_TOKEN"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -263,7 +263,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read"],
     tools: ["model_valuation", "structure_deal", "cap_table_snapshot"],
     requiredEnv: ["CAP_TABLE_API_KEY"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
 
@@ -325,7 +325,7 @@ const SERVERS: readonly McpServerSpec[] = [
       "export-design",
     ],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: true,
   },
   {
@@ -339,7 +339,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read"],
     tools: ["sync_file", "extract_tokens", "export_tailwind"],
     requiredEnv: ["FIGMA_ACCESS_TOKEN"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -366,7 +366,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["execute"],
     tools: ["apply_pas", "apply_aida", "apply_storybrand"],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
 
@@ -382,7 +382,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read", "write", "execute"],
     tools: ["run_task", "edit_file", "run_tests"],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: true,
   },
   {
@@ -396,7 +396,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read", "execute"],
     tools: ["build_image", "apply_manifest", "scale_service", "rollout_status"],
     requiredEnv: ["KUBECONFIG"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -410,7 +410,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read", "write"],
     tools: ["scaffold_repo", "add_workspace", "define_pipeline"],
     requiredEnv: ["GITHUB_TOKEN"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -424,7 +424,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read", "write"],
     tools: ["introspect_schema", "generate_migration", "model_entity"],
     requiredEnv: ["DATABASE_URL"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -438,7 +438,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read"],
     tools: ["index_repo", "semantic_search", "dependency_graph"],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -452,7 +452,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read", "execute"],
     tools: ["parse_ast", "apply_codemod", "rewrite_node"],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -471,7 +471,7 @@ const SERVERS: readonly McpServerSpec[] = [
       "validate_contract",
     ],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -485,7 +485,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["execute"],
     tools: ["run_e2e", "generate_unit_tests", "browser_snapshot"],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: true,
   },
   {
@@ -499,7 +499,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read", "write"],
     tools: ["create_branch", "open_pr", "resolve_conflict"],
     requiredEnv: ["GITHUB_TOKEN"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -513,7 +513,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read", "write"],
     tools: ["find_contact", "log_touch", "pipeline_status"],
     requiredEnv: ["APOLLO_API_KEY"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "clean", "three"],
     provisioned: false,
   },
   {
@@ -527,7 +527,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read", "write"],
     tools: ["draft_term_sheet", "draft_nda", "model_rev_share"],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "clean", "three"],
     provisioned: false,
   },
   {
@@ -541,7 +541,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read", "execute"],
     tools: ["validate_jsonld", "map_entity_graph", "generate_schema"],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
 
@@ -557,7 +557,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read", "execute"],
     tools: ["score_message", "detect_crisis", "classify_risk"],
     requiredEnv: ["CRISIS_NLP_URL", "CRISIS_NLP_TOKEN"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -571,7 +571,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["execute"],
     tools: ["page_human", "escalate_urgent"],
     requiredEnv: ["ESCALATION_WEBHOOK_URL", "ESCALATION_WEBHOOK_SECRET"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -585,7 +585,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read", "write"],
     tools: ["categorize_ticket", "assign_queue", "draft_reply"],
     requiredEnv: ["ZENDESK_API_TOKEN", "DISCORD_BOT_TOKEN"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -605,7 +605,7 @@ const SERVERS: readonly McpServerSpec[] = [
       "channels_list",
     ],
     requiredEnv: ["BUZZ_RELAY_URL", "BUZZ_PRIVATE_KEY", "BUZZ_AUTH_TAG"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: true,
   },
   {
@@ -619,7 +619,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read", "write"],
     tools: ["sync_issue", "create_branch", "link_pr"],
     requiredEnv: ["LINEAR_API_KEY", "GITHUB_TOKEN"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -632,7 +632,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["execute"],
     tools: ["dispatch_slack", "dispatch_discord", "dispatch_email"],
     requiredEnv: ["SLACK_WEBHOOK_URL", "DISCORD_WEBHOOK_URL", "RESEND_API_KEY"],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
 
@@ -648,7 +648,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["execute"],
     tools: [],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -661,7 +661,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["execute"],
     tools: [],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -674,7 +674,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["execute"],
     tools: [],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -688,7 +688,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["execute"],
     tools: [],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -702,7 +702,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read"],
     tools: [],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -716,7 +716,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["execute"],
     tools: [],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -744,7 +744,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read"],
     tools: [],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -758,7 +758,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["execute"],
     tools: [],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -772,7 +772,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read"],
     tools: [],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
   {
@@ -786,7 +786,7 @@ const SERVERS: readonly McpServerSpec[] = [
     defaultPermissions: ["read", "execute"],
     tools: [],
     requiredEnv: [],
-    scopes: ["hvg-app", "itshvg", "gomarco", "lhfyc", "clean", "three"],
+    scopes: ["hvgapp", "itshvg", "gomarco", "lhfyc", "clean", "three"],
     provisioned: false,
   },
 ];

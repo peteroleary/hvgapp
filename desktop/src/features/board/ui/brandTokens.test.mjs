@@ -17,7 +17,7 @@ import {
 const LOCKED_BRAND_SLUGS = [
   "clean",
   "gomarco",
-  "hvg-app",
+  "hvgapp",
   "itshvg",
   "lhfyc",
   "three",
@@ -37,7 +37,7 @@ test("every locked slug resolves to its brand display name", () => {
   assert.equal(brandDisplayName("lhfyc"), "Look How Far You've Come");
   assert.equal(brandDisplayName("gomarco"), "Go Marco");
   assert.equal(brandDisplayName("three"), "We 3 Live");
-  assert.equal(brandDisplayName("hvg-app"), "hvg.app");
+  assert.equal(brandDisplayName("hvgapp"), "hvg.app");
 });
 
 test("retired brand slugs are absent from the registry", () => {
@@ -60,7 +60,7 @@ test("retired brand names never surface as display text", () => {
 // hvg.app is the Buzz operating platform; High Value Growth is the consumer
 // media brand. Conflating them is the failure this pins.
 test("the platform slug is distinct from the High Value Growth brand", () => {
-  assert.notEqual(BRAND_DISPLAY_NAMES["hvg-app"], BRAND_DISPLAY_NAMES.itshvg);
+  assert.notEqual(BRAND_DISPLAY_NAMES["hvgapp"], BRAND_DISPLAY_NAMES.itshvg);
 });
 
 // amber-500 is the forbidden #f59e0b design token.

@@ -28,7 +28,7 @@ Board is the operational Kanban for the entire six-brand operation (and any bran
   id: string,
   title: string,
   description: string,
-  brand: string,               // slug: itshvg | gomarco | lhfyc | clean | three | hvg-app | future brands
+  brand: string,               // slug: itshvg | gomarco | lhfyc | clean | three | hvgapp | future brands
   function: string,             // build | design | content | social | marketing | sales | research | other
   assignees: [{ type: 'agent' | 'human', id: string, role?: string }],
   status: string,                // free-form label tied to listId, not the approval gate

@@ -64,7 +64,7 @@ pub const DEFAULT_LIST_TITLES: [&str; 5] = [
 /// card no brand filter ever returns — invisible, not broken — so anything
 /// outside this set is a hard error, not a warning.
 pub const BRAND_SLUGS: [&str; 6] = [
-    "clean", "itshvg", "lhfyc", "gomarco", "three", "hvg-app",
+    "clean", "itshvg", "lhfyc", "gomarco", "three", "hvgapp",
 ];
 
 /// The Board function taxonomy (`FunctionArea` in `types/boardTypes.ts`).
@@ -1042,7 +1042,7 @@ struct SeedCard {
 }
 
 /// Boards created by `buzz board seed`. The five customer-facing brands, the
-/// `hvg-app` platform board, plus Unified Master for cross-brand coordination. Order matters for the CLI
+/// `hvgapp` platform board, plus Unified Master for cross-brand coordination. Order matters for the CLI
 /// report; creation itself is independent.
 const SEED_BOARDS: &[SeedBoard] = &[
     SeedBoard {
@@ -1052,9 +1052,9 @@ const SEED_BOARDS: &[SeedBoard] = &[
         description: "Cross-brand coordination board. Goals, loops, and work that spans the six-brand operation live here.",
     },
     SeedBoard {
-        id: "hvg-app",
+        id: "hvgapp",
         title: "hvg.app",
-        brand: Some("hvg-app"),
+        brand: Some("hvgapp"),
         description: "The Buzz operating platform itself: relay, desktop, agent harness, board, and the pipelines the team runs on. Platform work, not brand work.",
     },
     SeedBoard {
@@ -1466,7 +1466,7 @@ mod tests {
     #[test]
     fn validate_brand_rejects_unknown() {
         assert!(validate_brand("clean").is_ok());
-        assert!(validate_brand("hvg-app").is_ok());
+        assert!(validate_brand("hvgapp").is_ok());
         assert!(validate_brand("cleanstartup").is_err());
         assert!(validate_brand("Clean").is_err());
         assert!(validate_brand("").is_err());

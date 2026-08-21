@@ -1,7 +1,7 @@
 # WORK ORDER — REPAIR THE BOARDS AND CARDS
 
 **Routed to:** JUV (owner) · MFR + TUN (build) · YBY (implementation) · PAT (verification)
-**Scope:** `hvg-app` · **Approval gate:** Peter, before anything destructive
+**Scope:** `hvgapp` · **Approval gate:** Peter, before anything destructive
 
 You built these boards. They are now wrong, and you are correcting them.
 
@@ -14,7 +14,7 @@ Exactly seven boards, no others:
 | Board id (`d` tag) | Title | Brand slug |
 |---|---|---|
 | `unified-master` | Unified Master | *(none — cross-brand)* |
-| `hvg-app` | hvg.app | `hvg-app` |
+| `hvgapp` | hvg.app | `hvgapp` |
 | `itshvg` | High Value Growth | `itshvg` |
 | `gomarco` | Go Marco | `gomarco` |
 | `lhfyc` | Look How Far You've Come | `lhfyc` |
@@ -34,7 +34,7 @@ data was never migrated, so the relay is expected to still hold:
 - a `sober` board titled **MoSober** — retired name, must not appear anywhere
 - a `concrete` board titled **K&B Concrete** — brand removed from the portfolio
 - a `three` board titled **We3Live** — should be **We 3 Live**
-- **no** `lhfyc`, `gomarco`, or `hvg-app` board
+- **no** `lhfyc`, `gomarco`, or `hvgapp` board
 - cards tagged `brand:sober` / `brand:concrete` — slugs the registry no longer knows
 
 **Do not assume this list is accurate. Verify it first.** It is derived from the
@@ -75,7 +75,7 @@ exact ids — no summaries.
 Once PAT reports, create only the boards that genuinely do not exist:
 `buzz board create --id lhfyc --title "Look How Far You've Come" --brand lhfyc`
 `buzz board create --id gomarco --title 'Go Marco' --brand gomarco`
-`buzz board create --id hvg-app --title 'hvg.app' --brand hvg-app`
+`buzz board create --id hvgapp --title 'hvg.app' --brand hvgapp`
 If `board create` refuses, the board already exists — say so, do not force it.
 
 **Task 3 — MFR + TUN: design and build the missing verbs.**
@@ -117,8 +117,8 @@ correct titles, zero cards on a slug outside the locked set, zero occurrences of
 ## 6. DECIDED — PLATFORM BOARD
 
 Peter has ruled: the portfolio keeps **both** `unified-master` and a separate
-`hvg-app` board. Platform work — relay, desktop, agent harness, board, pipelines
-— goes on `hvg-app`. `unified-master` stays for cross-brand coordination and for
+`hvgapp` board. Platform work — relay, desktop, agent harness, board, pipelines
+— goes on `hvgapp`. `unified-master` stays for cross-brand coordination and for
 parking cards that have no clear home.
 
-`hvg-app` is already in the seed set, so `buzz board seed` will create it.
+`hvgapp` is already in the seed set, so `buzz board seed` will create it.

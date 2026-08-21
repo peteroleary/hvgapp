@@ -41,7 +41,7 @@ export const JUVE: AgentConfig = {
     requiresHumanApproval: true,
   },
   scopeMandates: {
-    "hvg-app":
+    hvgapp:
       "Manage master board configurations, workspace permissions, cross-agent feed triggers, and sprint cards.",
     itshvg:
       "Schedule deep software testing workflows, content publishing sprints, and entrepreneurial guide releases.",

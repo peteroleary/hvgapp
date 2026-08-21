@@ -30,7 +30,7 @@ export const PATA: AgentConfig = {
     requiresHumanApproval: false,
   },
   scopeMandates: {
-    "hvg-app":
+    hvgapp:
       "Audit competitive AI agent harnesses, multi-tenant collaboration features, and workflow orchestration frameworks.",
     itshvg:
       "Drive every reviewed software tool yourself via browser automation — signing up, running real workflows, logging breaks, setup friction, and actual pricing with dates.",

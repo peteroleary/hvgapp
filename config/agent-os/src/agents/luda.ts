@@ -29,7 +29,7 @@ export const LUDA: AgentConfig = {
     requiresHumanApproval: true,
   },
   scopeMandates: {
-    "hvg-app":
+    hvgapp:
       "Design visual micro-demos, product tour clips, and interactive onboarding animations.",
     itshvg:
       "Produce dynamic, screen-recorded SaaS breakdown hooks, viral entrepreneurship growth shorts, and high-energy tool review teasers.",

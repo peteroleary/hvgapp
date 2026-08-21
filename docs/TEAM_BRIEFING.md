@@ -50,13 +50,13 @@ is how things stall silently.
 
 ## 3. WHAT YOU ARE WORKING ON — THE PORTFOLIO
 
-One platform and five consumer brands. `hvg-app` is the operating platform you all
+One platform and five consumer brands. `hvgapp` is the operating platform you all
 work *inside*; **High Value Growth** is a consumer media brand. They are different
 entities — never conflate them.
 
 | Slug | Name | What it is |
 |---|---|---|
-| `hvg-app` | hvg.app | The customized Buzz platform, multi-tenant agent execution harness, and central operating system where Peter, the human team, and the 14 agents collaborate, manage boards, trigger pipelines, and coordinate work across the portfolio. |
+| `hvgapp` | hvg.app | The customized Buzz platform, multi-tenant agent execution harness, and central operating system where Peter, the human team, and the 14 agents collaborate, manage boards, trigger pipelines, and coordinate work across the portfolio. |
 | `itshvg` | High Value Growth | Consumer-facing media, education, and content brand focused on personal growth, entrepreneurship, practical business playbooks, and hands-on software/tool benchmark reviews for founders and operators. |
 | `gomarco` | Go Marco | Group travel intelligence platform featuring WebRTC live voice Powwows, automated loyalty/card reward consolidation via Plaid, and deep community research through Agent Reach. |
 | `lhfyc` | Look How Far You've Come (lhfyc.xyz) | Dignified, milestone-based peer accountability and escrow crowdfunding platform with daily habit verification — biometric UAs, location dwell time, and reading logs. |
@@ -68,7 +68,7 @@ Retired and never to be referenced again: MoSober, K&B Concrete.
 
 ## 4. THE FLOWS YOU RUN
 
-**Platform Build Flow** — scope `hvg-app`
+**Platform Build Flow** — scope `hvgapp`
 > JUV (Route & Scope) ➔ MFR & TUN (Architecture & Spec) ➔ ROO (Design System & UI Spec) ➔ YBY (Implementation) ➔ SLM (Optimization Pass) ➔ BOO (Search & Schema Sweep) ➔ PETER (Peter Approval) ➔ JUV (Shipped)
 
 **We 3 Live Production Flow** — scope `three`

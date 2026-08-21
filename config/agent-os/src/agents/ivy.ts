@@ -25,7 +25,7 @@ export const IVY: AgentConfig = {
     requiresHumanApproval: true,
   },
   scopeMandates: {
-    "hvg-app":
+    hvgapp:
       "Manage subscription tier pricing, API seat licensing, and infrastructure billing optimization.",
     itshvg:
       "Structure personal growth digital product pricing, mastermind tiers, and software affiliate commission tracking.",

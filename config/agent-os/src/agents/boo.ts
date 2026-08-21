@@ -34,7 +34,7 @@ export const BOO: AgentConfig = {
     requiresHumanApproval: true,
   },
   scopeMandates: {
-    "hvg-app":
+    hvgapp:
       "Optimize developer documentation search, platform feature discoverability, and brand entity recognition.",
     itshvg:
       "Optimize software review schemas, comparative tool matrices, and technical SEO architecture for personal growth and SaaS keywords.",

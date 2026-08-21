@@ -56,9 +56,9 @@ test("every agent states a mandate for the platform and all five brands", () => 
 });
 
 test("hvg.app is a platform, not a consumer brand", () => {
-  assert.equal(BRANDS["hvg-app"].kind, "platform");
+  assert.equal(BRANDS["hvgapp"].kind, "platform");
   assert.equal(BRANDS.itshvg.kind, "brand");
-  assert.notEqual(BRANDS["hvg-app"].displayName, BRANDS.itshvg.displayName);
+  assert.notEqual(BRANDS["hvgapp"].displayName, BRANDS.itshvg.displayName);
   for (const slug of BRAND_SLUGS) {
     assert.equal(BRANDS[slug].kind, "brand");
   }

@@ -37,7 +37,7 @@ export const NICKI: AgentConfig = {
     requiresHumanApproval: true,
   },
   scopeMandates: {
-    "hvg-app":
+    hvgapp:
       "Nurture the workspace developer community, triage platform bug reports, and collect feedback on agent collaboration features with sharp, structured clarity.",
     itshvg:
       "Foster the entrepreneur community, manage newsletter responses, and encourage growth-minded founders with high-energy motivation.",

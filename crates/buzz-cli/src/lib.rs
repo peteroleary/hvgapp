@@ -1153,7 +1153,7 @@ pub enum NotesCmd {
 pub enum BoardCmd {
     /// List boards (reconciled heads across all authors).
     Ls {
-        /// Filter to one brand scope (locked set: clean, itshvg, lhfyc, gomarco, three, hvg-app).
+        /// Filter to one brand scope (locked set: clean, itshvg, lhfyc, gomarco, three, hvgapp).
         #[arg(long)]
         brand: Option<String>,
         /// Max results (default 50, hard cap 200).

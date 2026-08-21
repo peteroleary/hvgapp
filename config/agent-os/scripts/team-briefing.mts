@@ -76,7 +76,7 @@ p();
 p("## 3. WHAT YOU ARE WORKING ON — THE PORTFOLIO");
 p();
 p(
-  "One platform and five consumer brands. `hvg-app` is the operating platform you all",
+  "One platform and five consumer brands. `hvgapp` is the operating platform you all",
 );
 p(
   "work *inside*; **High Value Growth** is a consumer media brand. They are different",

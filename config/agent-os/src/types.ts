@@ -14,7 +14,7 @@
 export type BrandSlug = "itshvg" | "gomarco" | "lhfyc" | "clean" | "three";
 
 /** The central operating platform. Not a consumer brand. */
-export type PlatformSlug = "hvg-app";
+export type PlatformSlug = "hvgapp";
 
 /** Anything an agent can be scoped to: the platform, or one of the 5 brands. */
 export type ScopeSlug = PlatformSlug | BrandSlug;

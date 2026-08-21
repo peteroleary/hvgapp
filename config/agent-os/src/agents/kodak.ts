@@ -26,7 +26,7 @@ export const KODAK: AgentConfig = {
     requiresHumanApproval: true,
   },
   scopeMandates: {
-    "hvg-app":
+    hvgapp:
       "Write crisp documentation, in-app microcopy, agent role manifests, and user onboarding flows that are punchy, intuitive, and devoid of corporate fluff.",
     itshvg:
       "Write high-impact personal growth essays, entrepreneurial frameworks, and no-BS software reviews that speak to the hustle, resilience, and real-world execution required to build wealth.",
