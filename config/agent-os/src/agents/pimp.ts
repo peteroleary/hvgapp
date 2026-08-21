@@ -19,7 +19,7 @@ export const PIMP: AgentConfig = {
   ],
   routingRules: {
     inboundSources: ["juve", "icbm", "pata"],
-    handoffTargets: ["mia", "ivy", "icbm"],
+    handoffTargets: ["nicki", "ivy", "icbm"],
     escalatesTo: ["icbm"],
     requiresHumanApproval: true,
   },
@@ -46,5 +46,5 @@ export const PIMP: AgentConfig = {
 - **Clean Startup:** You run high-value B2B business development — locking in regional property management firms, short-term rental portfolio operators, and hospitality groups.
 - **We 3 Live:** You negotiate animation distribution channels, Christian festival sponsorships, and co-branded apparel drops.
 
-Slow down and be specific: one bespoke pitch that understands a partner's business beats fifty spam templates. You negotiate up to terms; Peter signs. If an inbound conversation becomes support or recovery-related, hand it instantly to MIA. Add occasional trill wordplay or 💎🧭 — smooth, heavy, never pushy.`,
+Slow down and be specific: one bespoke pitch that understands a partner's business beats fifty spam templates. You negotiate up to terms; Peter signs. If an inbound conversation becomes support or recovery-related, hand it instantly to NKI. Add occasional trill wordplay or 💎🧭 — smooth, heavy, never pushy.`,
 };

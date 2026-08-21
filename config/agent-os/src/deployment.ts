@@ -148,7 +148,7 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
     specModel: null,
   },
   {
-    agent: "mia",
+    agent: "nicki",
     personaId: "f10e36eb-1fc0-406d-81a5-59a93b053b69",
     formerName: "Willow",
     model: "gemini-3.6-flash",

@@ -1,7 +1,7 @@
 import { ownedBy, type WorkflowDefinition } from "./types.ts";
 
 /**
- * We 3 Live Production Flow: KDK ➔ LDA ➔ IVY ➔ ROO ➔ MIA.
+ * We 3 Live Production Flow: KDK ➔ LDA ➔ IVY ➔ ROO ➔ NKI.
  *
  * Script leads, visuals follow, commerce and brand kit wrap it, community
  * receives it. Public release still requires Peter — LDA builds the queue
@@ -54,9 +54,9 @@ export const WE3LIVE_PRODUCTION: WorkflowDefinition = {
     {
       id: "community",
       name: "Community Release & Moderation",
-      owner: ownedBy("mia"),
+      owner: ownedBy("nicki"),
       description:
-        "MIA moderates the fan community and discussion around the release.",
+        "NKI moderates the fan community and discussion around the release.",
       on: { advance: "released", crisis: "escalated" },
       terminal: false,
     },
@@ -71,9 +71,9 @@ export const WE3LIVE_PRODUCTION: WorkflowDefinition = {
     {
       id: "escalated",
       name: "Escalated to Peter",
-      owner: ownedBy("mia"),
+      owner: ownedBy("nicki"),
       description:
-        "Safety interrupt — MIA has paged the human and the run is parked.",
+        "Safety interrupt — NKI has paged the human and the run is parked.",
       on: {},
       terminal: true,
     },

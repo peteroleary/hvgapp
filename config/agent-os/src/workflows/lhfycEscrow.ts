@@ -2,7 +2,7 @@ import { ownedBy, ownedBySystem, type WorkflowDefinition } from "./types.ts";
 
 /**
  * lhfyc.xyz Escrow Milestone Flow:
- * Verification Ingestion ➔ SLM & PAT ➔ TUN ➔ MIA.
+ * Verification Ingestion ➔ SLM & PAT ➔ TUN ➔ NKI.
  *
  * SLM and PAT hold verification concurrently: SLM proves the signal is
  * tamper-proof, PAT checks it against the compliance landscape. A crisis
@@ -46,9 +46,9 @@ export const LHFYC_ESCROW: WorkflowDefinition = {
     {
       id: "acknowledge",
       name: "Community Acknowledgement",
-      owner: ownedBy("mia"),
+      owner: ownedBy("nicki"),
       description:
-        "MIA acknowledges the milestone with dignity and screens the space for predatory actors.",
+        "NKI acknowledges the milestone with dignity and screens the space for predatory actors.",
       on: { advance: "complete", crisis: "escalated" },
       terminal: false,
     },
@@ -63,9 +63,9 @@ export const LHFYC_ESCROW: WorkflowDefinition = {
     {
       id: "escalated",
       name: "Escalated to Peter",
-      owner: ownedBy("mia"),
+      owner: ownedBy("nicki"),
       description:
-        "Crisis interrupt. MIA has paged the human immediately; no clinical advice is given and the run is parked pending human handling.",
+        "Crisis interrupt. NKI has paged the human immediately; no clinical advice is given and the run is parked pending human handling.",
       on: {},
       terminal: true,
     },

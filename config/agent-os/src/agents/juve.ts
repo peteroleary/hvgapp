@@ -35,7 +35,7 @@ export const JUVE: AgentConfig = {
       "pimp",
       "pata",
       "boo",
-      "mia",
+      "nicki",
     ],
     escalatesTo: ["icbm"],
     requiresHumanApproval: true,

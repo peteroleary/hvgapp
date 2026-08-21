@@ -20,7 +20,7 @@ export const IVY: AgentConfig = {
   ],
   routingRules: {
     inboundSources: ["juve", "icbm", "luda", "kodak", "roo"],
-    handoffTargets: ["boo", "mia", "roo"],
+    handoffTargets: ["boo", "nicki", "roo"],
     escalatesTo: ["icbm", "juve"],
     requiresHumanApproval: true,
   },

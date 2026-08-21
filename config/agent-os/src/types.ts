@@ -34,7 +34,7 @@ export type AgentId =
   | "pimp"
   | "pata"
   | "boo"
-  | "mia";
+  | "nicki";
 
 /**
  * Opaque, harness-specific model identifier. Buzz stores and passes these

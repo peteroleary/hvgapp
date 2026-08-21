@@ -24,7 +24,7 @@ export const LUDA: AgentConfig = {
   ],
   routingRules: {
     inboundSources: ["juve", "kodak", "roo", "pata"],
-    handoffTargets: ["ivy", "roo", "boo", "mia"],
+    handoffTargets: ["ivy", "roo", "boo", "nicki"],
     escalatesTo: ["juve"],
     requiresHumanApproval: true,
   },

@@ -5,7 +5,7 @@ import { ICBM } from "./icbm.ts";
 import { IVY } from "./ivy.ts";
 import { JUVE } from "./juve.ts";
 import { LUDA } from "./luda.ts";
-import { MIA } from "./mia.ts";
+import { NICKI } from "./nicki.ts";
 import { OTTO } from "./otto.ts";
 import { PATA } from "./pata.ts";
 import { PIMP } from "./pimp.ts";
@@ -21,7 +21,7 @@ export {
   IVY,
   JUVE,
   LUDA,
-  MIA,
+  NICKI,
   OTTO,
   PATA,
   PIMP,
@@ -46,7 +46,7 @@ export const AGENTS: readonly AgentConfig[] = [
   PIMP,
   PATA,
   BOO,
-  MIA,
+  NICKI,
 ];
 
 const BY_ID = new Map<AgentId, AgentConfig>(
