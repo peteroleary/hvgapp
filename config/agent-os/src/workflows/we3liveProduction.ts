@@ -1,10 +1,10 @@
 import { ownedBy, type WorkflowDefinition } from "./types.ts";
 
 /**
- * We 3 Live Production Flow: Cruz ➔ Luda ➔ Ivy ➔ Roo ➔ Mia.
+ * We 3 Live Production Flow: KDK ➔ LDA ➔ IVY ➔ ROO ➔ MIA.
  *
  * Script leads, visuals follow, commerce and brand kit wrap it, community
- * receives it. Public release still requires Peter — Luda builds the queue
+ * receives it. Public release still requires Peter — LDA builds the queue
  * rather than pushing the button.
  */
 export const WE3LIVE_PRODUCTION: WorkflowDefinition = {
@@ -18,9 +18,9 @@ export const WE3LIVE_PRODUCTION: WorkflowDefinition = {
     {
       id: "script",
       name: "Script & Dialogue",
-      owner: ownedBy("cruz"),
+      owner: ownedBy("kodak"),
       description:
-        "Cruz writes episodic scripts and character dialogue, balancing satire, relatability, and family-appropriate faith.",
+        "KDK writes episodic scripts and character dialogue, balancing satire, relatability, and family-appropriate faith.",
       on: { advance: "visuals", block: "script" },
       terminal: false,
     },
@@ -29,7 +29,7 @@ export const WE3LIVE_PRODUCTION: WorkflowDefinition = {
       name: "Visual Concept & Animatics",
       owner: ownedBy("luda"),
       description:
-        "Luda engineers character sheets, animatics, and storyboard frames. When trend and tone conflict, tone wins.",
+        "LDA engineers character sheets, animatics, and storyboard frames. When trend and tone conflict, tone wins.",
       on: { advance: "commerce", reject: "script" },
       terminal: false,
     },
@@ -38,7 +38,7 @@ export const WE3LIVE_PRODUCTION: WorkflowDefinition = {
       name: "Merch & Unit Economics",
       owner: ownedBy("ivy"),
       description:
-        "Ivy sources blanks and models landed cost, fees, and margin. Products below healthy margin get killed here.",
+        "IVY sources blanks and models landed cost, fees, and margin. Products below healthy margin get killed here.",
       on: { advance: "brandkit", reject: "visuals" },
       terminal: false,
     },
@@ -47,7 +47,7 @@ export const WE3LIVE_PRODUCTION: WorkflowDefinition = {
       name: "Brand Kit & Asset Finish",
       owner: ownedBy("roo"),
       description:
-        "Roo applies the We 3 Live design system and finishes assets to spec, with accessibility verified.",
+        "ROO applies the We 3 Live design system and finishes assets to spec, with accessibility verified.",
       on: { advance: "community", reject: "visuals" },
       terminal: false,
     },
@@ -56,7 +56,7 @@ export const WE3LIVE_PRODUCTION: WorkflowDefinition = {
       name: "Community Release & Moderation",
       owner: ownedBy("mia"),
       description:
-        "Mia moderates the fan community and discussion around the release.",
+        "MIA moderates the fan community and discussion around the release.",
       on: { advance: "released", crisis: "escalated" },
       terminal: false,
     },
@@ -73,7 +73,7 @@ export const WE3LIVE_PRODUCTION: WorkflowDefinition = {
       name: "Escalated to Peter",
       owner: ownedBy("mia"),
       description:
-        "Safety interrupt — Mia has paged the human and the run is parked.",
+        "Safety interrupt — MIA has paged the human and the run is parked.",
       on: {},
       terminal: true,
     },

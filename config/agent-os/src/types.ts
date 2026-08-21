@@ -29,7 +29,7 @@ export type AgentId =
   | "slim"
   | "roo"
   | "luda"
-  | "cruz"
+  | "kodak"
   | "ivy"
   | "pimp"
   | "pata"

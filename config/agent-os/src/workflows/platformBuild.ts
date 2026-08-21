@@ -2,9 +2,9 @@ import { OWNED_BY_PETER, ownedBy, type WorkflowDefinition } from "./types.ts";
 
 /**
  * Platform Build Flow (hvg.app):
- * Juve ➔ Otto & Tune ➔ Roo ➔ Top ➔ Slim ➔ Boo ➔ Peter (Approval).
+ * JUV ➔ OTO & TUN ➔ ROO ➔ YBY ➔ SLM ➔ BOO ➔ Peter (Approval).
  *
- * Otto and Tune hold the architecture state concurrently by design — the
+ * OTO and TUN hold the architecture state concurrently by design — the
  * agent specs require two senior perspectives before either writes code.
  */
 export const PLATFORM_BUILD: WorkflowDefinition = {
@@ -20,7 +20,7 @@ export const PLATFORM_BUILD: WorkflowDefinition = {
       name: "Route & Scope",
       owner: ownedBy("juve"),
       description:
-        "Juve shapes the goal into SMART/OKR cards and assigns the build.",
+        "JUV shapes the goal into SMART/OKR cards and assigns the build.",
       on: { advance: "architect", block: "route" },
       terminal: false,
     },
@@ -29,7 +29,7 @@ export const PLATFORM_BUILD: WorkflowDefinition = {
       name: "Architecture & Spec",
       owner: ownedBy("otto", "tune"),
       description:
-        "Otto and Tune plan together and produce an unambiguous spec. Neither decides alone.",
+        "OTO and TUN plan together and produce an unambiguous spec. Neither decides alone.",
       on: { advance: "design", reject: "route", escalate: "route" },
       terminal: false,
     },
@@ -38,7 +38,7 @@ export const PLATFORM_BUILD: WorkflowDefinition = {
       name: "Design System & UI Spec",
       owner: ownedBy("roo"),
       description:
-        "Roo produces components, states, spacing, tokens, and breakpoints precise enough to build without guessing.",
+        "ROO produces components, states, spacing, tokens, and breakpoints precise enough to build without guessing.",
       on: { advance: "build", reject: "architect" },
       terminal: false,
     },
@@ -47,7 +47,7 @@ export const PLATFORM_BUILD: WorkflowDefinition = {
       name: "Implementation",
       owner: ownedBy("top"),
       description:
-        "Top builds directly from the verified spec and writes tests as it goes.",
+        "YBY builds directly from the verified spec and writes tests as it goes.",
       on: { advance: "optimize", reject: "design", escalate: "architect" },
       terminal: false,
     },
@@ -56,7 +56,7 @@ export const PLATFORM_BUILD: WorkflowDefinition = {
       name: "Optimization Pass",
       owner: ownedBy("slim"),
       description:
-        "Slim profiles and refactors hot paths for latency and allocation.",
+        "SLM profiles and refactors hot paths for latency and allocation.",
       on: { advance: "search", reject: "build" },
       terminal: false,
     },
@@ -65,7 +65,7 @@ export const PLATFORM_BUILD: WorkflowDefinition = {
       name: "Search & Schema Sweep",
       owner: ownedBy("boo"),
       description:
-        "Boo runs the schema, Core Web Vitals, and AI Overviews readiness sweep on the shipped surface.",
+        "BOO runs the schema, Core Web Vitals, and AI Overviews readiness sweep on the shipped surface.",
       on: { advance: "approval", reject: "build" },
       terminal: false,
     },
@@ -82,7 +82,7 @@ export const PLATFORM_BUILD: WorkflowDefinition = {
       id: "shipped",
       name: "Shipped",
       owner: ownedBy("juve"),
-      description: "Approved and released; Juve closes the cards.",
+      description: "Approved and released; JUV closes the cards.",
       on: {},
       terminal: true,
     },

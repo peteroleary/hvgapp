@@ -103,7 +103,7 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
     specModel: "Gemini 3.7 Flash",
   },
   {
-    agent: "cruz",
+    agent: "kodak",
     personaId: "builtin:honey",
     formerName: "Honey",
     model: "sonnet",

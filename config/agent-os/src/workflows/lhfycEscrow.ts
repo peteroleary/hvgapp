@@ -2,10 +2,10 @@ import { ownedBy, ownedBySystem, type WorkflowDefinition } from "./types.ts";
 
 /**
  * lhfyc.xyz Escrow Milestone Flow:
- * Verification Ingestion ➔ Slim & Pata ➔ Tune ➔ Mia.
+ * Verification Ingestion ➔ SLM & PAT ➔ TUN ➔ MIA.
  *
- * Slim and Pata hold verification concurrently: Slim proves the signal is
- * tamper-proof, Pata checks it against the compliance landscape. A crisis
+ * SLM and PAT hold verification concurrently: SLM proves the signal is
+ * tamper-proof, PAT checks it against the compliance landscape. A crisis
  * signal at any point jumps straight to human paging.
  */
 export const LHFYC_ESCROW: WorkflowDefinition = {
@@ -30,7 +30,7 @@ export const LHFYC_ESCROW: WorkflowDefinition = {
       name: "Tamper-Proof Validation",
       owner: ownedBy("slim", "pata"),
       description:
-        "Slim runs dwell-time and biometric timestamp parsers; Pata checks the result against the state-level escrow compliance landscape. Landscape analysis, not legal advice.",
+        "SLM runs dwell-time and biometric timestamp parsers; PAT checks the result against the state-level escrow compliance landscape. Landscape analysis, not legal advice.",
       on: { advance: "release", reject: "ingest", crisis: "escalated" },
       terminal: false,
     },
@@ -39,7 +39,7 @@ export const LHFYC_ESCROW: WorkflowDefinition = {
       name: "Escrow Release",
       owner: ownedBy("tune"),
       description:
-        "Tune executes the milestone rule against the Stripe Connect escrow ledger.",
+        "TUN executes the milestone rule against the Stripe Connect escrow ledger.",
       on: { advance: "acknowledge", reject: "validate", crisis: "escalated" },
       terminal: false,
     },
@@ -48,7 +48,7 @@ export const LHFYC_ESCROW: WorkflowDefinition = {
       name: "Community Acknowledgement",
       owner: ownedBy("mia"),
       description:
-        "Mia acknowledges the milestone with dignity and screens the space for predatory actors.",
+        "MIA acknowledges the milestone with dignity and screens the space for predatory actors.",
       on: { advance: "complete", crisis: "escalated" },
       terminal: false,
     },
@@ -65,7 +65,7 @@ export const LHFYC_ESCROW: WorkflowDefinition = {
       name: "Escalated to Peter",
       owner: ownedBy("mia"),
       description:
-        "Crisis interrupt. Mia has paged the human immediately; no clinical advice is given and the run is parked pending human handling.",
+        "Crisis interrupt. MIA has paged the human immediately; no clinical advice is given and the run is parked pending human handling.",
       on: {},
       terminal: true,
     },

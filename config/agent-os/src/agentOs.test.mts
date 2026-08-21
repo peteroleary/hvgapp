@@ -228,7 +228,7 @@ test("workflows that publish externally end behind a human gate", () => {
 });
 
 test("agents that ship public output require human approval", () => {
-  for (const id of ["luda", "cruz", "ivy", "pimp", "boo", "mia"] as const) {
+  for (const id of ["luda", "kodak", "ivy", "pimp", "boo", "mia"] as const) {
     assert.equal(
       getAgent(id).routingRules.requiresHumanApproval,
       true,

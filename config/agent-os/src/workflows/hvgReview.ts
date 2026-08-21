@@ -1,9 +1,9 @@
 import { OWNED_BY_PETER, ownedBy, type WorkflowDefinition } from "./types.ts";
 
 /**
- * High Value Growth Review Flow: Pata ➔ Cruz ➔ Luda ➔ Boo ➔ Peter.
+ * High Value Growth Review Flow: PAT ➔ KDK ➔ LDA ➔ BOO ➔ Peter.
  *
- * Pata drives the tool himself before anyone writes a word about it — the
+ * PAT drives the tool himself before anyone writes a word about it — the
  * review is grounded in a real workflow run, not a feature page.
  */
 export const HVG_REVIEW: WorkflowDefinition = {
@@ -19,16 +19,16 @@ export const HVG_REVIEW: WorkflowDefinition = {
       name: "Hands-On Benchmark",
       owner: ownedBy("pata"),
       description:
-        "Pata signs up and drives the real workflow via browser automation, logging breaks, setup friction, and actual pricing with dates.",
+        "PAT signs up and drives the real workflow via browser automation, logging breaks, setup friction, and actual pricing with dates.",
       on: { advance: "write", block: "research" },
       terminal: false,
     },
     {
       id: "write",
       name: "Review Copy",
-      owner: ownedBy("cruz"),
+      owner: ownedBy("kodak"),
       description:
-        "Cruz writes the no-BS review that respects the reader's time, working from Pata's cited brief.",
+        "KDK writes the no-BS review that respects the reader's time, working from PAT's cited brief.",
       on: { advance: "media", reject: "research" },
       terminal: false,
     },
@@ -37,7 +37,7 @@ export const HVG_REVIEW: WorkflowDefinition = {
       name: "Media & Hooks",
       owner: ownedBy("luda"),
       description:
-        "Luda produces screen-recorded breakdown hooks and teaser cuts. Builds the queue; does not publish.",
+        "LDA produces screen-recorded breakdown hooks and teaser cuts. Builds the queue; does not publish.",
       on: { advance: "search", reject: "write" },
       terminal: false,
     },
@@ -46,7 +46,7 @@ export const HVG_REVIEW: WorkflowDefinition = {
       name: "Schema & Search Readiness",
       owner: ownedBy("boo"),
       description:
-        "Boo validates review schema and comparative tool matrices, and scores AI Overviews citation readiness.",
+        "BOO validates review schema and comparative tool matrices, and scores AI Overviews citation readiness.",
       on: { advance: "approval", reject: "write" },
       terminal: false,
     },

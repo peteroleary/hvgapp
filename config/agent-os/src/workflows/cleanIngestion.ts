@@ -2,7 +2,7 @@ import { ownedBy, ownedBySystem, type WorkflowDefinition } from "./types.ts";
 
 /**
  * Clean Startup Data Ingestion Flow:
- * Field Sensor Ingestion ➔ Slim ➔ Pata ➔ Training Pipeline.
+ * Field Sensor Ingestion ➔ SLM ➔ PAT ➔ Training Pipeline.
  *
  * The spatial engine is the product here — turnover work generates the
  * chest-cam video, lapel audio, and LiDAR that trains the robotics model.
@@ -29,7 +29,7 @@ export const CLEAN_INGESTION: WorkflowDefinition = {
       name: "Spatial Processing",
       owner: ownedBy("slim"),
       description:
-        "Slim segments room meshes, maps clean paths, and generates imitation-learning trajectories.",
+        "SLM segments room meshes, maps clean paths, and generates imitation-learning trajectories.",
       on: { advance: "verify", reject: "ingest" },
       terminal: false,
     },
@@ -38,7 +38,7 @@ export const CLEAN_INGESTION: WorkflowDefinition = {
       name: "Benchmark Verification",
       owner: ownedBy("pata"),
       description:
-        "Pata verifies output against competitive turnover standards and sensor hardware benchmarks, citing sources with dates.",
+        "PAT verifies output against competitive turnover standards and sensor hardware benchmarks, citing sources with dates.",
       on: { advance: "training", reject: "spatial" },
       terminal: false,
     },

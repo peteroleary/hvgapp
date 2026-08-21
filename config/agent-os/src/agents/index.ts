@@ -1,6 +1,6 @@
 import type { AgentConfig, AgentId } from "../types.ts";
 import { BOO } from "./boo.ts";
-import { CRUZ } from "./cruz.ts";
+import { KODAK } from "./kodak.ts";
 import { ICBM } from "./icbm.ts";
 import { IVY } from "./ivy.ts";
 import { JUVE } from "./juve.ts";
@@ -16,7 +16,7 @@ import { TUNE } from "./tune.ts";
 
 export {
   BOO,
-  CRUZ,
+  KODAK,
   ICBM,
   IVY,
   JUVE,
@@ -41,7 +41,7 @@ export const AGENTS: readonly AgentConfig[] = [
   SLIM,
   ROO,
   LUDA,
-  CRUZ,
+  KODAK,
   IVY,
   PIMP,
   PATA,
