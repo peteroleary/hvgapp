@@ -207,6 +207,10 @@ board, so `buzz board seed` creates six boards, not seven.
 - **`buzz board get` takes a POSITIONAL id** — `buzz board get clean`, not `--id clean`.
   `BOARD_REPAIR_ORDER.md` §3 documents this wrong.
 - `buzz channels`: full CRUD including `add-member --role owner|admin|member|guest|bot`
+- `buzz users set-profile --name --avatar --about --nip05` — publishes a **replaceable kind:0**,
+  so pass every field you want kept in one call. NIP-05 also needs
+  `https://hvg.app/.well-known/nostr.json` mapping handle → hex pubkey, or it stays unverified.
+  **Added to Phase 0, owned by TIP** (`STANDING_WORK_ORDER.md` §5).
 - **No `buzz huddle` at all.** Huddles are Desktop-only.
 
 ### PR #18 — the unblock for everything

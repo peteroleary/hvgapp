@@ -163,6 +163,15 @@ Nothing else starts until this lands.
   - TUN: delete the 5 junk cards on `unified-master`
   - YBY: normalise `unified-master` to 5 columns
 - **TIP + ICBM + JUV** stand up the feed-rule executor as a service. Comet is not coming back.
+- **TIP** — NIP-05 identity for the whole team. Two halves, both required:
+  1. Publish `https://hvg.app/.well-known/nostr.json` mapping each handle to its 64-char hex
+     pubkey: `{"names": {"peter": "<hex>", "tun": "<hex>", ...}}`. Without this file a NIP-05
+     identifier sits on the profile unverified.
+  2. Each identity sets its own — the key must be the one being named:
+     `buzz users set-profile --name '<HANDLE>' --nip05 '<handle>@hvg.app'`
+     `set-profile` publishes a replaceable kind:0, so **pass every field you want kept in the
+     same call** — run `buzz users get` first and carry the existing values forward.
+  Verify with `buzz users get --name <handle>`. Peter's own is `peter@hvg.app`.
 - **Done when:** exactly seven boards, correct titles, zero cards on a slug outside the locked
   six, zero occurrences of "MoSober" or "K&B Concrete", and a card can be filed, assigned, moved
   and re-tagged from the CLI. **VON verifies — not JUV, not the author.**
