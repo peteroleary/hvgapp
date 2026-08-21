@@ -18,7 +18,7 @@ export const MODELS = {
   gpt5: modelId("gpt-5"),
   kimiK3: modelId("kimi-k3"),
   kimiCoding27: modelId("kimi-2.7-coding-high-speed"),
-  codex56Sol: modelId("codex-5.6-sol"),
+  gpt56Sol: modelId("gpt-5.6-sol"),
   gemini37Flash: modelId("gemini-3.7-flash"),
   grok46: modelId("grok-4.6"),
 } as const;

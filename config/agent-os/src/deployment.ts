@@ -79,10 +79,10 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
     agent: "slim",
     personaId: "79b32b10-bd71-4732-8949-554540929489",
     formerName: "Slim",
-    model: "gpt-5.6-terra[high]",
-    runtime: "codex",
-    provider: null,
-    specModel: "Codex 5.6 Sol",
+    model: "gpt-5.6-sol",
+    runtime: "cursor",
+    provider: "openai",
+    specModel: null,
   },
   {
     agent: "roo",
@@ -100,7 +100,7 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
     model: "grok-4.6",
     runtime: "grok",
     provider: "xai",
-    specModel: "Gemini 3.7 Flash",
+    specModel: null,
   },
   {
     agent: "kodak",
@@ -136,7 +136,7 @@ export const DEPLOYMENT: readonly DeploymentTarget[] = [
     model: "grok-4.6",
     runtime: "grok",
     provider: "xai",
-    specModel: "Gemini 3.7 Flash",
+    specModel: null,
   },
   {
     agent: "boo",

@@ -6,7 +6,7 @@ export const SLIM: AgentConfig = {
   name: "SLM",
   moniker: "Soulja Slim",
   artistPersona: "Soulja Slim (The Cut-Throat Soldier & Precision Marksman)",
-  assignedModel: MODELS.codex56Sol,
+  assignedModel: MODELS.gpt56Sol,
   provider: "openai",
   coreMandate:
     "Algorithmic & Optimization Specialist. Writes hyper-efficient, high-performance logic, spatial data parsers, and data normalization pipelines.",

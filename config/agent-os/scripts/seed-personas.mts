@@ -123,20 +123,81 @@ for (const target of DEPLOYMENT) {
   );
 }
 
-// Follow the rename through to minted instances.
+// Follow the rename through to minted instances, and carry the model with it.
+// An instance keeps its own model/runtime fields, so renaming alone would leave
+// a KDK instance still pointing at whatever Honey ran.
+const modelByAgent = new Map(DEPLOYMENT.map((d) => [d.agent, d]));
+const agentByPersona = new Map(
+  DEPLOYMENT.map((d) => [d.personaId, d.agent] as const),
+);
+
 let instances = 0;
 for (const rec of store) {
   if (rec.slug) continue;
   const newName = renamedPersonaIds.get(rec.persona_id as string);
+  const target = modelByAgent.get(
+    agentByPersona.get(rec.persona_id as string) as never,
+  );
+  let touched = false;
   if (newName && rec.name !== newName) {
     rec.name = newName;
     rec.display_name = newName;
+    touched = true;
+  }
+  if (
+    target &&
+    (rec.model !== target.model || rec.runtime !== target.runtime)
+  ) {
+    rec.model = target.model;
+    rec.runtime = target.runtime;
+    touched = true;
+  }
+  if (touched) {
     rec.updated_at = now;
     instances += 1;
   }
 }
 
+// Buzz re-seeds its built-in "Welcome Team" on launch, minting fresh instances
+// for the three personas the 18 were rebased onto. Left alone they accumulate:
+// three MFRs and three PATs, each a distinct @mention target. Renaming them
+// (above) makes them indistinguishable, so collapse each persona to its oldest
+// instance — the one carrying the longest message history.
+const dropped: string[] = [];
+const byPersona = new Map<string, Record<string, unknown>[]>();
+for (const rec of store) {
+  if (rec.slug || !rec.persona_id) continue;
+  const k = rec.persona_id as string;
+  byPersona.set(k, [...(byPersona.get(k) ?? []), rec]);
+}
+const survivors = new Set<unknown>();
+for (const [, recs] of byPersona) {
+  if (recs.length < 2) continue;
+  const keep = recs
+    .slice()
+    .sort((a, b) =>
+      String(a.created_at).localeCompare(String(b.created_at)),
+    )[0];
+  for (const r of recs) {
+    if (r !== keep) {
+      survivors.add(r);
+      dropped.push(`${r.name} ${String(r.pubkey).slice(0, 12)}`);
+    }
+  }
+}
+if (dropped.length > 0) {
+  for (let i = store.length - 1; i >= 0; i -= 1) {
+    if (survivors.has(store[i])) store.splice(i, 1);
+  }
+}
+
 console.log(changes.join("\n"));
+if (dropped.length > 0) {
+  console.log(
+    `\nCollapsed ${dropped.length} duplicate instance(s) re-minted by the built-in Welcome Team:`,
+  );
+  for (const d of dropped) console.log(`  - ${d}`);
+}
 console.log(
   `\n${renamedPersonaIds.size} personas renamed, ${instances} instances renamed.`,
 );
