@@ -6,6 +6,7 @@ import { getIdentity } from "@/shared/api/tauriIdentity";
 import { BoardView } from "./BoardView";
 import { collectAssigneePubkeys } from "./state/assigneeNames";
 import { useBoardMutations } from "./state/boardMutations";
+import { assembleGoal } from "./state/goalDraft";
 import { compareRank, rankBetween } from "./state/rank";
 import { useBoardLiveUpdates, useBoardStateQuery } from "./state/useBoardStore";
 import type { BoardList } from "./types/boardTypes";
@@ -163,6 +164,20 @@ export function BoardScreen() {
         onSelectBoard={setSelectedBoardId}
         onNewBoard={() => setIsCreateBoardOpen(true)}
         onAddCard={addCard}
+        onCreateGoal={(draft) => {
+          mutations.publishGoal.mutate(
+            assembleGoal(crypto.randomUUID(), draft),
+          );
+        }}
+        onSetCardGoal={(cardId, goalId) => {
+          const entity = findCard(cardId);
+          if (!entity) return;
+          mutations.updateCard.mutate({
+            boardAddress: entity.boardAddress,
+            cardId: entity.card.id,
+            changes: { parentGoalId: goalId ?? undefined },
+          });
+        }}
         onApproveCard={(cardId) => {
           const entity = findCard(cardId);
           if (!entity) return;

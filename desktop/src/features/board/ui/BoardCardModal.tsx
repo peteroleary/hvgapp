@@ -4,7 +4,8 @@ import { useState } from "react";
 import type { UserProfileLookup } from "@/features/profile/lib/identity";
 
 import { assigneeDisplayName } from "../state/assigneeNames";
-import type { Card } from "../types/boardTypes";
+import { goalHeadline } from "../state/goalDraft";
+import type { Card, Goal } from "../types/boardTypes";
 import { BRAND_TOKENS, brandDisplayName, FUNCTION_TOKENS } from "./BoardCard";
 
 export interface BoardCardModalProps {
@@ -15,6 +16,10 @@ export interface BoardCardModalProps {
   onApproveCard?: (cardId: string) => void;
   onRejectCard?: (cardId: string, reason: string) => void;
   onAddComment?: (cardId: string, commentBody: string) => void;
+  /** Goals the card can attach to. */
+  goals?: readonly Goal[];
+  /** Persist `parentGoalId`. Pass null to detach. */
+  onSetCardGoal?: (cardId: string, goalId: string | null) => void;
   /** Resolved kind:0 profiles for this board's assignees. */
   profiles?: UserProfileLookup;
 }
@@ -27,6 +32,8 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
   onApproveCard,
   onRejectCard,
   onAddComment,
+  goals = [],
+  onSetCardGoal,
   profiles,
 }) => {
   const [commentText, setCommentText] = useState("");
@@ -305,6 +312,29 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
                   {card.executionState}
                 </span>
               </div>
+
+              {onSetCardGoal && (
+                <div>
+                  <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                    Parent goal
+                  </h3>
+                  <select
+                    data-testid="parent-goal"
+                    value={card.parentGoalId ?? ""}
+                    onChange={(event) =>
+                      onSetCardGoal(card.id, event.target.value || null)
+                    }
+                    className="w-full rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary/60"
+                  >
+                    <option value="">No parent goal</option>
+                    {goals.map((goal) => (
+                      <option key={goal.id} value={goal.id}>
+                        {goalHeadline(goal)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           </div>
         </div>
