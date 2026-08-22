@@ -1,3 +1,4 @@
+import { DndContext } from "@dnd-kit/core";
 import assert from "node:assert/strict";
 import test from "node:test";
 import React from "react";
@@ -6,6 +7,16 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { BoardCard } from "./BoardCard.tsx";
 import { BoardCardModal } from "./BoardCardModal.tsx";
 import { BoardColumn } from "./BoardColumn.tsx";
+
+function renderColumn(props) {
+  return renderToStaticMarkup(
+    React.createElement(
+      DndContext,
+      null,
+      React.createElement(BoardColumn, props),
+    ),
+  );
+}
 
 const MINIMAL_CARD = {
   id: "card-1",
@@ -90,26 +101,22 @@ test("BoardCardModal shows auto-authorized when requiresApproval is false", () =
 });
 
 test("BoardColumn derives requiresApproval from approvalPendingByCardId map", () => {
-  const grantedHtml = renderToStaticMarkup(
-    React.createElement(BoardColumn, {
-      listId: "backlog",
-      title: "Backlog",
-      cards: [MINIMAL_CARD],
-      approvalPendingByCardId: { "card-1": false },
-      onSelectCard: () => {},
-    }),
-  );
+  const grantedHtml = renderColumn({
+    listId: "backlog",
+    title: "Backlog",
+    cards: [MINIMAL_CARD],
+    approvalPendingByCardId: { "card-1": false },
+    onSelectCard: () => {},
+  });
   notContains(grantedHtml, "Needs Approval");
 
-  const pendingHtml = renderToStaticMarkup(
-    React.createElement(BoardColumn, {
-      listId: "backlog",
-      title: "Backlog",
-      cards: [MINIMAL_CARD],
-      approvalPendingByCardId: { "card-1": true },
-      onSelectCard: () => {},
-    }),
-  );
+  const pendingHtml = renderColumn({
+    listId: "backlog",
+    title: "Backlog",
+    cards: [MINIMAL_CARD],
+    approvalPendingByCardId: { "card-1": true },
+    onSelectCard: () => {},
+  });
   contains(pendingHtml, "Needs Approval");
 });
 
@@ -168,14 +175,12 @@ test("BoardCardModal renders an assignee's handle, not the raw pubkey", () => {
 });
 
 test("BoardColumn passes profiles through to its cards", () => {
-  const html = renderToStaticMarkup(
-    React.createElement(BoardColumn, {
-      listId: "backlog",
-      title: "Backlog",
-      cards: [CARD_WITH_ASSIGNEE],
-      onSelectCard: () => {},
-      profiles: TUN_PROFILES,
-    }),
-  );
+  const html = renderColumn({
+    listId: "backlog",
+    title: "Backlog",
+    cards: [CARD_WITH_ASSIGNEE],
+    onSelectCard: () => {},
+    profiles: TUN_PROFILES,
+  });
   contains(html, "TUN (lead)");
 });

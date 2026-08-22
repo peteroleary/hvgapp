@@ -163,6 +163,14 @@ export function BoardScreen() {
         onSelectBoard={setSelectedBoardId}
         onNewBoard={() => setIsCreateBoardOpen(true)}
         onAddCard={addCard}
+        onMoveCard={({ cardId, listId, rank }) => {
+          mutations.moveCard.mutate({
+            boardAddress: boardEntity.address,
+            cardId,
+            listId,
+            rank,
+          });
+        }}
         onApproveCard={(cardId) => {
           const entity = findCard(cardId);
           if (!entity) return;
