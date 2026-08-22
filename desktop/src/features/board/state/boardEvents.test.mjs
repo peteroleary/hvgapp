@@ -637,3 +637,199 @@ test("golden vectors match reconciled state", () => {
     }
   }
 });
+
+function boardEvent({
+  id,
+  boardId,
+  title,
+  brandScope,
+  pubkey = OWNER,
+  createdAt = 1,
+}) {
+  return event({
+    id,
+    kind: 30623,
+    pubkey,
+    createdAt,
+    tags: [
+      ["d", boardId],
+      ...(brandScope ? [["t", `brand:${brandScope}`]] : []),
+    ],
+    content: {
+      title,
+      ...(brandScope ? { brandScope } : {}),
+      lists: [{ id: "backlog", title: "Backlog", rank: "a" }],
+    },
+  });
+}
+
+const LIVE_BOARDS = [
+  { boardId: "unified-master", title: "Unified Master" },
+  { boardId: "hvgapp", title: "hvg.app", brandScope: "hvgapp" },
+  { boardId: "gomarco", title: "Go Marco", brandScope: "gomarco" },
+  { boardId: "itshvg", title: "High Value Growth", brandScope: "itshvg" },
+  { boardId: "lhfyc", title: "Look How Far You've Come", brandScope: "lhfyc" },
+  { boardId: "clean", title: "Clean Startup", brandScope: "clean" },
+  { boardId: "three", title: "We 3 Live", brandScope: "three" },
+];
+
+test("fresh snapshot of the seven live boards never surfaces retired brand names", () => {
+  const events = LIVE_BOARDS.map((board, index) =>
+    boardEvent({
+      id: `live-${index}`,
+      boardId: board.boardId,
+      title: board.title,
+      brandScope: board.brandScope,
+    }),
+  );
+  const state = buildBoardState(events);
+  assert.equal(state.boards.length, 7);
+  assert.deepEqual(
+    state.boards.map((entity) => entity.board.id).sort(),
+    LIVE_BOARDS.map((board) => board.boardId).sort(),
+  );
+  const rendered = state.boards.map((entity) => entity.board.title).join(" ");
+  for (const retired of ["MoSober", "K&B Concrete"]) {
+    assert.ok(!rendered.includes(retired), `${retired} presented as live`);
+  }
+});
+
+test("stale retired boards mixed with live boards are dropped, not presented as live", () => {
+  const events = [
+    boardEvent({
+      id: "live-clean",
+      boardId: "clean",
+      title: "Clean Startup",
+      brandScope: "clean",
+    }),
+    boardEvent({
+      id: "stale-sober",
+      boardId: "sober",
+      title: "MoSober",
+      brandScope: "sober",
+    }),
+    boardEvent({
+      id: "stale-concrete",
+      boardId: "concrete",
+      title: "K&B Concrete",
+      brandScope: "concrete",
+    }),
+    boardEvent({
+      id: "stale-mosober",
+      boardId: "mosober",
+      title: "MoSober",
+      brandScope: "mosober",
+    }),
+    boardEvent({
+      id: "stale-kb",
+      boardId: "kb-concrete",
+      title: "K&B Concrete",
+      brandScope: "kb-concrete",
+    }),
+  ];
+  const state = buildBoardState(events);
+  assert.equal(state.boards.length, 1);
+  assert.equal(state.boards[0].board.id, "clean");
+  const rendered = state.boards.map((entity) => entity.board.title).join(" ");
+  assert.ok(!rendered.includes("MoSober"));
+  assert.ok(!rendered.includes("K&B Concrete"));
+});
+
+test("a stale cache of only retired boards yields an empty snapshot", () => {
+  const events = [
+    boardEvent({
+      id: "stale-sober",
+      boardId: "sober",
+      title: "MoSober",
+      brandScope: "sober",
+    }),
+    boardEvent({
+      id: "stale-concrete",
+      boardId: "concrete",
+      title: "K&B Concrete",
+      brandScope: "concrete",
+    }),
+  ];
+  const state = buildBoardState(events);
+  assert.equal(state.boards.length, 0);
+  assert.equal(state.cards.length, 0);
+});
+
+test("cards attached to retired boards are dropped with the board", () => {
+  const retiredBoard = boardEvent({
+    id: "stale-sober",
+    boardId: "sober",
+    title: "MoSober",
+    brandScope: "sober",
+  });
+  const liveBoard = boardEvent({
+    id: "live-clean",
+    boardId: "clean",
+    title: "Clean Startup",
+    brandScope: "clean",
+  });
+  const retiredCard = event({
+    id: "card-sober",
+    kind: 30624,
+    tags: [
+      ["d", "retired-card"],
+      ["a", `30623:${OWNER}:sober`],
+      ["l", "backlog"],
+      ["t", "brand:sober"],
+      ["t", "fn:build"],
+      ["rank", "m"],
+    ],
+    content: {
+      title: "Leftover MoSober card",
+      description: "Must not render as live work",
+      assignees: [],
+      executionState: "idle",
+      createdBy: OWNER,
+      comments: [],
+    },
+  });
+  const liveCard = event({
+    id: "card-clean",
+    kind: 30624,
+    tags: [
+      ["d", "live-card"],
+      ["a", `30623:${OWNER}:clean`],
+      ["l", "backlog"],
+      ["t", "brand:clean"],
+      ["t", "fn:build"],
+      ["rank", "m"],
+    ],
+    content: {
+      title: "Live clean card",
+      description: "Stays",
+      assignees: [],
+      executionState: "idle",
+      createdBy: OWNER,
+      comments: [],
+    },
+  });
+
+  const state = buildBoardState([
+    retiredBoard,
+    liveBoard,
+    retiredCard,
+    liveCard,
+  ]);
+  assert.equal(state.boards.length, 1);
+  assert.equal(state.boards[0].board.id, "clean");
+  assert.equal(state.cards.length, 1);
+  assert.equal(state.cards[0].card.id, "live-card");
+});
+
+test("an unknown future board still appears — the filter is retirement, not a closed allowlist", () => {
+  const state = buildBoardState([
+    boardEvent({
+      id: "future",
+      boardId: "new-brand",
+      title: "New Brand",
+      brandScope: "new-brand",
+    }),
+  ]);
+  assert.equal(state.boards.length, 1);
+  assert.equal(state.boards[0].board.id, "new-brand");
+});

@@ -48,6 +48,39 @@ const CARD_EXECUTION_STATES = new Set<CardExecutionState>([
 ]);
 const AUTONOMY_LEVELS = new Set<AutonomyLevel>(["manual", "notify", "auto"]);
 
+/**
+ * Board `d` tags and brand slugs retired from the portfolio. A stale Desktop
+ * cache or leftover relay event must not present these as live boards.
+ * Aliases cover the historical ids (`sober` / `mosober`, `concrete` /
+ * `kb-concrete`) so a cached seed from either generation is dropped.
+ */
+const RETIRED_BOARD_DTAGS = new Set([
+  "sober",
+  "mosober",
+  "concrete",
+  "kb-concrete",
+  "kbconcrete",
+]);
+
+const RETIRED_BOARD_TITLES = new Set(["MoSober", "K&B Concrete"]);
+
+function isRetiredBoard(board: Board): boolean {
+  const id = board.id.toLowerCase();
+  const brand = board.brandScope?.toLowerCase();
+  return (
+    RETIRED_BOARD_DTAGS.has(id) ||
+    (brand !== undefined && RETIRED_BOARD_DTAGS.has(brand)) ||
+    RETIRED_BOARD_TITLES.has(board.title)
+  );
+}
+
+function isRetiredCard(card: Card): boolean {
+  return (
+    RETIRED_BOARD_DTAGS.has(card.boardId.toLowerCase()) ||
+    RETIRED_BOARD_DTAGS.has(card.brand.toLowerCase())
+  );
+}
+
 /** The durable metadata added to a Board parsed from its addressable event. */
 export type BoardEntity = {
   address: string;
@@ -661,13 +694,13 @@ export function buildBoardSnapshot(
   const boards = currentEntities
     .flatMap((event) => {
       const board = parseBoard(event);
-      return board ? [board] : [];
+      return board && !isRetiredBoard(board.board) ? [board] : [];
     })
     .sort(compareEntities);
   const cards = currentEntities
     .flatMap((event) => {
       const card = parseCard(event);
-      return card ? [card] : [];
+      return card && !isRetiredCard(card.card) ? [card] : [];
     })
     .sort(
       (left, right) =>
