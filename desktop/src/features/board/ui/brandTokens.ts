@@ -39,7 +39,7 @@ export const BRAND_TOKENS: Record<string, { badge: string; border: string }> = {
     badge: "bg-cyan-950/40 text-cyan-300 border-cyan-700/50",
     border: "border-cyan-500",
   },
-  "hvgapp": {
+  hvgapp: {
     badge: "bg-yellow-950/40 text-yellow-300 border-yellow-700/50",
     border: "border-yellow-500",
   },
@@ -51,7 +51,7 @@ export const BRAND_DISPLAY_NAMES: Record<string, string> = {
   three: "We 3 Live",
   itshvg: "High Value Growth",
   gomarco: "Go Marco",
-  "hvgapp": "hvg.app",
+  hvgapp: "hvg.app",
 };
 
 /** Badge text for a brand slug; falls back to the raw value for unknown brands. */

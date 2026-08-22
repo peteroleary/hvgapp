@@ -8,12 +8,5 @@
     "In Review",
     "Done"
   ],
-  "brandSlugs": [
-    "clean",
-    "gomarco",
-    "hvgapp",
-    "itshvg",
-    "lhfyc",
-    "three"
-  ]
+  "brandSlugs": ["clean", "gomarco", "hvgapp", "itshvg", "lhfyc", "three"]
 }

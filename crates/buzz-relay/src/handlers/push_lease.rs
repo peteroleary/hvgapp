@@ -704,7 +704,7 @@ mod tests {
         let predicate = format!("NEW.kind IN ({kinds})");
         // 0018/0023 are checksum-frozen; the effective trigger allowlist lives
         // in the newest gate migration, which must match PUSH_KINDS exactly.
-        let migration = include_str!("../../../../migrations/0029_board_approval_push_kind.sql");
+        let migration = include_str!("../../../../migrations/0032_board_approval_push_kind.sql");
         assert!(
             migration.contains(&predicate),
             "migration trigger must use PUSH_KINDS exactly: {predicate}"

@@ -5089,7 +5089,10 @@ mod tests {
             KIND_BOARD_APPROVAL_GRANTED,
             KIND_BOARD_APPROVAL_DENIED,
         ] {
-            assert!(is_global_only_kind(kind), "Board kind {kind} must be global");
+            assert!(
+                is_global_only_kind(kind),
+                "Board kind {kind} must be global"
+            );
             assert!(
                 !requires_h_channel_scope(kind),
                 "Board kind {kind} must not require an h tag"

@@ -39,7 +39,7 @@ export type AppSidebarProps = {
   selectedChannelId: string | null;
   selectedView:
     | "home"
-  | "board"
+    | "board"
     | "channel"
     | "messages"
     | "agents"

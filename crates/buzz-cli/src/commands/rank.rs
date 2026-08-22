@@ -142,10 +142,7 @@ pub fn rank_between(before: Option<&str>, after: Option<&str>) -> Result<String,
 /// the port of `compareRank`. Two clients can drag into the same gap
 /// simultaneously and both writes survive, so equal ranks are expected; the
 /// tiebreak keeps every client rendering the same column.
-pub fn compare_rank(
-    left: (&str, u64, &str),
-    right: (&str, u64, &str),
-) -> std::cmp::Ordering {
+pub fn compare_rank(left: (&str, u64, &str), right: (&str, u64, &str)) -> std::cmp::Ordering {
     left.0
         .cmp(right.0)
         .then(left.1.cmp(&right.1))
@@ -255,13 +252,21 @@ mod tests {
         let mut column = vec![rank_between(None, None).unwrap()];
         for _ in 0..500 {
             let at = (rand() * (column.len() + 1) as f64).floor() as usize;
-            let before = if at == 0 { None } else { Some(column[at - 1].as_str()) };
+            let before = if at == 0 {
+                None
+            } else {
+                Some(column[at - 1].as_str())
+            };
             let after = column.get(at).map(String::as_str);
             let rank = rank_between(before, after).unwrap();
             column.insert(at, rank);
         }
 
-        assert_eq!(column, sorted(column.clone()), "column drifted out of order");
+        assert_eq!(
+            column,
+            sorted(column.clone()),
+            "column drifted out of order"
+        );
         let unique: std::collections::HashSet<&String> = column.iter().collect();
         assert_eq!(unique.len(), column.len(), "ranks must stay unique");
     }

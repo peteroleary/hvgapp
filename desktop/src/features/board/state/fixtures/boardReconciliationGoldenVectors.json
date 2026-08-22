@@ -194,7 +194,9 @@
           "content": {
             "title": "Approved card",
             "description": "Description",
-            "assignees": [{ "type": "agent", "id": "other", "role": "executor" }],
+            "assignees": [
+              { "type": "agent", "id": "other", "role": "executor" }
+            ],
             "executionState": "eligible",
             "createdBy": "owner",
             "comments": []
@@ -205,10 +207,7 @@
           "kind": 50002,
           "pubkey": "third",
           "created_at": 15,
-          "tags": [
-            ["a", "30624:owner:approved-card"],
-            ["p", "third"]
-          ],
+          "tags": [["a", "30624:owner:approved-card"], ["p", "third"]],
           "content": {}
         },
         {
@@ -228,7 +227,9 @@
           "content": {
             "title": "Approved card updated",
             "description": "Description",
-            "assignees": [{ "type": "agent", "id": "other", "role": "executor" }],
+            "assignees": [
+              { "type": "agent", "id": "other", "role": "executor" }
+            ],
             "executionState": "eligible",
             "createdBy": "other",
             "comments": []
@@ -257,9 +258,7 @@
           "kind": 50003,
           "pubkey": "third",
           "created_at": 10,
-          "tags": [
-            ["a", "30624:owner:tie-approval-card"]
-          ],
+          "tags": [["a", "30624:owner:tie-approval-card"]],
           "content": {}
         },
         {
@@ -267,9 +266,7 @@
           "kind": 50002,
           "pubkey": "third",
           "created_at": 10,
-          "tags": [
-            ["a", "30624:owner:tie-approval-card"]
-          ],
+          "tags": [["a", "30624:owner:tie-approval-card"]],
           "content": {}
         },
         {
@@ -289,7 +286,9 @@
           "content": {
             "title": "Tie approval card",
             "description": "Description",
-            "assignees": [{ "type": "agent", "id": "other", "role": "executor" }],
+            "assignees": [
+              { "type": "agent", "id": "other", "role": "executor" }
+            ],
             "executionState": "eligible",
             "createdBy": "owner",
             "comments": []
