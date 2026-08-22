@@ -20,6 +20,9 @@
 //!   [--goal <id>]` — read-modify-write against the reconciled head.
 //! - `board card move --board <id> --card <id> --list <id|title>
 //!   [--top|--bottom|--before <card>|--after <card>]` — same head discipline.
+//! - `board goal create --id <slug> --brand <slug> --framework SMART|OKR|PACT`
+//!   plus framework flags. No `--board`: a goal has no board linkage; cards
+//!   attach via `parentGoalId`. Refuses an existing id (any author).
 //! - `board seed [--dry-run]` — create the standard boards and file the P0 seed
 //!   cards. Idempotent: skips existing boards/cards by reconciled head.
 //!
@@ -735,6 +738,336 @@ pub fn build_approval_event(
     Ok(EventBuilder::new(Kind::Custom(kind as u16), content).tags(tags))
 }
 
+/// One OKR key result as assembled from `--kr description::targetMetric::targetValue`.
+/// `currentValue` is never set by the CLI (TS optional); `targetValue` is.
+#[derive(Debug, Clone, PartialEq)]
+pub struct GoalKeyResultInput {
+    pub description: String,
+    pub target_metric: String,
+    pub target_value: String,
+}
+
+/// Framework block for a new goal. Exactly one variant is serialized into
+/// content; the other two keys are omitted (`JSON.stringify` of `undefined`).
+#[derive(Debug, Clone, PartialEq)]
+pub enum GoalFrameworkBody {
+    Smart {
+        specific: String,
+        measurable: String,
+        attainable: String,
+        relevant: String,
+        time_bound: String,
+    },
+    Okr {
+        objective: String,
+        key_results: Vec<GoalKeyResultInput>,
+    },
+    Pact {
+        purposeful: String,
+        actionable: String,
+        continuous: String,
+        trackable: String,
+    },
+}
+
+/// Clap flags for `board goal create`, minus `--id`/`--brand` which the
+/// command validates separately. Framework-specific fields are optional at
+/// parse time so a missing SMART flag is a `Usage` error, not a clap dump.
+#[derive(Debug, Clone)]
+pub struct GoalCreateArgs {
+    pub framework: String,
+    pub specific: Option<String>,
+    pub measurable: Option<String>,
+    pub attainable: Option<String>,
+    pub relevant: Option<String>,
+    pub time_bound: Option<String>,
+    pub objective: Option<String>,
+    pub krs: Vec<String>,
+    pub purposeful: Option<String>,
+    pub actionable: Option<String>,
+    pub continuous: Option<String>,
+    pub trackable: Option<String>,
+}
+
+/// Content of a kind:30625 event. Field order matches the TS `Goal`
+/// interface minus `id` (`brandScope`, `framework`, `smart?`, `okr?`,
+/// `pact?`, `status`, `proposedCards`) so the serialized bytes equal
+/// Desktop's `JSON.stringify` output from `buildGoalEventTemplate`.
+#[derive(serde::Serialize)]
+struct GoalContent<'a> {
+    #[serde(rename = "brandScope")]
+    brand_scope: &'a str,
+    framework: &'a str,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    smart: Option<GoalSmartContent<'a>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    okr: Option<GoalOkrContent<'a>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pact: Option<GoalPactContent<'a>>,
+    status: &'a str,
+    #[serde(rename = "proposedCards")]
+    proposed_cards: &'a [serde_json::Value],
+}
+
+#[derive(serde::Serialize)]
+struct GoalSmartContent<'a> {
+    specific: &'a str,
+    measurable: &'a str,
+    attainable: &'a str,
+    relevant: &'a str,
+    #[serde(rename = "timeBound")]
+    time_bound: &'a str,
+}
+
+#[derive(serde::Serialize)]
+struct GoalOkrKeyResultContent<'a> {
+    description: &'a str,
+    #[serde(rename = "targetMetric")]
+    target_metric: &'a str,
+    #[serde(rename = "currentValue", skip_serializing_if = "Option::is_none")]
+    current_value: Option<&'a str>,
+    #[serde(rename = "targetValue", skip_serializing_if = "Option::is_none")]
+    target_value: Option<&'a str>,
+}
+
+#[derive(serde::Serialize)]
+struct GoalOkrContent<'a> {
+    objective: &'a str,
+    #[serde(rename = "keyResults")]
+    key_results: &'a [GoalOkrKeyResultContent<'a>],
+}
+
+#[derive(serde::Serialize)]
+struct GoalPactContent<'a> {
+    purposeful: &'a str,
+    actionable: &'a str,
+    continuous: &'a str,
+    trackable: &'a str,
+}
+
+/// Parse `--kr description::targetMetric::targetValue`. All three parts
+/// must be non-empty after trim. Extra `::` stay inside `targetValue`
+/// (`splitn(3)`), so a metric value may contain the delimiter.
+pub fn parse_kr(raw: &str) -> Result<GoalKeyResultInput, CliError> {
+    let mut parts = raw.splitn(3, "::");
+    let description = parts.next().unwrap_or("").trim();
+    let target_metric = parts.next().unwrap_or("").trim();
+    let target_value = parts.next().unwrap_or("").trim();
+    if description.is_empty() || target_metric.is_empty() || target_value.is_empty() {
+        return Err(CliError::Usage(
+            "--kr must be description::targetMetric::targetValue with all three parts non-empty"
+                .into(),
+        ));
+    }
+    Ok(GoalKeyResultInput {
+        description: description.to_string(),
+        target_metric: target_metric.to_string(),
+        target_value: target_value.to_string(),
+    })
+}
+
+fn flag_is_set(value: &Option<String>) -> bool {
+    value.is_some()
+}
+
+fn require_text(value: &Option<String>, flag: &str, framework: &str) -> Result<String, CliError> {
+    match value {
+        Some(s) if !s.trim().is_empty() => Ok(s.trim().to_string()),
+        _ => Err(CliError::Usage(format!(
+            "--framework {framework} requires {flag}"
+        ))),
+    }
+}
+
+fn reject_foreign_flags(framework: &str, flags: &[(&str, bool)]) -> Result<(), CliError> {
+    let unexpected: Vec<&str> = flags
+        .iter()
+        .filter(|(_, present)| *present)
+        .map(|(name, _)| *name)
+        .collect();
+    if unexpected.is_empty() {
+        Ok(())
+    } else {
+        Err(CliError::Usage(format!(
+            "--framework {framework} does not accept {}",
+            unexpected.join(", ")
+        )))
+    }
+}
+
+/// Assemble the framework block from clap flags. Pure for testability.
+pub fn assemble_goal_body(args: &GoalCreateArgs) -> Result<GoalFrameworkBody, CliError> {
+    let framework = args.framework.as_str();
+    if !GOAL_FRAMEWORKS.contains(&framework) {
+        return Err(CliError::Usage(format!(
+            "unknown framework {framework:?} — expected one of: {}",
+            GOAL_FRAMEWORKS.join(", ")
+        )));
+    }
+    match framework {
+        "SMART" => {
+            reject_foreign_flags(
+                framework,
+                &[
+                    ("--objective", flag_is_set(&args.objective)),
+                    ("--kr", !args.krs.is_empty()),
+                    ("--purposeful", flag_is_set(&args.purposeful)),
+                    ("--actionable", flag_is_set(&args.actionable)),
+                    ("--continuous", flag_is_set(&args.continuous)),
+                    ("--trackable", flag_is_set(&args.trackable)),
+                ],
+            )?;
+            Ok(GoalFrameworkBody::Smart {
+                specific: require_text(&args.specific, "--specific", framework)?,
+                measurable: require_text(&args.measurable, "--measurable", framework)?,
+                attainable: require_text(&args.attainable, "--attainable", framework)?,
+                relevant: require_text(&args.relevant, "--relevant", framework)?,
+                time_bound: require_text(&args.time_bound, "--time-bound", framework)?,
+            })
+        }
+        "OKR" => {
+            reject_foreign_flags(
+                framework,
+                &[
+                    ("--specific", flag_is_set(&args.specific)),
+                    ("--measurable", flag_is_set(&args.measurable)),
+                    ("--attainable", flag_is_set(&args.attainable)),
+                    ("--relevant", flag_is_set(&args.relevant)),
+                    ("--time-bound", flag_is_set(&args.time_bound)),
+                    ("--purposeful", flag_is_set(&args.purposeful)),
+                    ("--actionable", flag_is_set(&args.actionable)),
+                    ("--continuous", flag_is_set(&args.continuous)),
+                    ("--trackable", flag_is_set(&args.trackable)),
+                ],
+            )?;
+            if args.krs.is_empty() {
+                return Err(CliError::Usage(
+                    "--framework OKR requires --kr description::targetMetric::targetValue (repeatable)"
+                        .into(),
+                ));
+            }
+            let key_results = args
+                .krs
+                .iter()
+                .map(|raw| parse_kr(raw))
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(GoalFrameworkBody::Okr {
+                objective: require_text(&args.objective, "--objective", framework)?,
+                key_results,
+            })
+        }
+        "PACT" => {
+            reject_foreign_flags(
+                framework,
+                &[
+                    ("--specific", flag_is_set(&args.specific)),
+                    ("--measurable", flag_is_set(&args.measurable)),
+                    ("--attainable", flag_is_set(&args.attainable)),
+                    ("--relevant", flag_is_set(&args.relevant)),
+                    ("--time-bound", flag_is_set(&args.time_bound)),
+                    ("--objective", flag_is_set(&args.objective)),
+                    ("--kr", !args.krs.is_empty()),
+                ],
+            )?;
+            Ok(GoalFrameworkBody::Pact {
+                purposeful: require_text(&args.purposeful, "--purposeful", framework)?,
+                actionable: require_text(&args.actionable, "--actionable", framework)?,
+                continuous: require_text(&args.continuous, "--continuous", framework)?,
+                trackable: require_text(&args.trackable, "--trackable", framework)?,
+            })
+        }
+        _ => unreachable!("GOAL_FRAMEWORKS membership checked above"),
+    }
+}
+
+/// Build the unsigned kind:30625 event for `board goal create`, mirroring
+/// `buildGoalEventTemplate`: id lifts to the `d` tag, everything else
+/// serializes into content. Pure for testability. Do not add a field here
+/// that the TS `Goal` interface does not carry.
+pub fn build_goal_event(
+    id: &str,
+    brand_scope: &str,
+    body: &GoalFrameworkBody,
+) -> Result<EventBuilder, CliError> {
+    if id.is_empty() {
+        return Err(CliError::Usage("goal id is required".into()));
+    }
+    if brand_scope.is_empty() {
+        return Err(CliError::Usage("goal --brand is required".into()));
+    }
+    let tags = vec![Tag::parse(["d", id]).map_err(tag_err)?];
+    let content = match body {
+        GoalFrameworkBody::Smart {
+            specific,
+            measurable,
+            attainable,
+            relevant,
+            time_bound,
+        } => serde_json::to_string(&GoalContent {
+            brand_scope,
+            framework: "SMART",
+            smart: Some(GoalSmartContent {
+                specific,
+                measurable,
+                attainable,
+                relevant,
+                time_bound,
+            }),
+            okr: None,
+            pact: None,
+            status: "draft",
+            proposed_cards: &[],
+        }),
+        GoalFrameworkBody::Okr {
+            objective,
+            key_results,
+        } => {
+            let krs: Vec<GoalOkrKeyResultContent<'_>> = key_results
+                .iter()
+                .map(|kr| GoalOkrKeyResultContent {
+                    description: &kr.description,
+                    target_metric: &kr.target_metric,
+                    current_value: None,
+                    target_value: Some(kr.target_value.as_str()),
+                })
+                .collect();
+            serde_json::to_string(&GoalContent {
+                brand_scope,
+                framework: "OKR",
+                smart: None,
+                okr: Some(GoalOkrContent {
+                    objective,
+                    key_results: &krs,
+                }),
+                pact: None,
+                status: "draft",
+                proposed_cards: &[],
+            })
+        }
+        GoalFrameworkBody::Pact {
+            purposeful,
+            actionable,
+            continuous,
+            trackable,
+        } => serde_json::to_string(&GoalContent {
+            brand_scope,
+            framework: "PACT",
+            smart: None,
+            okr: None,
+            pact: Some(GoalPactContent {
+                purposeful,
+                actionable,
+                continuous,
+                trackable,
+            }),
+            status: "draft",
+            proposed_cards: &[],
+        }),
+    }
+    .map_err(|e| CliError::Other(format!("failed to serialize goal: {e}")))?;
+    Ok(EventBuilder::new(kind_board_goal(), content).tags(tags))
+}
+
 /// Extract the d-tag from a `30624:<pubkey>:<dtag>` coordinate, mirroring
 /// `parseAddress(value, KIND_BOARD_CARD)`.
 fn parse_card_address_dtag(address: &str) -> Option<&str> {
@@ -985,9 +1318,8 @@ fn apply_unassign(existing: &[AssigneeEntry], id: &str) -> Result<Vec<AssigneeEn
     Ok(existing.iter().filter(|a| a.id != id).cloned().collect())
 }
 
-/// Parsed view of a kind:30625 goal head. Kept to the fields the CLI reads
-/// today; the `board goal` verb extends this when it lands.
-#[allow(dead_code)] // read by tests now, by the `board goal` verb next
+/// Parsed view of a kind:30625 goal head. `board goal create` refuses an
+/// existing id by this snapshot; `card add/set --goal` uses the same fetch.
 pub struct GoalSnapshot {
     pub id: String,
     pub brand_scope: String,
@@ -1434,6 +1766,40 @@ pub async fn cmd_create(
     println!("coordinate {KIND_BOARD}:{}:{id}", event.pubkey.to_hex());
     println!("id         {id}");
     println!("title      {title}");
+    Ok(())
+}
+
+pub async fn cmd_goal_create(
+    client: &BuzzClient,
+    id: &str,
+    brand: &str,
+    args: &GoalCreateArgs,
+) -> Result<(), CliError> {
+    let id = crate::commands::notes::parse_slug(id)?;
+    let brand = validate_brand(brand)?;
+    let body = assemble_goal_body(args)?;
+
+    // parentGoalId is a d-tag, so a second writer of the same id would fork
+    // the attach. Refuse any existing head, matching `board create`.
+    if let Some(existing) = fetch_goal_head(client, &id).await? {
+        return Err(CliError::Conflict(format!(
+            "goal {:?} already exists (brandScope {}); goals are addressed by d-tag, \
+             so creating it again would overwrite the shared head",
+            existing.id, existing.brand_scope
+        )));
+    }
+
+    let builder = build_goal_event(&id, brand, &body)?;
+    let event = sign_and_submit(client, builder, "relay reported goal event as duplicate").await?;
+    println!("event_id   {}", event.id.to_hex());
+    println!(
+        "coordinate {KIND_BOARD_GOAL}:{}:{id}",
+        event.pubkey.to_hex()
+    );
+    println!("id         {id}");
+    println!("brand      {brand}");
+    println!("framework  {}", args.framework);
+    println!("status     draft");
     Ok(())
 }
 
@@ -2044,7 +2410,7 @@ pub async fn cmd_seed(client: &BuzzClient, dry_run: bool) -> Result<(), CliError
 }
 
 pub async fn dispatch(cmd: crate::BoardCmd, client: &BuzzClient) -> Result<(), CliError> {
-    use crate::{BoardCardCmd, BoardCmd};
+    use crate::{BoardCardCmd, BoardCmd, BoardGoalCmd};
     match cmd {
         BoardCmd::Ls { brand, limit } => cmd_ls(client, brand.as_deref(), limit).await,
         BoardCmd::Get { board_id } => cmd_get(client, &board_id).await,
@@ -2143,6 +2509,43 @@ pub async fn dispatch(cmd: crate::BoardCmd, client: &BuzzClient) -> Result<(), C
             card,
             reason,
         }) => cmd_card_deny(client, &board, &card, reason.as_deref()).await,
+        BoardCmd::Goal(BoardGoalCmd::Create {
+            id,
+            brand,
+            framework,
+            specific,
+            measurable,
+            attainable,
+            relevant,
+            time_bound,
+            objective,
+            krs,
+            purposeful,
+            actionable,
+            continuous,
+            trackable,
+        }) => {
+            cmd_goal_create(
+                client,
+                &id,
+                &brand,
+                &GoalCreateArgs {
+                    framework,
+                    specific,
+                    measurable,
+                    attainable,
+                    relevant,
+                    time_bound,
+                    objective,
+                    krs,
+                    purposeful,
+                    actionable,
+                    continuous,
+                    trackable,
+                },
+            )
+            .await
+        }
         BoardCmd::Seed { dry_run } => cmd_seed(client, dry_run).await,
     }
 }
@@ -2321,6 +2724,9 @@ mod tests {
         assert!(validate_brand("cleanstartup").is_err());
         assert!(validate_brand("Clean").is_err());
         assert!(validate_brand("").is_err());
+        // Pre-rekey platform slug — do not re-admit. Live hvgapp board
+        // still says `hvg-app`; that is a P5 rekey, not a validator hole.
+        assert!(validate_brand("hvg-app").is_err());
     }
 
     #[test]
@@ -3023,5 +3429,160 @@ mod tests {
         assert_eq!(ok.id, "goal-1");
         assert_eq!(ok.brand_scope, "clean");
         assert!(GoalSnapshot::from_event(&goal_event(&keys, "BOGUS")).is_err());
+    }
+
+    fn smart_args() -> GoalCreateArgs {
+        GoalCreateArgs {
+            framework: "SMART".into(),
+            specific: Some("Peter can create a goal from Desktop".into()),
+            measurable: Some("One goal exists on the hvgapp board after refresh".into()),
+            attainable: Some("publishGoal already writes kind 30625".into()),
+            relevant: Some("Goal rollup is dead until goals exist".into()),
+            time_bound: Some("2026-08-22".into()),
+            objective: None,
+            krs: vec![],
+            purposeful: None,
+            actionable: None,
+            continuous: None,
+            trackable: None,
+        }
+    }
+
+    #[test]
+    fn parse_kr_splits_three_parts_and_keeps_extra_delimiter() {
+        let kr = parse_kr("  content model :: pages :: 1::plus ").unwrap();
+        assert_eq!(kr.description, "content model");
+        assert_eq!(kr.target_metric, "pages");
+        assert_eq!(kr.target_value, "1::plus");
+        assert!(parse_kr("only-two::parts").is_err());
+        assert!(parse_kr("a:: ::c").is_err());
+        assert!(parse_kr("").is_err());
+    }
+
+    #[test]
+    fn assemble_goal_body_smart_requires_five_flags() {
+        let mut args = smart_args();
+        args.specific = None;
+        let err = assemble_goal_body(&args).unwrap_err();
+        assert!(matches!(err, CliError::Usage(msg) if msg.contains("--specific")));
+    }
+
+    #[test]
+    fn assemble_goal_body_smart_rejects_okr_flags() {
+        let mut args = smart_args();
+        args.objective = Some("nope".into());
+        let err = assemble_goal_body(&args).unwrap_err();
+        assert!(matches!(err, CliError::Usage(msg) if msg.contains("--objective")));
+    }
+
+    #[test]
+    fn assemble_goal_body_okr_requires_kr_and_objective() {
+        let args = GoalCreateArgs {
+            framework: "OKR".into(),
+            specific: None,
+            measurable: None,
+            attainable: None,
+            relevant: None,
+            time_bound: None,
+            objective: Some("First reviews ship".into()),
+            krs: vec![],
+            purposeful: None,
+            actionable: None,
+            continuous: None,
+            trackable: None,
+        };
+        let err = assemble_goal_body(&args).unwrap_err();
+        assert!(matches!(err, CliError::Usage(msg) if msg.contains("--kr")));
+        let mut with_kr = args.clone();
+        with_kr.krs = vec!["content model::pages::1".into()];
+        with_kr.objective = None;
+        let err = assemble_goal_body(&with_kr).unwrap_err();
+        assert!(matches!(err, CliError::Usage(msg) if msg.contains("--objective")));
+    }
+
+    #[test]
+    fn assemble_goal_body_rejects_unknown_framework() {
+        let mut args = smart_args();
+        args.framework = "WOOP".into();
+        assert!(assemble_goal_body(&args).is_err());
+        args.framework = "smart".into();
+        assert!(assemble_goal_body(&args).is_err());
+    }
+
+    #[test]
+    fn build_goal_event_smart_matches_ts_template() {
+        let body = assemble_goal_body(&smart_args()).unwrap();
+        let event = sign(build_goal_event("hvgapp-ship", "hvgapp", &body).unwrap());
+        assert_eq!(event.kind, kind_board_goal());
+        assert_eq!(tag_slices(&event), owned(&[&["d", "hvgapp-ship"]]));
+        // Byte-exact: TS key order is brandScope, framework, smart?, okr?,
+        // pact?, status, proposedCards. Absent framework blocks omitted.
+        assert_eq!(
+            event.content,
+            r#"{"brandScope":"hvgapp","framework":"SMART","smart":{"specific":"Peter can create a goal from Desktop","measurable":"One goal exists on the hvgapp board after refresh","attainable":"publishGoal already writes kind 30625","relevant":"Goal rollup is dead until goals exist","timeBound":"2026-08-22"},"status":"draft","proposedCards":[]}"#
+        );
+        let snap = GoalSnapshot::from_event(&event).unwrap();
+        assert_eq!(snap.id, "hvgapp-ship");
+        assert_eq!(snap.brand_scope, "hvgapp");
+    }
+
+    #[test]
+    fn build_goal_event_okr_matches_ts_template() {
+        let args = GoalCreateArgs {
+            framework: "OKR".into(),
+            specific: None,
+            measurable: None,
+            attainable: None,
+            relevant: None,
+            time_bound: None,
+            objective: Some("Run Clean capture end to end".into()),
+            krs: vec!["One home captured::homes captured::1".into()],
+            purposeful: None,
+            actionable: None,
+            continuous: None,
+            trackable: None,
+        };
+        let body = assemble_goal_body(&args).unwrap();
+        let event = sign(build_goal_event("clean-launch", "clean", &body).unwrap());
+        assert_eq!(tag_slices(&event), owned(&[&["d", "clean-launch"]]));
+        assert_eq!(
+            event.content,
+            r#"{"brandScope":"clean","framework":"OKR","okr":{"objective":"Run Clean capture end to end","keyResults":[{"description":"One home captured","targetMetric":"homes captured","targetValue":"1"}]},"status":"draft","proposedCards":[]}"#
+        );
+        assert!(!event.content.contains("currentValue"));
+    }
+
+    #[test]
+    fn build_goal_event_pact_matches_ts_template() {
+        let args = GoalCreateArgs {
+            framework: "PACT".into(),
+            specific: None,
+            measurable: None,
+            attainable: None,
+            relevant: None,
+            time_bound: None,
+            objective: None,
+            krs: vec![],
+            purposeful: Some("Daily proof stays in the user's hands".into()),
+            actionable: Some("Ship the check-in surface".into()),
+            continuous: Some("One check-in per day".into()),
+            trackable: Some("Streak length".into()),
+        };
+        let body = assemble_goal_body(&args).unwrap();
+        let event = sign(build_goal_event("lhfyc-habits", "lhfyc", &body).unwrap());
+        assert_eq!(
+            event.content,
+            r#"{"brandScope":"lhfyc","framework":"PACT","pact":{"purposeful":"Daily proof stays in the user's hands","actionable":"Ship the check-in surface","continuous":"One check-in per day","trackable":"Streak length"},"status":"draft","proposedCards":[]}"#
+        );
+        let snap = GoalSnapshot::from_event(&event).unwrap();
+        assert_eq!(snap.id, "lhfyc-habits");
+        assert_eq!(snap.brand_scope, "lhfyc");
+    }
+
+    #[test]
+    fn build_goal_event_rejects_empty_id() {
+        let body = assemble_goal_body(&smart_args()).unwrap();
+        assert!(build_goal_event("", "hvgapp", &body).is_err());
+        assert!(build_goal_event("hvgapp-ship", "", &body).is_err());
     }
 }
