@@ -3,11 +3,13 @@ import { useState } from "react";
 
 import type { UserProfileLookup } from "@/features/profile/lib/identity";
 
+import { goalHeadline, type GoalDraft } from "./state/goalDraft";
 import type { Board, Card, FeedRule, Goal } from "./types/boardTypes";
 import { BoardCardModal } from "./ui/BoardCardModal";
 import { BoardColumn } from "./ui/BoardColumn";
 import { BoardFeedRulesModal } from "./ui/BoardFeedRulesModal";
 import { CardComposerModal, type CardDraft } from "./ui/CardComposerModal";
+import { GoalComposerModal } from "./ui/GoalComposerModal";
 import { GoalDraftPanel } from "./ui/GoalDraftPanel";
 
 export interface BoardViewProps {
@@ -22,11 +24,15 @@ export interface BoardViewProps {
   onSelectBoard?: (boardId: string) => void;
   onNewBoard?: () => void;
   onAddCard?: (listId: string, draft: CardDraft) => void;
+  onCreateGoal?: (draft: GoalDraft) => void;
+  onSetCardGoal?: (cardId: string, goalId: string | null) => void;
   onApproveCard?: (cardId: string) => void;
   onRejectCard?: (cardId: string, reason: string) => void;
   onAddComment?: (cardId: string, commentBody: string) => void;
   onApproveGoal?: (goalId: string) => void;
   onRejectGoal?: (goalId: string) => void;
+  /** Test seam so static markup can render the Goals tab without a click. */
+  defaultTab?: "columns" | "goals";
 }
 
 export const BoardView: React.FC<BoardViewProps> = ({
@@ -40,11 +46,14 @@ export const BoardView: React.FC<BoardViewProps> = ({
   onSelectBoard,
   onNewBoard,
   onAddCard,
+  onCreateGoal,
+  onSetCardGoal,
   onApproveCard,
   onRejectCard,
   onAddComment,
   onApproveGoal,
   onRejectGoal,
+  defaultTab = "columns",
 }) => {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const selectedCard = cards.find((card) => card.id === selectedCardId) ?? null;
@@ -53,8 +62,9 @@ export const BoardView: React.FC<BoardViewProps> = ({
     : false;
   const [isFeedRulesOpen, setIsFeedRulesOpen] = useState(false);
   const [composerListId, setComposerListId] = useState<string | null>(null);
+  const [isGoalComposerOpen, setIsGoalComposerOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"columns" | "goals" | "feedRules">(
-    "columns",
+    defaultTab,
   );
 
   const pendingGoals = goals.filter((g) => g.status === "proposed");
@@ -130,6 +140,16 @@ export const BoardView: React.FC<BoardViewProps> = ({
               + New Board
             </button>
           )}
+          {onCreateGoal && (
+            <button
+              type="button"
+              data-testid="new-goal"
+              onClick={() => setIsGoalComposerOpen(true)}
+              className="px-3 py-1.5 rounded-lg border border-border bg-sidebar hover:bg-sidebar-accent text-2xs font-semibold text-foreground transition-colors"
+            >
+              + New Goal
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setIsFeedRulesOpen(true)}
@@ -172,20 +192,47 @@ export const BoardView: React.FC<BoardViewProps> = ({
         {activeTab === "goals" && (
           <div className="max-w-4xl mx-auto space-y-6">
             <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">
-              Pending Comet Goal Proposals
+              Goals
             </h2>
-            {pendingGoals.map((goal) => (
-              <GoalDraftPanel
-                key={goal.id}
-                goal={goal}
-                onApproveGoal={onApproveGoal}
-                onRejectGoal={onRejectGoal}
-              />
-            ))}
-            {pendingGoals.length === 0 && (
+            {goals.length === 0 && (
               <div className="text-center py-16 text-xs text-muted-foreground italic border border-dashed border-border rounded-xl">
-                No active Comet goal proposals requiring review.
+                No goals yet. Create one to attach cards against.
               </div>
+            )}
+            {goals
+              .filter((goal) => goal.status !== "proposed")
+              .map((goal) => (
+                <div
+                  key={goal.id}
+                  className="rounded-xl border border-border bg-card p-4 space-y-1"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-semibold text-foreground">
+                      {goalHeadline(goal)}
+                    </h3>
+                    <span className="text-2xs uppercase font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded">
+                      {goal.status} · {goal.framework}
+                    </span>
+                  </div>
+                  <p className="text-2xs text-muted-foreground font-mono">
+                    {goal.id}
+                  </p>
+                </div>
+              ))}
+            {pendingGoals.length > 0 && (
+              <>
+                <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">
+                  Pending Comet Goal Proposals
+                </h2>
+                {pendingGoals.map((goal) => (
+                  <GoalDraftPanel
+                    key={goal.id}
+                    goal={goal}
+                    onApproveGoal={onApproveGoal}
+                    onRejectGoal={onRejectGoal}
+                  />
+                ))}
+              </>
             )}
           </div>
         )}
@@ -200,6 +247,8 @@ export const BoardView: React.FC<BoardViewProps> = ({
         onApproveCard={onApproveCard}
         onRejectCard={onRejectCard}
         onAddComment={onAddComment}
+        goals={goals}
+        onSetCardGoal={onSetCardGoal}
         profiles={profiles}
       />
 
@@ -221,6 +270,15 @@ export const BoardView: React.FC<BoardViewProps> = ({
           onAddCard={(draft) => {
             if (composerListId) onAddCard(composerListId, draft);
           }}
+        />
+      )}
+
+      {onCreateGoal && (
+        <GoalComposerModal
+          isOpen={isGoalComposerOpen}
+          defaultBrand={board.brandScope}
+          onClose={() => setIsGoalComposerOpen(false)}
+          onCreateGoal={onCreateGoal}
         />
       )}
     </div>
