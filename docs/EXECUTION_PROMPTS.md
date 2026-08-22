@@ -54,7 +54,8 @@ process is silence, not work.
 | P6 | MFR | #build | nothing |
 | P7 | YBY | #build | **P11** (same reason) |
 | P8 | squad leads | each squad channel | P3 + P5 |
-| P11 | TIP | #build | nothing — **8 agents down, head of the critical path** |
+| P11 | TIP | #build | ✅ DONE (shim live, 8 agents verified respawning 2026-08-22 11:24 UTC) |
+| P12 | TIP | #build | nothing — the 15-min watcher ([MONITORING.md](./MONITORING.md)) |
 
 ---
 
