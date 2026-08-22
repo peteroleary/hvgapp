@@ -5,7 +5,7 @@ mod error;
 mod links;
 mod validate;
 
-use clap::{Parser, Subcommand};
+use clap::{Args, Parser, Subcommand};
 use client::BuzzClient;
 use error::CliError;
 use nostr::Keys;
@@ -1188,6 +1188,41 @@ pub enum BoardCmd {
         #[arg(long)]
         lists: Option<String>,
     },
+    /// Edit a board's own fields against the reconciled head (across all
+    /// authors). Untouched fields — including the column set — are carried
+    /// over verbatim; the CLI never rebuilds a board from flags alone.
+    #[command(
+        after_help = "Examples:\n  buzz board set three --title 'We 3 Live'\n  buzz board set clean --description 'Clean Startup operating board' --brand clean"
+    )]
+    Set {
+        /// Board id (the `d` tag).
+        board_id: String,
+        /// New title.
+        #[arg(long)]
+        title: Option<String>,
+        /// New description.
+        #[arg(long)]
+        description: Option<String>,
+        /// New brand scope (locked set — validated at the write boundary).
+        #[arg(long)]
+        brand: Option<String>,
+    },
+    /// Retire a board: a NIP-09 (kind:5) deletion of its addressable
+    /// coordinate. Only the key that owns the reconciled head can retire it.
+    #[command(
+        after_help = "Examples:\n  buzz board retire concrete\n  buzz board retire sober --with-cards"
+    )]
+    Retire {
+        /// Board id (the `d` tag).
+        board_id: String,
+        /// Also delete every card on the board. Without this a board that
+        /// still holds cards is refused, so cards are never orphaned silently.
+        #[arg(long, default_value_t = false)]
+        with_cards: bool,
+    },
+    /// Goal operations (kind:30625).
+    #[command(subcommand)]
+    Goal(BoardGoalCmd),
     /// Card operations.
     #[command(subcommand)]
     Card(BoardCardCmd),
@@ -1315,6 +1350,17 @@ pub enum BoardCardCmd {
         #[arg(long)]
         reason: Option<String>,
     },
+    /// Delete a card: a NIP-09 (kind:5) deletion of its addressable
+    /// coordinate. Only the key that owns the reconciled head can delete it.
+    #[command(after_help = "Examples:\n  buzz board card delete --board clean --card <card-id>")]
+    Delete {
+        /// Board id (the `d` tag).
+        #[arg(long)]
+        board: String,
+        /// Card id (the `d` tag).
+        #[arg(long)]
+        card: String,
+    },
     /// Deny approval for a card. Appends a kind:50003 event.
     #[command(
         after_help = "Examples:\n  buzz board card deny --board clean --card <card-id>\n  buzz board card deny --board clean --card <card-id> --reason 'needs revision'"
@@ -1330,6 +1376,102 @@ pub enum BoardCardCmd {
         #[arg(long)]
         reason: Option<String>,
     },
+}
+
+/// Structured outcome (kind:30625) operations. A goal is what cards roll up
+/// to: `board card add --goal` and `board card set --goal` both refuse an id
+/// that has no goal head, so the goal must exist first.
+#[derive(Subcommand)]
+pub enum BoardGoalCmd {
+    /// File a goal. The framework decides which field group is required:
+    /// SMART needs all five SMART flags, OKR needs `--objective` plus at
+    /// least one `--key-result`, PACT needs all four PACT flags.
+    #[command(
+        after_help = "Examples:\n  buzz board goal add --id hvgapp-ship --brand hvgapp --framework OKR --objective 'Run the operation from the app' --key-result 'Board is writable|verbs shipped|0|4'\n  buzz board goal add --id clean-launch --brand clean --framework SMART --specific 'Launch the capture pipeline' --measurable '1 home captured end to end' --attainable 'Pipeline exists in staging' --relevant 'Gates the whole brand' --time-bound '2026-09-30'"
+    )]
+    Add(Box<GoalAddArgs>),
+    /// List goal heads (reconciled across all authors).
+    Ls {
+        /// Filter to one brand scope.
+        #[arg(long)]
+        brand: Option<String>,
+        /// Max results (default 50, hard cap 200).
+        #[arg(long)]
+        limit: Option<u32>,
+    },
+    /// Delete a goal: a NIP-09 (kind:5) deletion of its addressable
+    /// coordinate. Refused while any card still points at it, so a card is
+    /// never left carrying a `parentGoalId` that resolves to nothing.
+    #[command(after_help = "Examples:\n  buzz board goal delete --id hvgapp-ship")]
+    Delete {
+        /// Goal id (the `d` tag).
+        #[arg(long)]
+        id: String,
+    },
+    /// Advance a goal's status against the reconciled head. Every other
+    /// field — framework body, proposedCards — is carried over verbatim.
+    #[command(after_help = "Examples:\n  buzz board goal set --id hvgapp-ship --status executing")]
+    Set {
+        /// Goal id (the `d` tag).
+        #[arg(long)]
+        id: String,
+        /// New status: draft, proposed, approved, executing, completed.
+        #[arg(long)]
+        status: String,
+    },
+}
+
+/// Flags for `board goal add`, hoisted out of the subcommand enum so one
+/// wide variant does not set the size of every other Board command.
+#[derive(Args)]
+pub struct GoalAddArgs {
+    /// Goal id — human slug, becomes the `d` tag. `[a-z0-9._-]{1,80}`.
+    #[arg(long)]
+    id: String,
+    /// Brand scope (locked set — validated at the write boundary).
+    #[arg(long)]
+    brand: String,
+    /// Goal framework: SMART, OKR, or PACT.
+    #[arg(long)]
+    framework: String,
+    /// Lifecycle status: draft, proposed, approved, executing, completed.
+    /// Defaults to `draft`.
+    #[arg(long)]
+    status: Option<String>,
+    /// SMART: what specifically gets done.
+    #[arg(long)]
+    specific: Option<String>,
+    /// SMART: how completion is measured.
+    #[arg(long)]
+    measurable: Option<String>,
+    /// SMART: why it is attainable.
+    #[arg(long)]
+    attainable: Option<String>,
+    /// SMART: why it is relevant.
+    #[arg(long)]
+    relevant: Option<String>,
+    /// SMART: the deadline.
+    #[arg(long = "time-bound")]
+    time_bound: Option<String>,
+    /// OKR: the objective.
+    #[arg(long)]
+    objective: Option<String>,
+    /// OKR: `description|targetMetric[|currentValue[|targetValue]]`.
+    /// May be repeated; at least one is required for OKR.
+    #[arg(long = "key-result")]
+    key_results: Vec<String>,
+    /// PACT: the purpose.
+    #[arg(long)]
+    purposeful: Option<String>,
+    /// PACT: the action.
+    #[arg(long)]
+    actionable: Option<String>,
+    /// PACT: the continuous practice.
+    #[arg(long)]
+    continuous: Option<String>,
+    /// PACT: how progress is tracked.
+    #[arg(long)]
+    trackable: Option<String>,
 }
 
 #[derive(Subcommand)]
