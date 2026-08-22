@@ -64,9 +64,7 @@ pub const DEFAULT_LIST_TITLES: [&str; 5] =
 /// `desktop/src/features/board/ui/brandTokens.ts`. A typo here produces a
 /// card no brand filter ever returns — invisible, not broken — so anything
 /// outside this set is a hard error, not a warning.
-pub const BRAND_SLUGS: [&str; 6] = [
-    "clean", "itshvg", "lhfyc", "gomarco", "three", "hvgapp",
-];
+pub const BRAND_SLUGS: [&str; 6] = ["clean", "itshvg", "lhfyc", "gomarco", "three", "hvgapp"];
 
 /// The Board function taxonomy (`FunctionArea` in `types/boardTypes.ts`).
 /// Mirrors `FUNCTION_AREAS` in `boardEvents.ts`.
@@ -1215,11 +1213,111 @@ pub async fn cmd_ls(
     Ok(())
 }
 
+/// Length of the pubkey prefix shown when a key has no resolvable profile.
+const PUBKEY_FALLBACK_PREFIX_LEN: usize = 8;
+
+/// The label for a pubkey that has no kind:0 profile (or whose profile carries
+/// no usable name): an 8-character prefix, never the bare 64-char hex.
+fn pubkey_fallback_label(pubkey: &str) -> String {
+    let prefix: String = pubkey.chars().take(PUBKEY_FALLBACK_PREFIX_LEN).collect();
+    format!("{prefix}\u{2026}")
+}
+
+/// Resolve pubkeys to human labels from their kind:0 metadata.
+///
+/// Resolution order is `display_name` -> `name` -> 8-character prefix, which is
+/// the order `users.rs` already uses for `buzz users get` and that Desktop's
+/// `resolveUserLabel` uses for every other surface. Agent keys carry
+/// `display_name` (the handle, e.g. `TUN`); `name` is honoured as a fallback so
+/// a NIP-01 profile that only sets the username still resolves.
+///
+/// Profile lookup is best-effort by design: `board get` must still print the
+/// board when the relay refuses or the query fails, so every unresolved key
+/// simply falls back to its prefix rather than failing the command.
+async fn resolve_pubkey_labels(
+    client: &BuzzClient,
+    pubkeys: &[String],
+) -> std::collections::HashMap<String, String> {
+    let mut labels: std::collections::HashMap<String, String> = pubkeys
+        .iter()
+        .map(|pk| (pk.clone(), pubkey_fallback_label(pk)))
+        .collect();
+    if pubkeys.is_empty() {
+        return labels;
+    }
+
+    let filter = serde_json::json!({
+        "kinds": [0],
+        "authors": pubkeys,
+        "limit": pubkeys.len(),
+    });
+    let Ok(raw) = client.query(&filter).await else {
+        return labels;
+    };
+    let events: Vec<serde_json::Value> = serde_json::from_str(&raw).unwrap_or_default();
+    for event in &events {
+        let Some(pubkey) = event.get("pubkey").and_then(|v| v.as_str()) else {
+            continue;
+        };
+        let Some(content) = event.get("content").and_then(|v| v.as_str()) else {
+            continue;
+        };
+        let Ok(profile) = serde_json::from_str::<serde_json::Value>(content) else {
+            continue;
+        };
+        if let Some(label) = profile_label(&profile) {
+            labels.insert(pubkey.to_string(), label);
+        }
+    }
+    labels
+}
+
+/// `display_name` then `name`, each trimmed; `None` when neither is usable.
+fn profile_label(profile: &serde_json::Value) -> Option<String> {
+    ["display_name", "name"]
+        .iter()
+        .filter_map(|key| profile.get(*key))
+        .filter_map(|value| value.as_str())
+        .map(str::trim)
+        .find(|value| !value.is_empty())
+        .map(str::to_string)
+}
+
+/// Render one assignee for display: the stored `{type,id,role}` plus a resolved
+/// `name`. Built here rather than on `AssigneeEntry` on purpose — that struct is
+/// serialized straight into card event content, which must stay byte-identical
+/// to the TypeScript `Assignee` interface, so it must never grow a field.
+fn assignee_display(
+    assignee: &AssigneeEntry,
+    labels: &std::collections::HashMap<String, String>,
+) -> serde_json::Value {
+    let name = labels
+        .get(&assignee.id)
+        .cloned()
+        .unwrap_or_else(|| pubkey_fallback_label(&assignee.id));
+    serde_json::json!({
+        "type": assignee.kind,
+        "id": assignee.id,
+        "role": assignee.role,
+        "name": name,
+    })
+}
+
 pub async fn cmd_get(client: &BuzzClient, board_id: &str) -> Result<(), CliError> {
     let board = fetch_board_head(client, board_id)
         .await?
         .ok_or_else(|| CliError::NotFound(format!("board not found: {board_id}")))?;
     let cards = fetch_board_cards(client, &board.id).await?;
+
+    // One batched kind:0 lookup for every assignee on the board, rather than a
+    // query per card — a full board is dozens of cards over a handful of keys.
+    let mut assignee_pubkeys: Vec<String> = cards
+        .iter()
+        .flat_map(|c| c.assignees.iter().map(|a| a.id.clone()))
+        .collect();
+    assignee_pubkeys.sort();
+    assignee_pubkeys.dedup();
+    let labels = resolve_pubkey_labels(client, &assignee_pubkeys).await;
 
     let mut ordered_lists: Vec<&BoardListEntry> = board.lists.iter().collect();
     ordered_lists.sort_by(|l, r| compare_rank((&l.rank, 0, &l.id), (&r.rank, 0, &r.id)));
@@ -1238,7 +1336,10 @@ pub async fn cmd_get(client: &BuzzClient, board_id: &str) -> Result<(), CliError
                         "functionArea": c.function_area,
                         "executionState": c.execution_state,
                         "rank": c.rank,
-                        "assignees": c.assignees,
+                        "assignees": c.assignees
+                            .iter()
+                            .map(|a| assignee_display(a, &labels))
+                            .collect::<Vec<_>>(),
                         "createdBy": c.created_by,
                         "owner": c.owner,
                         "coordinate": c.coordinate(),
@@ -2028,6 +2129,83 @@ mod tests {
     use super::*;
     use nostr::{Keys, Timestamp};
 
+    const TUN: &str = "845798e38eb7c9bfdca6df7e18e77650a5b773c2ec56d746034ee9ab748cbb39";
+
+    fn assignee(id: &str, role: Option<&str>) -> AssigneeEntry {
+        AssigneeEntry {
+            kind: "agent".into(),
+            id: id.into(),
+            role: role.map(str::to_string),
+        }
+    }
+
+    #[test]
+    fn profile_label_prefers_display_name_over_name() {
+        let profile = serde_json::json!({"display_name": "TUN", "name": "tunechi"});
+        assert_eq!(profile_label(&profile).as_deref(), Some("TUN"));
+    }
+
+    #[test]
+    fn profile_label_falls_back_to_name() {
+        // Agent keys carry `display_name`; a plain NIP-01 profile may set only
+        // `name`, and must still resolve rather than dropping to a prefix.
+        let profile = serde_json::json!({"name": "tunechi"});
+        assert_eq!(profile_label(&profile).as_deref(), Some("tunechi"));
+    }
+
+    #[test]
+    fn profile_label_rejects_blank_and_missing_names() {
+        assert_eq!(profile_label(&serde_json::json!({})), None);
+        assert_eq!(
+            profile_label(&serde_json::json!({"display_name": "   "})),
+            None
+        );
+        // A blank `display_name` must not shadow a usable `name`.
+        assert_eq!(
+            profile_label(&serde_json::json!({"display_name": "", "name": "TUN"})).as_deref(),
+            Some("TUN")
+        );
+        // Non-string values are ignored, not stringified.
+        assert_eq!(profile_label(&serde_json::json!({"display_name": 7})), None);
+    }
+
+    #[test]
+    fn pubkey_fallback_is_an_eight_char_prefix_never_the_full_hex() {
+        let label = pubkey_fallback_label(TUN);
+        assert_eq!(label, "845798e3\u{2026}");
+        assert!(!label.contains(TUN));
+    }
+
+    #[test]
+    fn assignee_display_uses_the_resolved_label() {
+        let labels = std::collections::HashMap::from([(TUN.to_string(), "TUN".to_string())]);
+        assert_eq!(
+            assignee_display(&assignee(TUN, Some("lead")), &labels),
+            serde_json::json!({"type": "agent", "id": TUN, "role": "lead", "name": "TUN"})
+        );
+    }
+
+    #[test]
+    fn assignee_display_falls_back_when_the_key_is_unresolved() {
+        let labels = std::collections::HashMap::new();
+        let out = assignee_display(&assignee(TUN, None), &labels);
+        assert_eq!(out["name"], serde_json::json!("845798e3\u{2026}"));
+        assert_eq!(out["role"], serde_json::Value::Null);
+        // The full pubkey stays available for callers that need to act on it.
+        assert_eq!(out["id"], serde_json::json!(TUN));
+    }
+
+    /// `AssigneeEntry` is serialized straight into card event content, which is
+    /// pinned byte-for-byte against the TypeScript `Assignee` interface. The
+    /// display-only `name` must never leak into that struct's own output.
+    #[test]
+    fn assignee_entry_serialization_stays_free_of_the_display_name() {
+        assert_eq!(
+            serde_json::to_string(&assignee(TUN, Some("lead"))).unwrap(),
+            format!(r#"{{"type":"agent","id":"{TUN}","role":"lead"}}"#)
+        );
+    }
+
     /// The checked-in cross-language conformance fixture, generated from the
     /// Desktop TS sources by `desktop/scripts/generate-board-event-vectors.mjs`
     /// and freshness-pinned TS-side by `boardEventVectors.test.mjs`.
@@ -2118,8 +2296,7 @@ mod tests {
             rank: "n".into(),
         }];
         let event = sign(
-            build_board_event("clean-board", "Clean Startup", None, Some("clean"), &lists)
-                .unwrap(),
+            build_board_event("clean-board", "Clean Startup", None, Some("clean"), &lists).unwrap(),
         );
         assert_eq!(event.kind, kind_board());
         assert_eq!(
