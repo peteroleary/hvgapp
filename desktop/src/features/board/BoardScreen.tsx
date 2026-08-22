@@ -200,6 +200,9 @@ export function BoardScreen() {
             });
           });
         }}
+        onCreateGoal={(goal) => {
+          mutations.publishGoal.mutate(goal);
+        }}
         onApproveGoal={(goalId) => {
           const entity = findGoal(goalId);
           if (!entity) return;
