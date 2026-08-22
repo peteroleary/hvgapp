@@ -112,3 +112,70 @@ test("BoardColumn derives requiresApproval from approvalPendingByCardId map", ()
   );
   contains(pendingHtml, "Needs Approval");
 });
+
+const TUN = "845798e38eb7c9bfdca6df7e18e77650a5b773c2ec56d746034ee9ab748cbb39";
+
+const CARD_WITH_ASSIGNEE = {
+  ...MINIMAL_CARD,
+  assignees: [{ type: "agent", id: TUN, role: "lead" }],
+};
+
+const TUN_PROFILES = {
+  [TUN]: { pubkey: TUN, displayName: "TUN" },
+};
+
+test("BoardCard renders an assignee's handle, never the raw pubkey", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(BoardCard, {
+      card: CARD_WITH_ASSIGNEE,
+      requiresApproval: false,
+      onSelectCard: () => {},
+      profiles: TUN_PROFILES,
+    }),
+  );
+  // Initials come from the resolved name, so TUN reads "TU" not "84".
+  contains(html, "TU");
+  contains(html, "TUN (lead)");
+  notContains(html, TUN);
+});
+
+test("BoardCard falls back to an 8-char prefix when a profile is missing", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(BoardCard, {
+      card: CARD_WITH_ASSIGNEE,
+      requiresApproval: false,
+      onSelectCard: () => {},
+    }),
+  );
+  contains(html, "845798e3");
+  // The fallback is a prefix, never the whole 64-character key.
+  notContains(html, TUN);
+});
+
+test("BoardCardModal renders an assignee's handle, not the raw pubkey", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(BoardCardModal, {
+      card: CARD_WITH_ASSIGNEE,
+      requiresApproval: false,
+      isOpen: true,
+      onClose: () => {},
+      profiles: TUN_PROFILES,
+    }),
+  );
+  contains(html, "@TUN");
+  // The full key stays reachable as a tooltip for copy/paste.
+  contains(html, `title="${TUN}"`);
+});
+
+test("BoardColumn passes profiles through to its cards", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(BoardColumn, {
+      listId: "backlog",
+      title: "Backlog",
+      cards: [CARD_WITH_ASSIGNEE],
+      onSelectCard: () => {},
+      profiles: TUN_PROFILES,
+    }),
+  );
+  contains(html, "TUN (lead)");
+});

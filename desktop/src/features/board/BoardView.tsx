@@ -1,6 +1,8 @@
 import type React from "react";
 import { useState } from "react";
 
+import type { UserProfileLookup } from "@/features/profile/lib/identity";
+
 import type { Board, Card, FeedRule, Goal } from "./types/boardTypes";
 import { BoardCardModal } from "./ui/BoardCardModal";
 import { BoardColumn } from "./ui/BoardColumn";
@@ -15,6 +17,8 @@ export interface BoardViewProps {
   goals?: Goal[];
   approvalPendingByCardId?: Readonly<Record<string, boolean>>;
   feedRules?: FeedRule[];
+  /** Resolved kind:0 profiles for this board's assignees. */
+  profiles?: UserProfileLookup;
   onSelectBoard?: (boardId: string) => void;
   onNewBoard?: () => void;
   onAddCard?: (listId: string, draft: CardDraft) => void;
@@ -32,6 +36,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
   goals = [],
   approvalPendingByCardId = {},
   feedRules = [],
+  profiles,
   onSelectBoard,
   onNewBoard,
   onAddCard,
@@ -157,6 +162,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
                       ? (listId) => setComposerListId(listId)
                       : undefined
                   }
+                  profiles={profiles}
                 />
               );
             })}
@@ -194,6 +200,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
         onApproveCard={onApproveCard}
         onRejectCard={onRejectCard}
         onAddComment={onAddComment}
+        profiles={profiles}
       />
 
       {/* Feed Rules Config Modal */}

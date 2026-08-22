@@ -1,8 +1,10 @@
 import { useState } from "react";
 
+import { useUsersBatchQuery } from "@/features/profile/hooks";
 import { getIdentity } from "@/shared/api/tauriIdentity";
 
 import { BoardView } from "./BoardView";
+import { collectAssigneePubkeys } from "./state/assigneeNames";
 import { useBoardMutations } from "./state/boardMutations";
 import { compareRank, rankBetween } from "./state/rank";
 import { useBoardLiveUpdates, useBoardStateQuery } from "./state/useBoardStore";
@@ -24,6 +26,14 @@ export function BoardScreen() {
   useBoardLiveUpdates();
   const boardQuery = useBoardStateQuery();
   const mutations = useBoardMutations();
+  // One batched kind:0 fetch for every assignee on the board, so each card
+  // renders a handle instead of a pubkey. Declared above the loading and error
+  // early-returns below to keep the hook order stable across renders.
+  const assigneeProfilesQuery = useUsersBatchQuery(
+    collectAssigneePubkeys(
+      boardQuery.data?.cards.map((entity) => entity.card) ?? [],
+    ),
+  );
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
   const [isCreateBoardOpen, setIsCreateBoardOpen] = useState(false);
 
@@ -141,6 +151,7 @@ export function BoardScreen() {
         cards={state.cards
           .filter((entity) => entity.boardAddress === boardEntity.address)
           .map((entity) => entity.card)}
+        profiles={assigneeProfilesQuery.data?.profiles}
         feedRules={state.feedRules
           .map((entity) => entity.rule)
           .filter(

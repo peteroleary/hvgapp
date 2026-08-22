@@ -1,5 +1,8 @@
 import type React from "react";
 
+import type { UserProfileLookup } from "@/features/profile/lib/identity";
+
+import { assigneeDisplayName, assigneeInitials } from "../state/assigneeNames";
 import type { Card } from "../types/boardTypes";
 import { BRAND_TOKENS, brandDisplayName } from "./brandTokens";
 
@@ -9,6 +12,8 @@ export interface BoardCardProps {
   card: Card;
   requiresApproval: boolean;
   onSelectCard: (card: Card) => void;
+  /** Resolved kind:0 profiles for this board's assignees. */
+  profiles?: UserProfileLookup;
 }
 
 export const FUNCTION_TOKENS: Record<string, string> = {
@@ -26,6 +31,7 @@ export const BoardCard: React.FC<BoardCardProps> = ({
   card,
   requiresApproval,
   onSelectCard,
+  profiles,
 }) => {
   const isRejected = card.approvalDecision?.state === "rejected";
 
@@ -109,20 +115,23 @@ export const BoardCard: React.FC<BoardCardProps> = ({
       <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/40 mt-2">
         {/* Assignee Avatar Stack */}
         <div className="flex items-center -space-x-1.5 overflow-hidden">
-          {card.assignees.map((assignee) => (
-            <div
-              key={assignee.id}
-              title={`${assignee.id} (${assignee.role || "assignee"})`}
-              className="relative inline-flex items-center justify-center w-5 h-5 rounded-full bg-sidebar-accent text-sidebar-foreground border border-background text-badge font-bold"
-            >
-              {assignee.id.slice(0, 2).toUpperCase()}
-              <span
-                className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-background ${
-                  assignee.type === "agent" ? "bg-amber-400" : "bg-blue-400"
-                }`}
-              />
-            </div>
-          ))}
+          {card.assignees.map((assignee) => {
+            const displayName = assigneeDisplayName(assignee, profiles);
+            return (
+              <div
+                key={assignee.id}
+                title={`${displayName} (${assignee.role || "assignee"})`}
+                className="relative inline-flex items-center justify-center w-5 h-5 rounded-full bg-sidebar-accent text-sidebar-foreground border border-background text-badge font-bold"
+              >
+                {assigneeInitials(displayName)}
+                <span
+                  className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-background ${
+                    assignee.type === "agent" ? "bg-amber-400" : "bg-blue-400"
+                  }`}
+                />
+              </div>
+            );
+          })}
         </div>
 
         {/* Function Tag & Comment Count */}

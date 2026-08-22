@@ -1,6 +1,9 @@
 import type React from "react";
 import { useState } from "react";
 
+import type { UserProfileLookup } from "@/features/profile/lib/identity";
+
+import { assigneeDisplayName } from "../state/assigneeNames";
 import type { Card } from "../types/boardTypes";
 import { BRAND_TOKENS, brandDisplayName, FUNCTION_TOKENS } from "./BoardCard";
 
@@ -12,6 +15,8 @@ export interface BoardCardModalProps {
   onApproveCard?: (cardId: string) => void;
   onRejectCard?: (cardId: string, reason: string) => void;
   onAddComment?: (cardId: string, commentBody: string) => void;
+  /** Resolved kind:0 profiles for this board's assignees. */
+  profiles?: UserProfileLookup;
 }
 
 export const BoardCardModal: React.FC<BoardCardModalProps> = ({
@@ -22,6 +27,7 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
   onApproveCard,
   onRejectCard,
   onAddComment,
+  profiles,
 }) => {
   const [commentText, setCommentText] = useState("");
   const [rejectionReasonText, setRejectionReasonText] = useState("");
@@ -273,8 +279,11 @@ export const BoardCardModal: React.FC<BoardCardModalProps> = ({
                               : "bg-blue-400"
                           }`}
                         />
-                        <span className="font-medium text-foreground">
-                          @{assignee.id}
+                        <span
+                          className="font-medium text-foreground"
+                          title={assignee.id}
+                        >
+                          @{assigneeDisplayName(assignee, profiles)}
                         </span>
                       </div>
                       {assignee.role && (

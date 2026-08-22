@@ -1,5 +1,7 @@
 import type React from "react";
 
+import type { UserProfileLookup } from "@/features/profile/lib/identity";
+
 import type { Card } from "../types/boardTypes";
 import { BoardCard } from "./BoardCard";
 
@@ -10,6 +12,8 @@ export interface BoardColumnProps {
   approvalPendingByCardId?: Readonly<Record<string, boolean>>;
   onSelectCard: (card: Card) => void;
   onAddCard?: (listId: string) => void;
+  /** Resolved kind:0 profiles for this board's assignees. */
+  profiles?: UserProfileLookup;
 }
 
 export const BoardColumn: React.FC<BoardColumnProps> = ({
@@ -19,6 +23,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
   approvalPendingByCardId = {},
   onSelectCard,
   onAddCard,
+  profiles,
 }) => {
   return (
     <div className="w-[320px] shrink-0 flex flex-col rounded-lg bg-sidebar border border-sidebar-border/60 max-h-full">
@@ -50,6 +55,7 @@ export const BoardColumn: React.FC<BoardColumnProps> = ({
             card={card}
             requiresApproval={approvalPendingByCardId[card.id] ?? false}
             onSelectCard={onSelectCard}
+            profiles={profiles}
           />
         ))}
         {cards.length === 0 && (
