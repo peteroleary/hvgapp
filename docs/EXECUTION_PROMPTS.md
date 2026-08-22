@@ -56,6 +56,7 @@ process is silence, not work.
 | P8 | squad leads | each squad channel | P3 + P5 |
 | P11 | TIP | #build | ✅ DONE (shim live, 8 agents verified respawning 2026-08-22 11:24 UTC) |
 | P12 | TIP | #build | nothing — the 15-min watcher ([MONITORING.md](./MONITORING.md)) |
+| P13 | TIP + MFR | #build | P12 — watcher self-healing ladder ([INCIDENTS.md](./INCIDENTS.md) table) |
 
 ---
 
@@ -207,3 +208,23 @@ headless behavior and took down 8 agents for a day.
 
 DONE WHEN: all 8 grok-runtime agents initialize clean after a Buzz.app relaunch.
 ```
+
+## P13 — TIP + MFR — THE WATCHER LEARNS TO FIX (self-healing ladder)
+
+```
+The watcher's v1 only reports. Build the remediation ladder from docs/INCIDENTS.md:
+
+1. EXPOSE+FIX (TIP): when the watcher sees "harness alive but no agent_pool_ready in the
+   log tail" (I3 pattern), it re-posts the pending dispatch mention itself instead of
+   waiting for a human to notice silence.
+2. FIX (TIP): same pattern twice in an hour -> bump updated_at for the affected agents in
+   managed-agents.json to force respawn (backup the file first, every time). Two failed
+   respawns -> page Peter, stop.
+3. FIX (TIP): disk < 10 GiB -> clear ~/.buzz/REPOS/*/target and the known-rebuildable
+   caches (list is in the 2026-08-22 INCIDENTS entry) BEFORE posting.
+4. MFR — the durable half: buzz-acp must (a) re-emit unconsumed dispatch events after a
+   respawn so zombie instances can't eat them silently, and (b) surface "pool dead" as a
+   first-class relay-visible status. Cards on hvgapp board.
+
+DONE WHEN: kill one agent's pool, wait one watcher cycle, see the fix happen AND the post
+explaining it. Silence is failure.
