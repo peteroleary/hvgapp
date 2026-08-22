@@ -99,17 +99,18 @@ re-run; expect exit 1 with a DISK line. Restore the threshold to 10.
 cd /Users/po/.buzz && git add monitor/monitor.sh && git commit -s -m "monitor: 15-min hive health checks" && git push
 ```
 
-### Task 2: Watcher launcher — launchd + JUV alert posts (TIP, #build)
+### Task 2: Watcher launcher + Buzz.app keepalive (TUN, #build)
 
 **Files:**
 - Create: `/Users/po/Library/LaunchAgents/app.hvg.monitor.plist`
+- Create: `/Users/po/Library/LaunchAgents/app.hvg.buzz-keepalive.plist`
 
 **Interfaces:**
 - Consumes: Task 1's exit-1 stdout payload.
-- Produces: #command posts mentioning JUV (pubkey `828f505e354b0a381a807eb44300c91b312f7cabd07d21689812ffbe4c2a56b5`).
+- Produces: #command posts mentioning JUV (pubkey `828f505e354b0a381a807eb44300c91b312f7cabd07d21689812ffbe4c2a56b5`), and a Buzz.app process that relaunches on crash (ALLOCATION §8 — 24/7 unattended depends on this).
 
-- [ ] **Step 1: Write the plist** — `StartInterval` 900, `ProgramArguments` runs a wrapper
-  that executes monitor.sh and, on exit 1, posts:
+- [ ] **Step 1: Write the monitor plist** — `StartInterval` 900, `ProgramArguments` runs a
+  wrapper that executes monitor.sh and, on exit 1, posts:
 
 ```bash
 #!/bin/bash
@@ -124,17 +125,26 @@ if [ $? -eq 1 ]; then
 fi
 ```
 
-- [ ] **Step 2: Load and verify**
+- [ ] **Step 2: Write the keepalive plist** — `KeepAlive: true`, `RunAtLoad: true`,
+  launching the installed Buzz.app binary (`open -na` form so macOS doesn't fork a second
+  instance). This is the crash → relaunch guarantee; Peter never restarts the hive by hand
+  again.
+- [ ] **Step 3: Load and verify both**
 
 ```bash
 launchctl load ~/Library/LaunchAgents/app.hvg.monitor.plist
+launchctl load ~/Library/LaunchAgents/app.hvg.buzz-keepalive.plist
 ```
-Expected: `launchctl list | grep hvg` shows the job. Stage the Task-1 disk-threshold
-failure, run the wrapper by hand, confirm the @JUV post lands in #command.
+Expected: `launchctl list | grep hvg` shows both jobs. Stage the Task-1 disk-threshold
+failure, run the wrapper by hand, confirm the @JUV post lands in #command. Then kill the
+Buzz.app process and confirm the keepalive relaunches it within 30 seconds.
 
-- [ ] **Step 3: Commit** — wrapper + a copy of the plist into the `~/.buzz` repo, push.
+- [ ] **Step 4: Commit** — wrapper + copies of both plists into the `~/.buzz` repo, push.
 
-### Task 3: Concurrency file + HOLD enforcement (TIP, #build)
+### Task 3: Concurrency file + HOLD enforcement (YBY, #build)
+
+YBY's first task post-P11 — small, verifiable, and doubles as proof his grok runtime is
+truly back before he takes B1.
 
 **Files:**
 - Create: `/Users/po/.buzz/max-agents` (contents: `3`)
@@ -157,7 +167,7 @@ LIVE=$(pgrep -f buzz-acp | wc -l | tr -d ' ')
 - [ ] **Step 3:** Test: `echo 1 > ~/.buzz/max-agents`, run monitor.sh, expect the CAP line
   (live count > 1). Restore to 3. Commit + push in the `~/.buzz` repo.
 
-### Task 4: Desktop concurrency toggle (MFR, #build)
+### Task 4: Desktop concurrency toggle (YBY, #build — after B1 lands; MFR reviews the PR)
 
 **Files:**
 - Modify: `desktop/src/features/settings/` — add the control where agent settings live
@@ -181,7 +191,7 @@ LIVE=$(pgrep -f buzz-acp | wc -l | tr -d ' ')
 - [ ] **Step 4:** `cargo test --manifest-path desktop/src-tauri/Cargo.toml` +
   `pnpm -C desktop build`. Commit with `-s`, PR per repo rules.
 
-### Task 5: Subscription window table (PAT, #research)
+### Task 5: Subscription window table (SLM drafts, #research; PAT verifies sources)
 
 **Files:**
 - Modify: `docs/ALLOCATION.md` §1 — replace each `*(PAT)*` with verified mechanics.
@@ -189,15 +199,17 @@ LIVE=$(pgrep -f buzz-acp | wc -l | tr -d ' ')
 **Interfaces:**
 - Produces: the window/cap table JUV's pacing rules consume (ALLOCATION §3).
 
-- [ ] **Step 1:** For each of Claude, Kimi, Grok, ChatGPT/Codex, Gemini: document the
+- [ ] **Step 1 (SLM):** For each of Claude, Kimi, Grok, ChatGPT/Codex, Gemini: document the
   window type, cap, and reset behavior from provider docs (cite URL + access date) plus
-  any observed rate-limit events in harness logs (quote the log line).
-- [ ] **Step 2:** Where docs and observation disagree, observation wins — note the
+  any observed rate-limit events in harness logs (quote the log line). This is benchmark
+  rigor applied to provider limits — your lane.
+- [ ] **Step 2 (SLM):** Where docs and observation disagree, observation wins — note the
   conflict explicitly.
-- [ ] **Step 3:** Commit with `-s`, push to main. Unknown stays written as UNKNOWN with a
-  date — never guessed.
+- [ ] **Step 3 (PAT):** source-check every claim, sign off in the commit message.
+  Unknown stays written as UNKNOWN with a date — never guessed.
+- [ ] **Step 4 (SLM):** Commit with `-s`, push to main.
 
-### Task 6: Per-agent env matrix (PAT drafts, MIA clears, TIP applies)
+### Task 6: Per-agent env matrix (PAT drafts, MIA clears, TIP applies, SLM verifies)
 
 **Files:**
 - Create: `docs/ENV_MATRIX.md` — one row per agent: runtime(s) it may fail over into,
@@ -215,10 +227,12 @@ LIVE=$(pgrep -f buzz-acp | wc -l | tr -d ' ')
 - [ ] **Step 2 (MIA):** clearance pass — anything touching secrets gets a written yes/no
   in the doc.
 - [ ] **Step 3 (TIP):** apply via Desktop; one-turn smoke task per agent per failover
-  runtime ("reply with your model name"); paste results into the matrix. Push after each
-  stage.
+  runtime ("reply with your model name").
+- [ ] **Step 4 (SLM):** verify every smoke result against the matrix — the row doesn't
+  count until SLM confirms the reported model matches the target runtime. Paste results
+  into the matrix. Push after each stage.
 
-### Task 7: Weekly utilization report (PAT, #research)
+### Task 7: Weekly utilization report (PAT authors, SLM gathers, #research)
 
 **Files:**
 - Create: relay note template (NIP-23 via `buzz notes publish`) — sections below.
@@ -227,12 +241,15 @@ LIVE=$(pgrep -f buzz-acp | wc -l | tr -d ' ')
 - Consumes: watcher state (Task 1), harness logs, board history.
 - Produces: the Monday report JUV and Peter read; drives ALLOCATION *(tune)* corrections.
 
-- [ ] **Step 1:** Template sections: idle-window-hours (count of 15-min watcher windows
-  with zero live cards); burn % per subscription vs. cap; exhaustion events (target 0);
-  task-to-tier mismatches; plan-artifact-to-card-set velocity per brand.
-- [ ] **Step 2:** First report runs the Monday after the watcher has 7 days of data.
+- [ ] **Step 1 (SLM):** gather the inputs — watcher state (Task 1), harness logs, board
+  history — into the week's raw numbers.
+- [ ] **Step 2 (PAT):** author from the template. Sections: idle-window-hours (count of
+  15-min watcher windows with zero live cards); burn % per subscription vs. cap;
+  exhaustion events (target 0); task-to-tier mismatches; plan-artifact-to-card-set
+  velocity per brand.
+- [ ] **Step 3 (PAT):** First report runs the Monday after the watcher has 7 days of data.
   Publish as a relay note titled `UTILIZATION <date>`; link it in #command.
-- [ ] **Step 3:** Every *(tune)* ratio the report corrects gets edited into
+- [ ] **Step 4 (PAT):** Every *(tune)* ratio the report corrects gets edited into
   `docs/ALLOCATION.md` in the same week, committed with the report's date.
 
 ### Task 8 (DEFERRED): Ambiguous-anomaly summarizer (TIP, #build)
@@ -247,7 +264,9 @@ MONITORING.md. Until then, templated alerts are the whole system. Do not build e
 
 Coverage: ALLOCATION §2 floors → Global Constraints + P8 update (done); §3 pacing →
 Tasks 1/5/7 + JUV's P9 rules (done); §5 concurrency → Tasks 3/4; §6 env → Task 6;
-§7 learning loop → Task 7; §8 24/7 machinery → Tasks 1/2 + launchd keepalive card carried
-on the hvgapp board (B-queue); §1 windows → Task 5. Type consistency: state keys, file
-paths, and the JUV pubkey are identical across tasks. Deferred: B2 absorption (MFR's
-existing card, unchanged), Ollama/local model (rejected 2026-08-22).
+§7 learning loop → Task 7; §8 24/7 machinery → Tasks 1/2 (watcher + Buzz.app keepalive);
+§1 windows → Task 5. Load spread: TIP (1, 6-apply, 8-deferred), TUN (2 + keepalive),
+YBY (3, 4-after-B1), SLM (5, 6-verify, 7-gather), PAT (6-draft, 7-author), MIA (6-clear),
+MFR (4-review). Type consistency: state keys, file paths, and the JUV pubkey are identical
+across tasks. Deferred: B2 absorption (MFR's existing card, unchanged), Ollama/local model
+(rejected 2026-08-22).
