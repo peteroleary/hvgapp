@@ -3,6 +3,46 @@
 Newest first. Every entry: symptom, root cause (verified, not derived), fix, and the
 permanent guard. If an incident has no guard, it will repeat.
 
+## 2026-08-22 — Agent secret custody (found before it bit; no exposure)
+
+**I9. Desktop agent env is a plaintext secret store, and 50 secret slots were pointed at
+it.** Symptom: none — this was found during ALLOCATION_PLAN Task 6 Step 2 review, not from
+a failure. Root (verified against the live file and source, not derived): the managed-agent
+field is `env_vars`, a plaintext `name → value` map persisted verbatim to
+`~/Library/Application Support/xyz.block.buzz.app/agents/managed-agents.json`; Desktop →
+Advanced → Environment Variables writes the **value** there, and
+`desktop/src-tauri/src/migration_databricks_tests.rs:201` asserts a raw `ANTHROPIC_API_KEY`
+survives the v1→v2 migration inside that map. The keyring at
+`desktop/src-tauri/src/secret_store.rs` is scoped to nsec identity keys and has no caller on
+the agent env path — so we already built the right pattern for one class of secret and were
+about to route the other class around it. Blast radius: all 41 records run as the same uid,
+so a secret in that file is readable by every agent in the pool, including any agent that
+has been prompt-injected through untrusted input; `tmutil isexcluded` reports the file
+`[Included]`, so anything written there also propagates into every Time Machine snapshot.
+Scale: 15 agents declare **50 distinct slots across 57 declarations** in
+`BUZZ_AGENT_OS_REQUIRED_ENV`, including Plaid, Stripe, kubeconfig, store-release
+credentials, the Clean Startup LiDAR pipeline token, NKI's crisis and Zendesk tokens, and —
+worst — `BUZZ_PRIVATE_KEY`, an agent identity secret declared as an env var when the
+keychain that should hold it already ships.
+
+**State at time of writing: zero secret-shaped values are present in the file.** Nothing
+leaked. This is a gate, not a breach, and should not be repeated as one.
+
+Fix: MIA ruling `~/.buzz/PLANS/TRUST_S1_AGENT_SECRET_CUSTODY.md` (`b058d41`) — **NO** on
+every secret-shaped cell (S1 metered vendor, S2 identity/infra, S3 regulated), **YES** on
+the S0 non-secrets (plain URLs, `PLAID_ENV`, `SHOPIFY_STORE_DOMAIN`). Nothing is actually
+blocked by it: subscription → subscription failover (grok ↔ cursor ↔ claude/codex login)
+needs no key on any runtime, so Task 6 closes without one. The Kimi `config.toml` GAP is
+closed as *not to be built* — plaintext on the same disk, outside our control, is worse.
+
+**Guard:** four items, one Build card, in the ruling §5 — (1) `keychain:<service>/<item>`
+indirection in `env_vars` resolved by `buzz-acp` at spawn and never materialized to disk;
+(2) `secret_store` extended past nsec, keyed per agent; (3) a **write-path refusal** in
+Desktop for literal values on secret-shaped names, fail closed; (4) a loud startup scan for
+literals already present. Guard 3 is the one that matters — this class of mistake is a
+person pasting into a text box, and a rule in a document does not stop that. S1 unblocks
+when MIA verifies 1–4 at a committed SHA; S3 needs that plus a per-slot review.
+
 ## 2026-08-22 — The hive-outage day (four linked failures)
 
 **I1. Disk full (1 GiB free).** Symptom: TUN's kimi session `write failed: ENOSPC`,
