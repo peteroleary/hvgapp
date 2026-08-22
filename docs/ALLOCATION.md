@@ -20,17 +20,26 @@ headroom telemetry automate it underneath later, unchanged rules.
 
 ## 1. SUBSCRIPTIONS UNDER MANAGEMENT
 
-| Subscription | $/mo | Window mechanics |
-|---|---|---|
-| Claude | $100 | 5-hour rolling windows + weekly cap (confirmed by live rate-limit events) |
-| Kimi | $200 | *(PAT documents from telemetry + provider docs)* |
-| Grok | $300 | *(PAT)* |
-| ChatGPT/Codex | $100 | *(PAT)* |
-| Gemini | $50 | *(PAT)* |
+Hive cost column is what Peter pays. Tier column maps that spend to the provider SKU we
+actually run against. Numeric caps are **not published** for most subscriptions — providers
+meter compute, not message counts. Where no number exists, the watcher uses observed
+rate-limit events as ground truth (see Observed column).
 
-PAT's first telemetry job: a written table of each subscription's real windows, caps, and
-reset behavior — sourced from provider docs plus observed rate-limit events in harness
-logs, dated. Until then the watcher treats "rate-limit event seen" as the only truth.
+| Subscription | $/mo | Tier (hive) | Windows | Cap (published) | Reset behavior | Source (accessed 2026-08-22) | Observed in harness logs |
+|---|---|---|---|---|---|---|---|
+| Claude | $100 | Max 5× | **Session:** rolling 5 h. **Weekly:** all models. Shared across Claude chat, Claude Code, Cowork. | No token/message count; Max 5× = 5× Pro per session. Weekly hours vary by model mix. | Session window resets every 5 h. Weekly resets at a **fixed day/time per account** (Settings → Usage). | [Anthropic Max plan](https://support.claude.com/en/articles/11049741-what-is-the-max-plan) | **YES** — 110 `session limit` events 2026-08-21 on `opus[1m]` (90), `claude-fable-5[1m]` (16), `sonnet` (4). Example: `You've hit your session limit · resets 3:30pm (America/Chicago)` |
+| Kimi | $200 | Vivace (inferred from $199 list) | **Weekly:** Kimi Code quota (7-day from subscription date). **Burst:** rolling 5 h rate window. **Monthly:** shared credit pool with Kimi Chat/Work/Agent — Kimi Code freezes if monthly pool exhausted even with weekly headroom. | No public token count; Vivace = 720 agent credits/mo (12× Moderato 60; shared pool). | Weekly quota refreshes every 7 days from subscription date (no rollover). 5 h window rolls continuously. Monthly credits reset at billing-cycle start. | [Kimi Code membership](https://www.kimi.com/code/docs/en/kimi-code/membership); [Kimi membership overview](https://www.kimi.ai/help/membership/membership-overview) | **NONE** — full log scan 2026-08-22 found no Kimi rate-limit strings (auth errors only on 2026-08-09). |
+| Grok | $300 | SuperGrok Heavy (inferred from ~$300 list) | **Weekly:** single shared compute pool across Chat, Imagine, Voice, Build, API (replaced per-product daily caps June 2026). Free-tier Chat/Voice limits are separate. | No numeric allowance published; compute-metered % in Settings → Usage. Higher tier = larger pool (unsized). | Fixed weekly reset — day/time shown in Settings → Usage (not rolling). Extra Usage Credits or upgrade when exhausted. | [xAI Grok FAQ — weekly usage](https://docs.x.ai/grok/faq); [x.ai pricing](https://x.ai/pricing) (Heavy $300 inferred — not on fetched page) | **NONE** — full log scan 2026-08-22 found no Grok subscription-limit strings. |
+| ChatGPT/Codex | $100 | ChatGPT Pro 5× | **Designed:** rolling 5 h window shared by local CLI/IDE messages + cloud chats. **Weekly:** additional cap. ChatGPT Work and Codex share one pool. | Per-model message *ranges* per 5 h on Plus (e.g. GPT-5.6 Sol 10–100); Pro 5× = 5× Plus ranges. Weekly % shown in Usage dashboard. | 5 h window rolls continuously when enforced. Weekly resets at fixed time (Usage dashboard / `/status`). | [ChatGPT pricing](https://learn.chatgpt.com/docs/pricing); [#32635 user report](https://github.com/openai/codex/issues/32635) (5 h meter disappeared 2026-07-12) | **CONFLICT** — 5 h meter disappeared 2026-07-12 per user reports; no first-party restoration date confirmed. **Hive observation still weekly-only** (no `session limit` strings in agent logs 2026-08-21/22). Watcher treats weekly as binding until 5 h reappears in CLI `/status` or harness logs. |
+| Gemini | $50 | **UNKNOWN SKU** — $50 matches no published SKU (AI Plus $4.99, AI Pro $19.99, Ultra 5× $99.99, Ultra 20× $200); likely bundled Google One. Multiplier unknown until invoice confirms tier. | **Session:** compute allowance refreshes every 5 h. **Weekly:** hard stop after weekly cap. Limits factor prompt complexity, features, chat length. | Tier multipliers: Plus 2×, Pro 4×, Ultra 5× or 20× vs standard (no numeric prompt count since May 2026). | 5 h sub-windows roll until weekly cap; then downgrade to Flash-Lite or wait for refresh. Reset times in Settings → Usage Limits. | [Gemini Apps limits](https://support.google.com/gemini/answer/16275805?hl=en); [Google AI plans](https://one.google.com/about/google-ai-plans/) | **NONE** — no explicit rate-limit payload in harness logs 2026-08-22. |
+
+**Watcher rule (unchanged):** until PAT's headroom proxy ships (P10), a parsed
+`session limit` / `resets <time>` line in any agent log is a **HOT** signal for that
+subscription. Relay `rate-limited: quota exceeded` lines are **relay-side**, not
+subscription windows — do not conflate.
+
+**Draft status:** Task 5 complete 2026-08-22 — SLM Steps 1–2, PAT Step 3 source-check
+(PASS WITH CORRECTIONS), SLM Step 4 commit signed.
 
 ## 2. THE TIER SYSTEM
 
@@ -174,7 +183,7 @@ remembers.**
 | 1 | Watcher (P12) | Prompted, TIP |
 | 2 | `[floor:T?]` convention in card drafts | This doc; effective with Phase 1b filing (P8) |
 | 3 | `~/.buzz/max-agents` + dispatch rule | This doc; effective on JUV's next dispatch |
-| 4 | Subscription window table (§1) | PAT, first telemetry job |
+| 4 | Subscription window table (§1) | Complete 2026-08-22 (SLM + PAT source-check) |
 | 5 | Per-agent env matrix | PAT → MIA → TIP |
 | 6 | Desktop concurrency toggle | Build card, MFR |
 | 7 | headroom telemetry (P10) | TIP/PAT — upgrades pacing from events to numbers |
