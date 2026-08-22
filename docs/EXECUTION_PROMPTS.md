@@ -3,9 +3,36 @@
 Everything is verified against the live relay and repo, 2026-08-22. Each block names its
 target. Paste into the channel shown. Do not improvise scope.
 
+**Paste P0 and nothing else.** It hands the whole queue to JUV; the agents chain the rest
+off channel posts. Peter is out of the loop after one paste.
+
 Current verified state: 9 boards (hvgapp/gomarco/lhfyc created 2026-08-22, owned by the
 desktop identity `3b0c5670…`); hvgapp board holds cards B1–B8; PR #18 OPEN, one commit
 `f5350cfe`, conflicts only in `crates/buzz-cli/src/commands/board.rs`.
+
+## P0 — GIVE TO JUV (#command) — THE ONLY PASTE
+
+```
+JUV — you now own the work queue. Peter is done pasting prompts.
+
+The queue is ~/Desktop/hvgapp/docs/EXECUTION_PROMPTS.md, P1-P8, with the dependency
+column. Dispatch it: post each P-item to its named agent in its named channel the moment
+its dependencies report done in-channel. P1, P2, P6, P7 have no dependencies — post all
+four NOW.
+
+Rules:
+- Max two cards live at once (RAM). Refill a slot within the hour when it reports done.
+- Agents confirm completion in-channel with evidence (command output, PR link, board id).
+  No evidence = not done = reassign or escalate, your call.
+- You route, you never write code or board state.
+- The ONLY reason to message Peter: an agent's process is down and needs a restart, or a
+  §0 gated action needs his signature. Everything else you settle yourself.
+- Every 4h (the dispatch cron will ping you): SLOT 1 / SLOT 2 / BUDGET / BLOCKED per
+  docs/ORCHESTRATION.md P9.
+
+Start by confirming which agents' processes are actually running. A prompt posted to a dead
+process is silence, not work.
+```
 
 | # | Give to | Where | Depends on |
 |---|---|---|---|
