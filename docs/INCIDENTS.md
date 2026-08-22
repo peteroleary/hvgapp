@@ -76,3 +76,15 @@ a card, not a footnote. Any remaining §7 gap without a filed card is the same f
 | Expose + fix | pool-dead pattern (I3) | watcher re-posts the pending dispatch mention itself | TIP |
 | Fix | pool-dead OR init-exhausted | watcher bumps `updated_at` in managed-agents.json to force respawn; if that fails twice, page Peter | TIP + MFR |
 | Fix | disk < 10 GiB | watcher clears `~/.buzz/REPOS/*/target` and known-rebuildable caches before posting | TIP |
+
+**I8. P8's brand-slug "correction" was itself inverted — 25 silent filing failures.**
+Symptom: `card add --brand hvg-app` hard-rejected at the write boundary during Phase 1b
+filing — 6 failures (ICBM, first hit 15:1x UTC), then 19 (ROO). Root: EXECUTION_PROMPTS
+P8 asserted *"hvgapp's brand is `hvg-app`, not `hvgapp`"* — written against the live
+board's pre-rekey `brandScope` metadata instead of the shipped validator, which accepts
+exactly `clean, itshvg, lhfyc, gomarco, three, hvgapp` (post-rekey main, 2026-08-19).
+Same doc-drift class PAT and NKI flagged independently. Fix: P8 line corrected 2026-08-22
+(ICBM) quoting the validator's own error; board `brandScope` reconciliation stays TUN's P5.
+**Guard:** a doc line describing validator behavior quotes the validator's error message
+verbatim or names the source file — same rule as I5/I6: cite the code, not the metadata.
+Filing docs get re-verified against the binary at every CLI rebuild.

@@ -173,7 +173,12 @@ File your drafted sets: ~/.buzz/PLANS/CARDS_<SQUAD>_<BRAND>.md -> the matching b
     --brand <slug> --fn <area> --assignee <hex>:lead
 
 CORRECTIONS to the kickoff:
-- The write boundary validates brand slugs: hvgapp's brand is `hvg-app`, not `hvgapp`.
+- The write boundary validates brand slugs: hvgapp's brand is **`hvgapp`** — `hvg-app` is
+  REJECTED by the rebuilt CLI (verbatim: `unknown brand "hvg-app" — expected one of: clean,
+  itshvg, lhfyc, gomarco, three, hvgapp`). Corrected 2026-08-22 after 25 silent filing
+  failures (ICBM 6, ROO 19); this line previously said the opposite (INCIDENTS I8). The
+  live board's `brandScope: hvg-app` is pre-rekey metadata residue — TUN rewrites in P5;
+  not a filing blocker.
 - The six boards to file on: hvgapp, gomarco, itshvg, lhfyc, clean, three. Nothing else.
 - NEW (ALLOCATION §2): every card description starts with `[floor:T0|T1|T2|T3]` — the
   minimum model tier allowed to execute it. No tag = T2. Floors are minimums; failover
