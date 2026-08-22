@@ -75,10 +75,10 @@ entities — never conflate them.
 | Slug | Name | What it is |
 |---|---|---|
 | `hvgapp` | hvg.app | The customized Buzz platform, multi-tenant agent execution harness, and central operating system where Peter, the human team, and the 19 agents collaborate, manage boards, trigger pipelines, and coordinate work across the portfolio. |
-| `itshvg` | High Value Growth | Consumer-facing media, education, and content brand focused on personal growth, entrepreneurship, practical business playbooks, and hands-on software/tool benchmark reviews for founders and operators. |
-| `gomarco` | Go Marco | Group travel intelligence platform featuring WebRTC live voice Powwows, automated loyalty/card reward consolidation via Plaid, and deep community research through Agent Reach. |
+| `itshvg` | High Value Growth (highvaluegrowth.com) | Consumer-facing media, education, and content brand focused on personal growth, entrepreneurship, practical business playbooks, and hands-on software/tool benchmark reviews for founders and operators. |
+| `gomarco` | Go Marco (gomarco.xyz) | Group travel intelligence platform featuring WebRTC live voice Powwows, automated loyalty/card reward consolidation via Plaid, and deep community research through Agent Reach. |
 | `lhfyc` | Look How Far You've Come (lhfyc.xyz) | Dignified, milestone-based peer accountability and escrow crowdfunding platform with daily habit verification — biometric UAs, location dwell time, and reading logs. |
-| `clean` | Clean Startup | Short-term rental turnover logistics platform operating as a spatial AI and data collection engine — video, mic audio, and LiDAR floorplans — to train future autonomous cleaning robotics. |
+| `clean` | Clean Startup (thecleanstartup.com) | Short-term rental turnover logistics platform operating as a spatial AI and data collection engine — video, mic audio, and LiDAR floorplans — to train future autonomous cleaning robotics. |
 | `three` | We 3 Live (we3.live) | Faith-based creative studio and apparel empire producing original entertainment IP, including an edgy family-friendly animated cartoon series, devotionals, and streetwear merch. |
 
 The slug is the board and card key. Tag work with the slug, not the display name.

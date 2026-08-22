@@ -244,3 +244,10 @@ board. `STANDING_WORK_ORDER.md` §5 has been corrected to match.
    person who does not know the system.
 9. **Anticipated overload gets scheduled out, never absorbed.** "They'll manage" is how a
    forecast becomes an incident.
+10. **A squad channel holds the squad plus named attachments — nobody else.** Phase guests
+    leave when their phase ends. Second instances of one agent (e.g. `05c5aed2…` = a
+    secondary MFR instance) count as that agent, not as a guest. **Correction 2026-08-22:
+    `3b0c5670…` is NOT a deleted agent — it is the current desktop identity key** (derived
+    from the keychain `identity` nsec and confirmed as the author of live workflow
+    `066668ce-…`). KICKOFF §B's "deleted agent" line is wrong; the 5 junk cards still get
+    deleted, but the key stays.
