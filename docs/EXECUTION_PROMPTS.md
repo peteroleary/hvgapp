@@ -27,7 +27,7 @@ its dependencies report done in-channel. P1, P2, P6, P7 have no dependencies —
 four NOW.
 
 Rules:
-- Max two cards live at once (RAM). Refill a slot within the hour when it reports done.
+- Max three cards live at once (Peter's cap, 2026-08-22). Refill a slot within the hour when it reports done.
 - Agents confirm completion in-channel with evidence (command output, PR link, board id).
   No evidence = not done = reassign or escalate, your call.
 - You route, you never write code or board state.
