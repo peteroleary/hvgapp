@@ -229,9 +229,10 @@ LIVE=$(pgrep -f buzz-acp | wc -l | tr -d ' ')
   vars per runtime, source, cleared-by-MIA checkbox. Locked copy: `docs/ENV_MATRIX.md`.
 - [x] **Step 2 (MIA):** clearance pass — **NO on every secret-shaped cell**, every agent,
   every runtime. S0 YES. Kimi GAP closed as not to be built. INCIDENTS I6 / PR #24.
-- [ ] **Step 3 (TIP):** apply S0 via Desktop (`PLAID_ENV=sandbox` on PAT; nothing
-  secret-shaped). One-turn smoke per agent per failover runtime ("reply with your model
-  name") against subscription logins only. Missing login → wait.
+- [ ] **Step 3 (TIP):** apply S0 via Desktop only where a live value exists
+  (`BUZZ_RELAY_URL=wss://hvg.app` optional on JUV; `PLAID_ENV` waits — MCP unprovisioned).
+  Nothing secret-shaped. One-turn smoke per agent per failover runtime ("reply with your
+  model name") against subscription logins only. Missing login → wait.
 - [ ] **Step 4 (SLM):** verify every smoke result against the matrix — the row doesn't
   count until SLM confirms the reported model matches the target runtime. Paste results
   into the matrix. Push after each stage.

@@ -40,9 +40,9 @@ and by every Time Machine snapshot (`tmutil isexcluded` → `[Included]`).
 | Class | Examples | Ruling |
 |---|---|---|
 | **S3** | `PLAID_SECRET`, `PLAID_CLIENT_ID`, `STRIPE_SECRET_KEY`, `STRIPE_CONNECT_ACCOUNT_ID`, `CAP_TABLE_API_KEY`, `LIDAR_PIPELINE_TOKEN`, `CRISIS_NLP_TOKEN`, `ZENDESK_API_TOKEN`, `ESCALATION_WEBHOOK_SECRET` | **NO.** Hard veto until S1 §5 *plus* per-slot MIA review |
-| **S2** | `BUZZ_PRIVATE_KEY`, `BUZZ_AUTH_TAG`, `KUBECONFIG`, `DATABASE_URL`, `GITHUB_TOKEN`, `RAILWAY_TOKEN`, `VERCEL_TOKEN`, `PLAY_SERVICE_ACCOUNT_JSON`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `DISCORD_BOT_TOKEN` | **NO.** `BUZZ_PRIVATE_KEY` already has a home (`secret_store` keychain) — never env |
+| **S2** | `BUZZ_PRIVATE_KEY`, `KUBECONFIG`, `DATABASE_URL`, `GITHUB_TOKEN`, `RAILWAY_TOKEN`, `VERCEL_TOKEN`, `PLAY_SERVICE_ACCOUNT_JSON`, `ASC_KEY_ID`, `ASC_ISSUER_ID`, `DISCORD_BOT_TOKEN` | **NO.** `BUZZ_PRIVATE_KEY` already has a home (`secret_store` keychain) — never env. `BUZZ_AUTH_TAG` is **not** in this class — MIA S1b (`616dc2f`): S0, public attestation, not a bearer |
 | **S1** | `ANTHROPIC_API_KEY`, `XAI_API_KEY`, `OPENAI_API_KEY`, `CODEX_API_KEY`, `CODEX_ACCESS_TOKEN`, `CURSOR_API_KEY`, `KIMI_API_KEY`, `SERP_INTEL_API_KEY`, Agent Reach / ElevenLabs / Midjourney / Runway / Sora / Apollo / Browserbase / Figma / Amadeus / Duffel / Printful / Shopify admin / Resend / Linear, webhook URLs | **NO** until S1 §5 (keychain indirection + write-path refusal + startup scan) |
-| **S0** | `PLAID_ENV`, `SHOPIFY_STORE_DOMAIN`, `BUZZ_RELAY_URL`, `LIDAR_PIPELINE_URL`, `PORTFOLIO_ANALYTICS_URL`, `CRISIS_NLP_URL`, `BUZZ_AGENT_OS_*` | **YES.** Plaintext env is the right place. Type only values that have a source. UNKNOWN stays unset |
+| **S0** | `PLAID_ENV`, `SHOPIFY_STORE_DOMAIN`, `BUZZ_RELAY_URL`, `LIDAR_PIPELINE_URL`, `PORTFOLIO_ANALYTICS_URL`, `CRISIS_NLP_URL`, `BUZZ_AUTH_TAG`, `BUZZ_AGENT_OS_*` | **YES.** Plaintext env is the right place for config. Type only values that have a **live** source. UNKNOWN stays unset. `BUZZ_AUTH_TAG` is S0 but lives on the `auth_tag` record field, **not** `env_vars` — do not paste it into Desktop env |
 
 Webhook URLs (`SLACK_WEBHOOK_URL`, `DISCORD_WEBHOOK_URL`, `ESCALATION_WEBHOOK_URL`)
 are bearer credentials. S1, not addresses.
@@ -83,8 +83,9 @@ kimi is **home only** (PMP, TUN). It is not a failover target.
 
 | Var | Value | Agent | Source | TIP |
 |---|---|---|---|---|
-| `PLAID_ENV` | `sandbox` | PAT | `PLANS/CARDS_SHIP_GOMARCO.md` GOMARCO-S4 — sandbox first, US, `transactions`+`balances` only (2026-08-21) | **type now** |
+| `PLAID_ENV` | **UNKNOWN** | PAT | GOMARCO-S4 *plans* sandbox after provision. Live MCP `plaid-finance` is `provisioned: false`. A ship-card intent is not a live env | **leave unset** |
 | `BUZZ_RELAY_URL` | `wss://hvg.app` | JUV (declared). Harness already injects this for every agent | Live `BUZZ_RELAY_URL` this session; `WORK_LOGS/TIP_DESKTOP_CUT_2026-08-22.md` | Optional Desktop duplicate on JUV only. Do not spray onto 19 rows |
+| `BUZZ_AUTH_TAG` | already on `auth_tag` field (22/41 records, 0 in `env_vars`) | JUV declared it in `REQUIRED_ENV` | MIA S1b — S0, not a bearer. Wrong slot for Desktop env | **do not type into env_vars** |
 | `SHOPIFY_STORE_DOMAIN` | **UNKNOWN** | BSB | No provisioned `.myshopify.com` in nest or `hvgapp` as of 2026-08-22. THREE merch is IP-gated (`CARDS_SHIP_THREE.md`) | **leave unset** |
 | `LIDAR_PIPELINE_URL` | **UNKNOWN** | SLM | MCP `lidar-spatial-data` `provisioned: false` (`config/agent-os/mcp-servers.config.json`) | **leave unset** |
 | `PORTFOLIO_ANALYTICS_URL` | **UNKNOWN** | ICBM | MCP unprovisioned | **leave unset** |
@@ -109,7 +110,7 @@ Expected home model is the live `managed-agents.json` `model` field, 2026-08-22.
 | MIA | claude / `opus[1m]` | grok → cursor → codex | `/login` Max | **unset** | none | NO | |
 | ROO | claude / `opus[1m]` | grok → cursor → codex | `/login` Max | **unset** (incl. `FIGMA_ACCESS_TOKEN`) | none | NO | |
 | DEE | claude / (model unset in JSON) | grok → cursor → codex | `/login` Max | **unset** | none | NO | |
-| PAT | grok / `grok-4.6` | cursor → claude | `grok login` → `~/.grok/auth.json` | **unset** (incl. `XAI_API_KEY`, Plaid/Duffel/Amadeus/Reach/Browserbase keys) | `PLAID_ENV=sandbox` | NO | **home PASS** 2026-08-22 this session — reported `grok-4.6` |
+| PAT | grok / `grok-4.6` | cursor → claude | `grok login` → `~/.grok/auth.json` | **unset** (incl. `XAI_API_KEY`, Plaid/Duffel/Amadeus/Reach/Browserbase keys) | none (`PLAID_ENV` UNKNOWN until S4 provisions) | NO | **home PASS** — reported `grok-4.6`; SLM harness `grok-acp-pty` + `model=grok-4.6` @ 14:40Z |
 | TIP | grok / `grok-4.6` | cursor → claude | `grok login` | **unset** (incl. GitHub/Railway/Vercel tokens) | none | NO | |
 | VON | grok / `grok-4.6` | cursor → claude | `grok login` | **unset** | none | NO | |
 | YBY | grok / `grok-4.6` | cursor → claude | `grok login` | **unset** | none | NO | |
@@ -118,7 +119,7 @@ Expected home model is the live `managed-agents.json` `model` field, 2026-08-22.
 | LDA | grok / `grok-4.6` | cursor → claude | `grok login` | **unset** (creative-gen keys) | none | NO | |
 | JUV | codex / `gpt-5.6-terra[high]` | grok → claude | `codex login` ChatGPT Pro | **unset**. `BUZZ_PRIVATE_KEY` must never take this path — keychain already ships | optional `BUZZ_RELAY_URL=wss://hvg.app` | NO | |
 | BSB | codex / `gpt-5.6-terra[high]` | grok → claude | `codex login` | **unset** (Stripe/Shopify admin/Printful). Store domain UNKNOWN | none | NO | |
-| SLM | cursor / `gpt-5.6-sol` | grok → claude | `agent login` | **unset** (LiDAR token). Pipeline URL UNKNOWN | none | NO | |
+| SLM | cursor / `gpt-5.6-sol` | grok → claude | `agent login` | **unset** (LiDAR token). Pipeline URL UNKNOWN | none | NO | **home PASS** — SLM harness `cursor-agent acp` + `model=gpt-5.6-sol` @ 14:40Z |
 | NKI | cursor / `gemini-3.7-flash` | grok → claude | `agent login` (Cursor-hosted Gemini, not `GEMINI_API_KEY`) | **unset** (crisis/Zendesk/webhook secrets). NLP URL UNKNOWN | none | NO | |
 | PMP | kimi / `kimi-code/k3` | grok → cursor → claude | `/login` inside Kimi Code CLI | **unset**. No `config.toml` key task | none | NO | |
 | TUN | kimi / `kimi-code/k3` | grok → cursor → claude | `/login` | **unset**. No `config.toml` key task | none | NO | |
@@ -136,7 +137,7 @@ Smoke is **"reply with your model name"** against **subscription logins only**.
 No API-key runtime is in scope.
 
 1. Home: one-turn ask on the agent's current runtime. Reported model must match the
-   Home column (SLM verifies). PAT home is already filled.
+   Home column (SLM verifies). PAT and SLM home rows are filled (2/19).
 2. Failover: TIP switches the agent to the next runtime in the Failover column via
    Desktop (runtime dropdown, not env). Same one-turn ask. Switch back when done.
 3. A row is not done until SLM pastes the reported model into the Smoke column.
@@ -162,12 +163,14 @@ Cited 2026-08-22. Kept so a future S1-unblocked pass does not reinvent names.
 
 ## 8. Next
 
-1. **TIP** — type `PLAID_ENV=sandbox` on PAT. Type nothing else secret-shaped. Optional
-   JUV `BUZZ_RELAY_URL=wss://hvg.app`. Then home+failover smokes per §6.
-2. **SLM** — Step 4: reported model must match the target runtime or the row is not done.
-   Paste into the Smoke column; push after each stage.
-3. **JUV** — `BUZZ_PRIVATE_KEY` in declared env is a separate this-week fix (keychain
-   already ships). §5 of the S1 ruling is one Build card, not this matrix.
+1. **TIP** — type **no** `PLAID_ENV` (retracted: MCP unprovisioned). Optional JUV
+   `BUZZ_RELAY_URL=wss://hvg.app`. Do not paste `BUZZ_AUTH_TAG` into env. Then 17 remaining
+   home smokes + failover smokes per §6.
+2. **SLM** — Step 4: 2/19 home PASS (PAT, SLM). Remaining 17 WAIT on TIP smokes. Paste
+   into the Smoke column; push after each stage.
+3. **JUV** — `BUZZ_PRIVATE_KEY` in declared env is a **deletion**, not a migration
+   (MIA 2026-08-22). Keychain already ships. `BUZZ_AUTH_TAG` is S0 and already on the
+   `auth_tag` field — do not move it into env.
 4. **BOO** — `SERP_INTEL_API_KEY` is S1. State that on the G-card.
 5. Task 6 **does not close** until SLM has home smokes for all 19. Failover smokes that
    cannot run because a subscription login is missing wait — they do not get a key.
