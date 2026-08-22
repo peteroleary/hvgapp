@@ -758,9 +758,7 @@ pub fn spawn_agent_child(
         // custom-provider files at all.
         let goose_provider_override = if meta.id == "goose" {
             effective_model.as_deref().and_then(|model| {
-                crate::managed_agents::config_bridge::resolve_goose_custom_provider_for_model(
-                    model,
-                )
+                crate::managed_agents::config_bridge::resolve_goose_custom_provider_for_model(model)
             })
         } else {
             None

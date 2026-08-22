@@ -1481,7 +1481,7 @@ pub async fn cmd_card_add(
         .iter()
         .filter(|c| c.list_id == list.id)
         .map(|c| c.rank.as_str())
-        .last();
+        .next_back();
     let rank = rank_between(last_rank, None)?;
 
     let card_id = uuid::Uuid::new_v4().to_string();
@@ -1996,7 +1996,7 @@ pub async fn cmd_seed(client: &BuzzClient, dry_run: bool) -> Result<(), CliError
             .iter()
             .filter(|c| c.list_id == list.id)
             .map(|c| c.rank.as_str())
-            .last();
+            .next_back();
         let rank = rank_between(last_rank, None)?;
         let card_id = uuid::Uuid::new_v4().to_string();
         let me = client.keys().public_key().to_hex();
