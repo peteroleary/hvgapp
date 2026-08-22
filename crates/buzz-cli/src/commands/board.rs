@@ -1213,14 +1213,34 @@ pub async fn cmd_ls(
     Ok(())
 }
 
-/// Length of the pubkey prefix shown when a key has no resolvable profile.
-const PUBKEY_FALLBACK_PREFIX_LEN: usize = 8;
-
 /// The label for a pubkey that has no kind:0 profile (or whose profile carries
-/// no usable name): an 8-character prefix, never the bare 64-char hex.
+/// no usable name).
+///
+/// This is the Rust mirror of `truncatePubkey` in
+/// `desktop/src/shared/lib/pubkey.ts` — `abcd1234\u{2026}wxyz`, first 8 and last 4 —
+/// and must stay identical to it. That module is the one canonical compact
+/// display form precisely so surfaces cannot disagree about how a key reads,
+/// and the `check-pubkey-truncation` guard that enforces it only scans
+/// `.ts`/`.tsx`, so Rust is outside its reach and has to hold the line by hand.
+///
+/// The suffix is not decoration: a truncated pubkey is a recognition aid and
+/// never an identity proof, and a bare 8-character prefix is the cheapest part
+/// to vanity-grind. Keeping the trailing characters makes a look-alike key
+/// meaningfully harder to pass off.
 fn pubkey_fallback_label(pubkey: &str) -> String {
-    let prefix: String = pubkey.chars().take(PUBKEY_FALLBACK_PREFIX_LEN).collect();
-    format!("{prefix}\u{2026}")
+    let chars: Vec<char> = pubkey.chars().collect();
+    if chars.len() <= 12 {
+        return pubkey.to_string();
+    }
+    let prefix: String = chars[..8].iter().collect();
+    let suffix: String = chars[chars.len() - 4..].iter().collect();
+    format!("{prefix}\u{2026}{suffix}")
+}
+
+/// Hex pubkeys are case-insensitive but compared as strings. Mirrors
+/// `normalizePubkey` in `desktop/src/shared/lib/pubkey.ts`.
+fn normalize_pubkey(pubkey: &str) -> String {
+    pubkey.trim().to_lowercase()
 }
 
 /// Resolve pubkeys to human labels from their kind:0 metadata.
@@ -1238,9 +1258,12 @@ async fn resolve_pubkey_labels(
     client: &BuzzClient,
     pubkeys: &[String],
 ) -> std::collections::HashMap<String, String> {
+    // Keyed by normalized pubkey throughout: hex is case-insensitive, but the
+    // relay echoes lowercase while a card may store any case, so looking up the
+    // raw id would miss its own freshly-inserted entry.
     let mut labels: std::collections::HashMap<String, String> = pubkeys
         .iter()
-        .map(|pk| (pk.clone(), pubkey_fallback_label(pk)))
+        .map(|pk| (normalize_pubkey(pk), pubkey_fallback_label(pk)))
         .collect();
     if pubkeys.is_empty() {
         return labels;
@@ -1266,7 +1289,7 @@ async fn resolve_pubkey_labels(
             continue;
         };
         if let Some(label) = profile_label(&profile) {
-            labels.insert(pubkey.to_string(), label);
+            labels.insert(normalize_pubkey(pubkey), label);
         }
     }
     labels
@@ -1292,7 +1315,7 @@ fn assignee_display(
     labels: &std::collections::HashMap<String, String>,
 ) -> serde_json::Value {
     let name = labels
-        .get(&assignee.id)
+        .get(&normalize_pubkey(&assignee.id))
         .cloned()
         .unwrap_or_else(|| pubkey_fallback_label(&assignee.id));
     serde_json::json!({
@@ -2169,11 +2192,26 @@ mod tests {
         assert_eq!(profile_label(&serde_json::json!({"display_name": 7})), None);
     }
 
+    /// Pinned against `truncatePubkey` in `desktop/src/shared/lib/pubkey.ts`.
+    /// Change one side without the other and the same unresolved key reads two
+    /// different ways depending on which surface you are looking at.
     #[test]
-    fn pubkey_fallback_is_an_eight_char_prefix_never_the_full_hex() {
+    fn pubkey_fallback_matches_the_canonical_compact_form() {
         let label = pubkey_fallback_label(TUN);
-        assert_eq!(label, "845798e3\u{2026}");
+        assert_eq!(label, "845798e3\u{2026}bb39");
         assert!(!label.contains(TUN));
+    }
+
+    #[test]
+    fn pubkey_fallback_leaves_short_values_intact() {
+        // `truncatePubkey` returns anything <= 12 chars unchanged; truncating
+        // it would be longer than the value itself.
+        assert_eq!(pubkey_fallback_label("abc"), "abc");
+        assert_eq!(pubkey_fallback_label("123456789012"), "123456789012");
+        assert_eq!(
+            pubkey_fallback_label("1234567890123"),
+            "12345678\u{2026}0123"
+        );
     }
 
     #[test]
@@ -2189,10 +2227,20 @@ mod tests {
     fn assignee_display_falls_back_when_the_key_is_unresolved() {
         let labels = std::collections::HashMap::new();
         let out = assignee_display(&assignee(TUN, None), &labels);
-        assert_eq!(out["name"], serde_json::json!("845798e3\u{2026}"));
+        assert_eq!(out["name"], serde_json::json!("845798e3\u{2026}bb39"));
         assert_eq!(out["role"], serde_json::Value::Null);
         // The full pubkey stays available for callers that need to act on it.
         assert_eq!(out["id"], serde_json::json!(TUN));
+    }
+
+    /// A card may store a pubkey in any case; the relay echoes lowercase. The
+    /// label lookup must resolve regardless, or an upper-case id silently falls
+    /// back to a prefix in the CLI while Desktop (which normalizes) resolves it.
+    #[test]
+    fn assignee_display_resolves_regardless_of_pubkey_case() {
+        let labels = std::collections::HashMap::from([(TUN.to_string(), "TUN".to_string())]);
+        let out = assignee_display(&assignee(&TUN.to_uppercase(), Some("lead")), &labels);
+        assert_eq!(out["name"], serde_json::json!("TUN"));
     }
 
     /// `AssigneeEntry` is serialized straight into card event content, which is
@@ -2203,6 +2251,17 @@ mod tests {
         assert_eq!(
             serde_json::to_string(&assignee(TUN, Some("lead"))).unwrap(),
             format!(r#"{{"type":"agent","id":"{TUN}","role":"lead"}}"#)
+        );
+    }
+
+    /// The `role: None` arm of the same pin: `skip_serializing_if` must drop the
+    /// key entirely rather than emitting `"role":null`, which is what the TS
+    /// `Assignee` interface does.
+    #[test]
+    fn assignee_entry_serialization_omits_an_absent_role() {
+        assert_eq!(
+            serde_json::to_string(&assignee(TUN, None)).unwrap(),
+            format!(r#"{{"type":"agent","id":"{TUN}"}}"#)
         );
     }
 
