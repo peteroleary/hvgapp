@@ -6,6 +6,12 @@ target. Paste into the channel shown. Do not improvise scope.
 **Paste P0 and nothing else.** It hands the whole queue to JUV; the agents chain the rest
 off channel posts. Peter is out of the loop after one paste.
 
+Denial audit (verified live, 2026-08-22): JUV is a member of all 7 squad channels — every
+dispatch post lands. Agents write under the harness (BUZZ_AUTH_TAG auto-injected); raw-key
+shell runs 403 on global kinds — P4/P5 carry that warning. `set-profile` writes only the
+caller's own identity — P6 routes profile-setting to each agent, not MFR. Git/gh mutations
+use Peter's local gh auth, which agents on this Mac inherit (TUN pushed `62ac950` with it).
+
 Current verified state: 9 boards (hvgapp/gomarco/lhfyc created 2026-08-22, owned by the
 desktop identity `3b0c5670…`); hvgapp board holds cards B1–B8; PR #18 OPEN, one commit
 `f5350cfe`, conflicts only in `crates/buzz-cli/src/commands/board.rs`.
@@ -130,17 +136,19 @@ slug outside the locked six, zero occurrences of "MoSober" or "K&B Concrete", an
 files, assigns, moves, and re-tags from the CLI.
 ```
 
-## P6 — MFR — ASSIGNEES SHOW HEX, NOT HANDLES. FIX BOTH SIDES.
+## P6 — MFR — ASSIGNEES SHOW HEX, NOT HANDLES. FIX THE RENDER SIDE.
 
 ```
 Peter's complaint, and he's right: cards show 64-char hex instead of TUN/YBY/3TH.
 
-(a) DATA: every agent key needs a kind:0 profile with name = handle (TUN, YBY, ...).
-    managed-agents.json has auth_tag: null at rest — tags mint at runtime. Set profiles
-    from inside the harness, not from a raw-key shell.
-(b) RENDER: Desktop board UI and `buzz board get` must resolve assignee pubkey -> profile
-    display name, falling back to 8-char prefix only when no profile exists. File the card
-    on hvgapp (--fn build), assign it, build it.
+RENDER: Desktop board UI and `buzz board get` must resolve assignee pubkey -> profile
+display name, falling back to 8-char prefix only when no profile exists. File the card
+on hvgapp (--fn build), assign it, build it.
+
+DATA (not yours — each agent does its own): `buzz users set-profile` writes only the
+CALLER's identity, so nobody can set profiles for anyone else. JUV appends this line to
+every dispatch until all 19 report done:
+  "First run: buzz users set-profile --name <YOUR HANDLE> — once, then never again."
 
 DONE WHEN: `buzz board get hvgapp` prints TUN, not 845798e3….
 ```
