@@ -187,32 +187,28 @@ CORRECTIONS to the kickoff:
 DONE WHEN: every drafted card with a named assignee is filed on its brand's board.
 ```
 
-## P11 — TIP — GROK-RUNTIME AGENTS ARE ALL DEAD ON RESPAWN (LDA down since 08-21)
+## P11 — GROK-RUNTIME AGENTS (final state, 2026-08-22 ~14:10 UTC)
 
 ```
-Root cause, verified 2026-08-22: the harness resolves the spawn command from the runtime
-catalog, so EVERY agent with runtime=grok spawns /Users/po/.local/bin/grok acp. grok CLI
-1.0.5's ACP mode opens /dev/tty at startup and dies with "Device not configured (os
-error 6)" under the pipe-based harness. Reproduced both ways: pipe -> dies, PTY -> alive.
-LDA has restart-looped 330 times since 2026-08-21 08:53 UTC. TIP/3TH/VON only look alive
-because their processes predate the break — they die on their next respawn too. Affected:
-LDA, YBY, PAT, 3TH, BOO, Bumble, TIP, VON (all runtime=grok).
+RESOLVED ROOT CAUSE (corrects the earlier PTY theory): the runtime catalog spawns
+`<grok> agent`, but grok 1.0.5's ACP mode lives at `grok agent stdio`. Bare `grok agent`
+drops into an interactive pager ("Open Grok Build — press Enter"), which needs a tty —
+that pager, not ACP itself, was the ENXIO source. Verified: `grok agent stdio` answers a
+full ACP initialize over plain pipes, no PTY required.
 
-FIX NOW (config, no code):
-1. Write the PTY shim:
-     cat > /Users/po/.local/bin/grok-acp-pty <<'EOF'
-     #!/bin/bash
-     exec /usr/bin/script -q /dev/null /Users/po/.local/bin/grok acp
-     EOF
-     chmod +x /Users/po/.local/bin/grok-acp-pty
-   (script(1) allocates a pseudo-tty; the shim intentionally drops extra args.)
-2. In Desktop, pin each grok-runtime agent's harness override (agent_command_override) to
-   /Users/po/.local/bin/grok-acp-pty. The override wins at spawn; the record's
-   agent_command is a legacy snapshot. auto_restart_on_config_change restarts them.
-3. Verify: LDA's newest log shows a successful initialize within one minute, no ENXIO.
+LIVE FIX (deployed by Kimi, 2026-08-22): shim at /Users/po/.local/bin/grok-acp-pty —
+  exec /Users/po/.local/bin/grok "$@" stdio
+All 8 grok-runtime agents (LDA, YBY, PAT, 3TH, BOO, Bumble, TIP, VON) are pinned to it via
+agent_command_override. NOTE: LDA's record carries stale agent_args=["acp"] from its old
+goose config — if LDA misbehaves, blank his agent_args in Desktop first.
 
-FIX PERMANENT (code): MFR files the card on hvgapp — buzz-acp spawns agents under a PTY
-(portable-pty) so tty-needing CLIs work unwrapped. The shim is temporary.
+RESTART REQUIRED: harness instances that exhausted 10 init retries ("cannot continue") do
+NOT respawn on config change. Quit Buzz.app fully and relaunch (or toggle the 8 agents in
+the UI). Verify: TIP's newest log shows a successful initialize, no "Method not found".
 
-DONE WHEN: all 8 grok-runtime agents initialize clean after a forced respawn.
+PERMANENT (MFR card): catalog should resolve grok -> `grok agent stdio` natively and the
+shim retires; consider pinning the grok CLI version — the Aug 21 auto-update changed
+headless behavior and took down 8 agents for a day.
+
+DONE WHEN: all 8 grok-runtime agents initialize clean after a Buzz.app relaunch.
 ```
