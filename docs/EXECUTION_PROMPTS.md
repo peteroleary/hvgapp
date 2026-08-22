@@ -50,6 +50,7 @@ process is silence, not work.
 | P6 | MFR | #build | nothing |
 | P7 | YBY | #build | nothing |
 | P8 | squad leads | each squad channel | P3 + P5 |
+| P11 | TIP | #build | nothing — **8 agents are down, jump the queue** |
 
 ---
 
@@ -176,4 +177,34 @@ CORRECTIONS to the kickoff:
 - The write boundary validates brand slugs: hvgapp's brand is `hvg-app`, not `hvgapp`.
 - The six boards to file on: hvgapp, gomarco, itshvg, lhfyc, clean, three. Nothing else.
 DONE WHEN: every drafted card with a named assignee is filed on its brand's board.
+```
+
+## P11 — TIP — GROK-RUNTIME AGENTS ARE ALL DEAD ON RESPAWN (LDA down since 08-21)
+
+```
+Root cause, verified 2026-08-22: the harness resolves the spawn command from the runtime
+catalog, so EVERY agent with runtime=grok spawns /Users/po/.local/bin/grok acp. grok CLI
+1.0.5's ACP mode opens /dev/tty at startup and dies with "Device not configured (os
+error 6)" under the pipe-based harness. Reproduced both ways: pipe -> dies, PTY -> alive.
+LDA has restart-looped 330 times since 2026-08-21 08:53 UTC. TIP/3TH/VON only look alive
+because their processes predate the break — they die on their next respawn too. Affected:
+LDA, YBY, PAT, 3TH, BOO, Bumble, TIP, VON (all runtime=grok).
+
+FIX NOW (config, no code):
+1. Write the PTY shim:
+     cat > /Users/po/.local/bin/grok-acp-pty <<'EOF'
+     #!/bin/bash
+     exec /usr/bin/script -q /dev/null /Users/po/.local/bin/grok acp
+     EOF
+     chmod +x /Users/po/.local/bin/grok-acp-pty
+   (script(1) allocates a pseudo-tty; the shim intentionally drops extra args.)
+2. In Desktop, pin each grok-runtime agent's harness override (agent_command_override) to
+   /Users/po/.local/bin/grok-acp-pty. The override wins at spawn; the record's
+   agent_command is a legacy snapshot. auto_restart_on_config_change restarts them.
+3. Verify: LDA's newest log shows a successful initialize within one minute, no ENXIO.
+
+FIX PERMANENT (code): MFR files the card on hvgapp — buzz-acp spawns agents under a PTY
+(portable-pty) so tty-needing CLIs work unwrapped. The shim is temporary.
+
+DONE WHEN: all 8 grok-runtime agents initialize clean after a forced respawn.
 ```
