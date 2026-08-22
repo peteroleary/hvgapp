@@ -12,19 +12,23 @@ shell runs 403 on global kinds — P4/P5 carry that warning. `set-profile` write
 caller's own identity — P6 routes profile-setting to each agent, not MFR. Git/gh mutations
 use Peter's local gh auth, which agents on this Mac inherit (TUN pushed `62ac950` with it).
 
-Current verified state: 9 boards (hvgapp/gomarco/lhfyc created 2026-08-22, owned by the
-desktop identity `3b0c5670…`); hvgapp board holds cards B1–B8; PR #18 OPEN, one commit
-`f5350cfe`, conflicts only in `crates/buzz-cli/src/commands/board.rs`.
+Current verified state (2026-08-22, live): 9 boards (hvgapp/gomarco/lhfyc created, owned
+by the desktop identity `3b0c5670…`); hvgapp board holds cards B1–B8. **PR #18 and PR #19
+are MERGED** — P1 and P2 are done. **The head of the critical path is now P11** (grok PTY
+fix): YBY is grok-runtime and dead until P11 lands, so B1 (P4) and the board repair (P5)
+sit behind it. If P11 stalls >1h, reassign B1 to MFR or TUN (both on live runtimes) rather
+than let the path idle — say so in-channel when you do.
 
 ## P0 — GIVE TO JUV (#command) — THE ONLY PASTE
 
 ```
 JUV — you now own the work queue. Peter is done pasting prompts.
 
-The queue is ~/Desktop/hvgapp/docs/EXECUTION_PROMPTS.md, P1-P8, with the dependency
+The queue is ~/Desktop/hvgapp/docs/EXECUTION_PROMPTS.md, P1-P11, with the dependency
 column. Dispatch it: post each P-item to its named agent in its named channel the moment
-its dependencies report done in-channel. P1, P2, P6, P7 have no dependencies — post all
-four NOW.
+its dependencies report done in-channel. P1/P2 are already landed. **P11 is the head of
+the critical path and has no dependencies — post it NOW**, plus P6. Everything grok-runtime
+waits on P11; if TIP stalls >1h, escalate to Peter (a process restart is his).
 
 Rules:
 - Max three cards live at once (Peter's cap, 2026-08-22). Refill a slot within the hour when it reports done.
@@ -42,15 +46,15 @@ process is silence, not work.
 
 | # | Give to | Where | Depends on |
 |---|---|---|---|
-| P1 | TIP | #build | nothing |
-| P2 | MFR | #build | nothing |
+| P1 | TIP | #build | ✅ LANDED (PR #19 merged) |
+| P2 | MFR | #build | ✅ LANDED (PR #18 merged) |
 | P3 | TIP | #build | P2 |
-| P4 | YBY | #build | P2 |
+| P4 | YBY | #build | P2 **+ P11** (YBY is grok-runtime) |
 | P5 | TUN | #build | P4 |
 | P6 | MFR | #build | nothing |
-| P7 | YBY | #build | nothing |
+| P7 | YBY | #build | **P11** (same reason) |
 | P8 | squad leads | each squad channel | P3 + P5 |
-| P11 | TIP | #build | nothing — **8 agents are down, jump the queue** |
+| P11 | TIP | #build | nothing — **8 agents down, head of the critical path** |
 
 ---
 
