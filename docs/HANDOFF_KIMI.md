@@ -111,7 +111,7 @@ Roster and routing in `TEAM_BRIEFING.md` §1–2. Squads in `SQUADS.md`.
 | Build | MFR | MFR, TUN, YBY, 3TH | CI / build pipeline |
 | Research & Data | PAT | PAT, SLM | `sensor:field-ingestion`, `sensor:verification-ingestion` |
 | Creative | ROO | ROO, YAK, LDA | asset + publishing ⚠️ **no trigger — gap** |
-| Growth | PMP | PMP, IVY, BOO | `schedule:sweep` |
+| Growth | PMP | PMP, BSB, BOO | `schedule:sweep` |
 | Trust & Safety | MIA | MIA, NKI, **+DEE** | `community:inbound`, `support:inbound` |
 | Ship | TIP | TIP, VON | feed-rule executor + release |
 
@@ -265,7 +265,7 @@ Kinds: `48100` started · `48101` joined · `48102` left · `48103` ended · `48
 |---|---|
 | **claude** | ICBM, YAK, MFR, MIA, ROO |
 | **grok** | 3TH, BOO, LDA, PAT, TIP, VON, YBY |
-| **codex** | IVY, JUV |
+| **codex** | BSB, JUV |
 | **cursor** | NKI, SLM |
 | **kimi** | PMP, TUN |
 | **goose** | none assigned yet — `.buzz/.goose` exists, commit `c6416f2b` references it |

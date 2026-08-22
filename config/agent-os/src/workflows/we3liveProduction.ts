@@ -1,7 +1,7 @@
 import { ownedBy, type WorkflowDefinition } from "./types.ts";
 
 /**
- * We 3 Live Production Flow: YAK ➔ LDA ➔ IVY ➔ ROO ➔ NKI.
+ * We 3 Live Production Flow: YAK ➔ LDA ➔ BSB ➔ ROO ➔ NKI.
  *
  * Script leads, visuals follow, commerce and brand kit wrap it, community
  * receives it. Public release still requires Peter — LDA builds the queue
@@ -38,7 +38,7 @@ export const WE3LIVE_PRODUCTION: WorkflowDefinition = {
       name: "Merch & Unit Economics",
       owner: ownedBy("ivy"),
       description:
-        "IVY sources blanks and models landed cost, fees, and margin. Products below healthy margin get killed here.",
+        "BSB sources blanks and models landed cost, fees, and margin. Products below healthy margin get killed here.",
       on: { advance: "brandkit", reject: "visuals" },
       terminal: false,
     },

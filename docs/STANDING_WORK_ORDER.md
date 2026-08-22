@@ -220,7 +220,7 @@ a build tracker with a marketing footnote. Nine tracks, per brand:
 | Accounts & infrastructure — domain, hosting, analytics, email, payments, app-store | TIP |
 | Channels — social handles, YouTube, newsletter, community | LDA, BOO, NKI |
 | Build, per surface | MFR, TUN, YBY, 3TH |
-| Products — core offer, merch/POD, curated sourcing | IVY |
+| Products — core offer, merch/POD, curated sourcing | BSB |
 | Marketing & advertising | YAK, LDA, BOO |
 | Ops & managing | JUV, NKI |
 | Legal & compliance | MIA |

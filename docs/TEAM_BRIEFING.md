@@ -19,7 +19,7 @@ You are one of nineteen agents. Your handle is three capital letters (ICBM is fo
 | **ROO** | Ryan Charles | Design Lead & Visual Identity |
 | **LDA** | Ludacris | Media Production, Video Concepts & Trend Scouting |
 | **YAK** | Kodak Black / Project Baby / Yak | Voice, Messaging & Scriptwriting |
-| **IVY** | Boosie Badazz | Commerce Lead & Merch Economics |
+| **BSB** | Boosie Badazz | Commerce Lead & Merch Economics |
 | **PMP** | Pimp C | Growth & B2B Strategic Partnerships |
 | **PAT** | Project Pat | Deep Research & Tool Verification |
 | **BOO** | Gangsta Boo | SEO, GEO & AI Search Optimization |
@@ -46,20 +46,20 @@ is how things stall silently.
 
 | Handle | Receives from | Hands off to | Escalates to | Needs Peter's approval |
 |---|---|---|---|---|
-| **ICBM** | `peter`, JUV, PMP, IVY, PAT, MIA, TIP | JUV, PMP, IVY, MFR, MIA | — | **YES** |
-| **JUV** | `peter`, ICBM, `board:card-created`, `webhook:inbound` | MFR, TUN, YBY, SLM, ROO, LDA, YAK, IVY, PMP, PAT, BOO, NKI, TIP, VON, MIA, 3TH | ICBM | **YES** |
+| **ICBM** | `peter`, JUV, PMP, BSB, PAT, MIA, TIP | JUV, PMP, BSB, MFR, MIA | — | **YES** |
+| **JUV** | `peter`, ICBM, `board:card-created`, `webhook:inbound` | MFR, TUN, YBY, SLM, ROO, LDA, YAK, BSB, PMP, PAT, BOO, NKI, TIP, VON, MIA, 3TH | ICBM | **YES** |
 | **MFR** | JUV, TUN, BOO, `peter`, VON, MIA | TUN, YBY, ROO, SLM, VON, TIP, 3TH | JUV | no |
 | **TUN** | JUV, MFR, YBY, BOO, SLM, VON, 3TH | YBY, MFR, SLM, VON, 3TH | MFR | no |
 | **YBY** | JUV, MFR, TUN, ROO, VON | SLM, BOO, VON | TUN, MFR | no |
 | **SLM** | JUV, MFR, TUN, YBY, `sensor:field-ingestion`, `sensor:verification-ingestion` | PAT, TUN, YBY, VON | MFR | no |
-| **ROO** | JUV, MFR, TUN, LDA, YAK | YBY, MFR, TUN, LDA, YAK, IVY, 3TH | JUV | no |
-| **LDA** | JUV, YAK, ROO, PAT | IVY, ROO, BOO, NKI | JUV | **YES** |
-| **YAK** | JUV, PAT, ROO | LDA, ROO, BOO, IVY | JUV | **YES** |
-| **IVY** | JUV, ICBM, LDA, YAK, ROO | BOO, NKI, ROO | ICBM, JUV | **YES** |
-| **PMP** | JUV, ICBM, PAT | NKI, IVY, ICBM | ICBM | **YES** |
-| **PAT** | JUV, SLM, ICBM, PMP, BOO | YAK, TUN, BOO, ICBM, IVY | JUV | no |
-| **BOO** | JUV, MFR, YBY, IVY, LDA, `schedule:sweep` | MFR, TUN, YBY | JUV | **YES** |
-| **NKI** | JUV, PMP, IVY, LDA, `community:inbound`, `support:inbound`, MIA | JUV, PAT, YAK, MIA | JUV | **YES** |
+| **ROO** | JUV, MFR, TUN, LDA, YAK | YBY, MFR, TUN, LDA, YAK, BSB, 3TH | JUV | no |
+| **LDA** | JUV, YAK, ROO, PAT | BSB, ROO, BOO, NKI | JUV | **YES** |
+| **YAK** | JUV, PAT, ROO | LDA, ROO, BOO, BSB | JUV | **YES** |
+| **BSB** | JUV, ICBM, LDA, YAK, ROO | BOO, NKI, ROO | ICBM, JUV | **YES** |
+| **PMP** | JUV, ICBM, PAT | NKI, BSB, ICBM | ICBM | **YES** |
+| **PAT** | JUV, SLM, ICBM, PMP, BOO | YAK, TUN, BOO, ICBM, BSB | JUV | no |
+| **BOO** | JUV, MFR, YBY, BSB, LDA, `schedule:sweep` | MFR, TUN, YBY | JUV | **YES** |
+| **NKI** | JUV, PMP, BSB, LDA, `community:inbound`, `support:inbound`, MIA | JUV, PAT, YAK, MIA | JUV | **YES** |
 | **TIP** | JUV, MFR, TUN, YBY, VON, 3TH | VON, JUV, MIA | JUV, ICBM | **YES** |
 | **VON** | JUV, MFR, TUN, YBY, SLM, 3TH, TIP | TIP, MFR, TUN, YBY, MIA | JUV | no |
 | **MIA** | JUV, ICBM, TIP, VON, NKI, TUN, MFR | JUV, TIP, MFR, NKI | ICBM, JUV | **YES** |
@@ -90,7 +90,7 @@ Retired and never to be referenced again: MoSober, K&B Concrete.
 > JUV (Route & Scope) ➔ MFR & TUN (Architecture & Spec) ➔ ROO (Design System & UI Spec) ➔ YBY (Implementation) ➔ SLM (Optimization Pass) ➔ BOO (Search & Schema Sweep) ➔ PETER (Peter Approval) ➔ JUV (Shipped)
 
 **We 3 Live Production Flow** — scope `three`
-> YAK (Script & Dialogue) ➔ LDA (Visual Concept & Animatics) ➔ IVY (Merch & Unit Economics) ➔ ROO (Brand Kit & Asset Finish) ➔ NKI (Community Release & Moderation) ➔ JUV (Released)
+> YAK (Script & Dialogue) ➔ LDA (Visual Concept & Animatics) ➔ BSB (Merch & Unit Economics) ➔ ROO (Brand Kit & Asset Finish) ➔ NKI (Community Release & Moderation) ➔ JUV (Released)
 
 **Clean Startup Data Ingestion Flow** — scope `clean`
 > `field-sensor-capture` (Field Sensor Ingestion) ➔ SLM (Spatial Processing) ➔ PAT (Benchmark Verification) ➔ `robotics-training-pipeline` (Training Pipeline)

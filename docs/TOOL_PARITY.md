@@ -18,7 +18,7 @@ that has no agent on it.
 |---|---|---|
 | **claude** | ICBM, YAK, MFR, MIA, ROO | standard + Command + Build + Creative + Trust |
 | **grok** | 3TH, BOO, LDA, PAT, TIP, VON, YBY | standard + Build + R&D + Creative + Growth + Ship |
-| **codex** | IVY, JUV | standard + Command + Growth |
+| **codex** | BSB, JUV | standard + Command + Growth |
 | **cursor** | NKI, SLM | standard + R&D + Trust |
 | **kimi** | PMP, TUN | standard + Build + Growth |
 | **goose** | *none assigned* | standard baseline only |
@@ -110,7 +110,7 @@ npm install -g typescript-language-server typescript   # shared with claude
 - Install `railway` from the already-configured xAI marketplace (`~/.grok/config.toml` sources it) — **pin the SHA from the marketplace catalog**, MIA clears before use (infra write).
 - Everything else (github, context7, playwright, supabase, resend, vercel, claude-seo, frontend-design) **already loads via Claude Code compatibility**. Verify with `grok inspect`.
 
-### codex (IVY, JUV) — env + one stanza
+### codex (BSB, JUV) — env + one stanza
 - Already enabled: github, context7, resend, claude-seo, browser. Action is env only:
   `GITHUB_PERSONAL_ACCESS_TOKEN` (fine-grained, portfolio org only) in the agent environment.
 - Analytics: add the Vercel remote MCP per gap 2 (or Google's `google-analytics-mcp` if GA4 is ever adopted):

@@ -25,7 +25,7 @@
 | **Build** | MFR | MFR, TUN, YBY, 3TH | CI / build pipeline |
 | **Research & Data** | PAT | PAT, SLM | Ingestion — `sensor:field-ingestion`, `sensor:verification-ingestion` |
 | **Creative** | ROO | ROO, YAK, LDA | Asset + publishing pipeline ⚠️ *no trigger yet — §7* |
-| **Growth** | PMP | PMP, IVY, BOO | Search sweep — `schedule:sweep` |
+| **Growth** | PMP | PMP, BSB, BOO | Search sweep — `schedule:sweep` |
 | **Trust & Safety** | MIA | MIA, NKI, DEE | Inbound — `community:inbound`, `support:inbound` |
 | **Ship** | TIP | TIP, VON | Feed-rule executor + release |
 
@@ -117,10 +117,10 @@ Platform Build Flow (SLM).
 Video, animatics, hooks, trend scouting (LDA).
 **Gate.** First public publish per channel needs Peter. After that, publish freely.
 
-### Growth — PMP (lead), IVY, BOO
+### Growth — PMP (lead), BSB, BOO
 **Purpose.** Revenue and reach. Everything downstream of a working product.
 **Runs.** Search sweep: `schedule:sweep`.
-**Delivers.** Partnerships and B2B (PMP). Commerce, merch, unit economics (IVY). SEO, GEO, AI
+**Delivers.** Partnerships and B2B (PMP). Commerce, merch, unit economics (BSB). SEO, GEO, AI
 search, schema (BOO).
 **Gate.** Spending money and signing anything needs Peter.
 
@@ -163,7 +163,7 @@ Home squad in **bold**. `→` means attached for that phase only.
 | YAK | **Creative** | — | Creative | Creative | Creative | Creative *(`itshvg`)* | Creative |
 | LDA | **Creative** | — | Creative | → **Build** *(understudy)* | Creative | Creative *(`clean`)* | Creative |
 | PMP | **Growth** | — | Growth | Growth | **Growth** *(Selina)* | Growth | Growth |
-| IVY | **Growth** | — | Growth | Growth | Growth | Growth | Growth |
+| BSB | **Growth** | — | Growth | Growth | Growth | Growth | Growth |
 | BOO | **Growth** | — | Growth | → **Build** | Growth | Growth | Growth |
 | MIA | **Trust** | Trust | Trust | Trust | Trust | Trust | **Trust** *(IP gate)* |
 | NKI | **Trust** | — | Trust | Trust | Trust | Trust | Trust |
@@ -177,7 +177,7 @@ Home squad in **bold**. `→` means attached for that phase only.
 |---|---|---|---|---|---|---|
 | `itshvg` | TUN | YAK | BOO | **PAT** *(attached to Creative)* | — | VON |
 | `lhfyc` | YBY, 3TH *(shell)* | ROO | — | SLM | **MIA** *(escrow gate)* | VON |
-| `clean` | MFR, 3TH *(shell)* | LDA | IVY | SLM | **MIA** *(consent gate)* | VON |
+| `clean` | MFR, 3TH *(shell)* | LDA | BSB | SLM | **MIA** *(consent gate)* | VON |
 
 **Nobody covers two brands alone.** The earlier draft had ROO doing design for both `lhfyc` and
 `clean`, and 3TH doing mobile for both. That was a planning error, not a staffing problem — and

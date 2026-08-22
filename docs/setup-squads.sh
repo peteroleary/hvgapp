@@ -21,7 +21,7 @@ pk() { case "$1" in
   YAK) echo 2edec9f62fcaaea84ba117f1bc4bffa7ea33cab3abffd1b1f9412945133a1c89;;
   LDA) echo 345c304634a0336e1b1a1a99cc6ddff6ca036b61bea00047b7e668d327e79c36;;
   PMP) echo 8bffc84ecc398e240179357da6d8ff3bf3158d11d408c9a39078789e89ce00ca;;
-  IVY) echo b40993220a82a8ff19460ee1614e04ac223df3500fcdafd2e29d9899ad1a5e40;;
+  BSB) echo b40993220a82a8ff19460ee1614e04ac223df3500fcdafd2e29d9899ad1a5e40;;
   BOO) echo 4995971739aced66a1c5baaaafdca4c7a851a8f0531ed4ccff8dd91341afcb53;;
   MIA) echo f082881f514c47b69bd3eb977048b923ea519ca184bf4f26a2c641544dc1db95;;
   NKI) echo a2c915266039ce300d46c87b394365f2476945c83f781b305e99b35308c1525d;;
@@ -37,7 +37,7 @@ SQUADS=(
   "build|MFR|MFR TUN YBY 3TH|Build — architecture, scaffolding, implementation, mobile. Lead: MFR. TUN holds the board key."
   "research|PAT|PAT SLM|Research & Data — verified facts and processed signal. Lead: PAT. Cite sources with dates."
   "creative|ROO|ROO YAK LDA|Creative — brand identity, voice, produced media. Lead: ROO."
-  "growth|PMP|PMP IVY BOO|Growth — revenue and reach. Lead: PMP."
+  "growth|PMP|PMP BSB BOO|Growth — revenue and reach. Lead: PMP."
   "trust|MIA|MIA NKI DEE|Trust & Safety — protect the user and the business. Lead: MIA. Independent of Build, Creative, Growth."
   "ship|TIP|TIP VON|Ship — the last gate. Lead: TIP. VON verifies done; never the author."
 )

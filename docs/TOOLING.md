@@ -20,7 +20,7 @@ From `managed-agents.json`, verified 2026-08-21:
 |---|---|---|
 | **claude** | ICBM, YAK, MFR, MIA, ROO | ✅ **Yes** — all 16 plugins available |
 | **grok** | 3TH, BOO, LDA, PAT, TIP, VON, YBY | ❌ No — xAI runtime, separate config |
-| **codex** | IVY, JUV | ❌ No — own MCP config |
+| **codex** | BSB, JUV | ❌ No — own MCP config |
 | **cursor** | NKI, SLM | ❌ No — own MCP config |
 | **kimi** | PMP, TUN | ❌ No — own MCP config |
 
