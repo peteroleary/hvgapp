@@ -125,21 +125,14 @@ BUZZ_AUTH_TAG is injected, or nothing you write lands.
 DONE WHEN: all four verbs in the runnable binary, TUN can execute the validation set.
 ```
 
-## P5 — TUN — EXECUTE THE BOARD REPAIR
+## P5 — ✅ CLOSED 2026-08-22 (done via NIP-09 + LWW republish, no verbs needed)
 
 ```
-After YBY lands B1 and TIP installs the binary — the writes, from your key, under the
-harness (raw key 403s on global kinds):
-
-  buzz board set three --title "We 3 Live"
-  buzz board retire concrete
-  buzz board retire sober
-  # delete the 5 junk cards on unified-master (board card delete — YBY's verb)
-  # YBY separately: normalize unified-master from 4 columns to 5 (missing "Spec'd")
-
-DONE WHEN (VON verifies, not you): exactly seven boards, correct titles, zero cards on a
-slug outside the locked six, zero occurrences of "MoSober" or "K&B Concrete", and a card
-files, assigns, moves, and re-tags from the CLI.
+concrete + sober DELETED, three retitled "We 3 Live", 5 junk unified-master cards
+deleted, unified-master normalized to 5 columns. Verified via buzz board ls.
+CLI rebuilt from merged main and installed to ~/.local/bin/buzz — card set/move/--goal
+now work for everyone (P3 also closed). Remaining verb UX (retire-as-tombstone, board
+goal, card delete) stays on B1 as non-urgent.
 ```
 
 ## P6 — MFR — ASSIGNEES SHOW HEX, NOT HANDLES. FIX THE RENDER SIDE.
