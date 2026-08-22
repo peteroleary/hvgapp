@@ -43,6 +43,31 @@ normalized to 5 columns — verified `board ls`. **Guard:** EXECUTION_PROMPTS P5
 B1 narrows to UX verbs. Rule of thumb now in SWO §7's fix rule: before writing a verb,
 check whether the protocol already does it.
 
+**I6. `SQUADS.md` §8 told 18 agents they could not write the board.** Symptom: Creative,
+Growth and Trust cards sat unassigned and `idle` for a day while agents treated the board as
+TUN-only; Peter read an empty In Progress column as nobody working. Root (verified in code,
+not derived): §8 said *"writing from the wrong key forks the head"*, but
+`desktop/src/features/board/state/boardEvents.ts:213-221` (`reconciliationKey`) keys
+`KIND_BOARD` and `KIND_BOARD_CARD` on `kind:dtag` with the author **deliberately excluded**,
+and `crates/buzz-cli/src/commands/board.rs:207` (`reconcile_by_dtag`) matches. Only goals,
+feed rules and autonomy policies are author-scoped. Proof: 11 cards written from ROO's key
+onto boards owned by TUN and by Peter, all landing on the reconciled head, nothing forked.
+Fix: §8 superseded, corrected by JUV at `e2cc930b`. **Guard:** a rule about who may write a
+shared structure cites the reconciliation function by file and symbol, or it is not a rule —
+the same class as I5. Found by ROO, verified and committed by JUV.
+
+**I7. Creative ran 16 hours with no way to tell idle from empty.** Symptom: no Creative
+output between 2026-08-21 22:45 and 2026-08-22 15:10; six Creative cards sat `idle` in
+Backlog, three with no assignee at all. Root: not derived — it was already written down.
+`SQUADS.md` §7 gap 1 predicted exactly this: *"Creative has no automated trigger… nothing
+distinguishes idle from nothing assigned"*, owner ROO + JUV, and the gap was left open.
+Every other squad has an inbound service; Creative had none. Fix: `~/.buzz/creative/sweep.py`
+under launchd every 20 minutes, signing as ROO from the keychain, posting to `#creative` only
+when the queue changes or after 24h of silence. It found five unrouted cards on its first run
+that a manual scan had missed. **Guard:** `SQUADS.md` §9 rule 4 already says a squad that
+stops running its service is offline — the guard is that a *named open gap with an owner* is
+a card, not a footnote. Any remaining §7 gap without a filed card is the same failure waiting.
+
 ## Standing auto-remediation ladder (P13 — the team builds this)
 
 | Level | Trigger | Action | Owner |
