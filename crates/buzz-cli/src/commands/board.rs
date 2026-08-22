@@ -985,12 +985,19 @@ fn apply_unassign(existing: &[AssigneeEntry], id: &str) -> Result<Vec<AssigneeEn
     Ok(existing.iter().filter(|a| a.id != id).cloned().collect())
 }
 
-/// Parsed view of a kind:30625 goal head. Kept to the fields the CLI reads
-/// today; the `board goal` verb extends this when it lands.
-#[allow(dead_code)] // read by tests now, by the `board goal` verb next
+/// Parsed view of a kind:30625 goal head.
+#[derive(Debug, Clone)]
 pub struct GoalSnapshot {
     pub id: String,
     pub brand_scope: String,
+    pub framework: String,
+    pub status: String,
+    pub owner: String,
+    pub updated_at: u64,
+    /// The event's content verbatim. `goal set` re-emits from a typed
+    /// rebuild and refuses when that rebuild is not byte-identical here, so
+    /// a goal written by a client this CLI cannot mirror is never mangled.
+    pub content: String,
 }
 
 impl GoalSnapshot {
@@ -1036,7 +1043,17 @@ impl GoalSnapshot {
         Ok(Self {
             id: id.to_owned(),
             brand_scope: required("brandScope")?,
+            framework,
+            status,
+            owner: event.pubkey.to_hex(),
+            updated_at: event.created_at.as_secs(),
+            content: event.content.clone(),
         })
+    }
+
+    /// Canonical addressable coordinate `30625:<owner>:<id>`.
+    pub fn coordinate(&self) -> String {
+        format!("{KIND_BOARD_GOAL}:{}:{}", self.owner, self.id)
     }
 }
 
@@ -2043,9 +2060,664 @@ pub async fn cmd_seed(client: &BuzzClient, dry_run: bool) -> Result<(), CliError
     Ok(())
 }
 
+/// Build the NIP-09 deletion event (kind:5) for an addressable Board
+/// coordinate.
+///
+/// The deletion carries **only** an `a` tag. This is load-bearing and mirrors
+/// `notes::build_rm_event`: the relay routes to its coordinate soft-delete
+/// path only when the kind:5 has no `e` target ids. An `e` tag would route to
+/// the per-event path and leave the live replaceable row intact — the board
+/// or card would survive its own "deletion". Pure and unit-testable.
+pub fn build_addressable_delete_event(coordinate: &str) -> Result<EventBuilder, CliError> {
+    if coordinate.is_empty() {
+        return Err(CliError::Usage("coordinate is required".into()));
+    }
+    let a_tag = Tag::parse(["a", coordinate]).map_err(tag_err)?;
+    Ok(EventBuilder::new(Kind::EventDeletion, "").tags(vec![a_tag]))
+}
+
+/// Refuse a deletion the relay would reject anyway: a kind:5 only removes a
+/// coordinate owned by its own author, so a non-owner "delete" is a no-op
+/// that reads as success. Fail here, with the owner named.
+fn require_owner(client: &BuzzClient, owner: &str, what: &str, id: &str) -> Result<(), CliError> {
+    let me = client.keys().public_key().to_hex();
+    if !owner.eq_ignore_ascii_case(&me) {
+        return Err(CliError::Usage(format!(
+            "{what} {id:?} is owned by {owner}, not by you ({me}); a NIP-09 deletion \
+             only removes its own author's coordinate, so this would silently no-op. \
+             Run it from the owning key."
+        )));
+    }
+    Ok(())
+}
+
+/// Edit a board's own fields on the reconciled head. The column set is
+/// carried over verbatim — lists stay immutable from the CLI in v1, so a
+/// rename can never silently reshape a board's columns.
+pub async fn cmd_set(
+    client: &BuzzClient,
+    board_id: &str,
+    title: Option<&str>,
+    description: Option<&str>,
+    brand: Option<&str>,
+) -> Result<(), CliError> {
+    if let Some(title) = title {
+        if title.is_empty() {
+            return Err(CliError::Usage("--title cannot be empty".into()));
+        }
+    }
+    if let Some(description) = description {
+        if description.is_empty() {
+            return Err(CliError::Usage("--description cannot be empty".into()));
+        }
+    }
+    if title.is_none() && description.is_none() && brand.is_none() {
+        return Err(CliError::Usage(
+            "nothing to change — pass at least one of --title, --description, --brand".into(),
+        ));
+    }
+    let brand = brand.map(validate_brand).transpose()?;
+
+    // Read-before-write: mutate the reconciled head (across all authors), so
+    // an unnamed field is carried over rather than dropped.
+    let board = fetch_board_head(client, board_id)
+        .await?
+        .ok_or_else(|| CliError::NotFound(format!("board not found: {board_id}")))?;
+
+    let next_title = title.unwrap_or(&board.title);
+    let next_description = description.or(board.description.as_deref());
+    let next_brand = brand.or(board.brand_scope.as_deref());
+
+    let builder = build_board_event(
+        &board.id,
+        next_title,
+        next_description,
+        next_brand,
+        &board.lists,
+    )?;
+    let event = sign_and_submit(client, builder, "relay reported board event as duplicate").await?;
+
+    let me = event.pubkey.to_hex();
+    println!("event_id   {}", event.id.to_hex());
+    println!("coordinate {KIND_BOARD}:{me}:{}", board.id);
+    println!("id         {}", board.id);
+    println!("title      {next_title}");
+    if !board.owner.eq_ignore_ascii_case(&me) {
+        // Boards reconcile by d-tag across authors and latest wins, so this
+        // write is the head — but it lives at a new coordinate, and only the
+        // original author can ever NIP-09 delete theirs.
+        println!(
+            "warning    previous head was authored by {}; your write is now the \
+             reconciled head at a new coordinate, and `board retire` from this key \
+             cannot remove theirs",
+            board.owner
+        );
+    }
+    Ok(())
+}
+
+/// Retire a board by deleting its addressable coordinate (NIP-09).
+pub async fn cmd_retire(
+    client: &BuzzClient,
+    board_id: &str,
+    with_cards: bool,
+) -> Result<(), CliError> {
+    let board = fetch_board_head(client, board_id)
+        .await?
+        .ok_or_else(|| CliError::NotFound(format!("board not found: {board_id}")))?;
+    require_owner(client, &board.owner, "board", &board.id)?;
+
+    // Cards are separate addressable events: deleting the board alone leaves
+    // them live and parented to a coordinate that no longer resolves.
+    let cards = fetch_board_cards(client, &board.id).await?;
+    if !cards.is_empty() && !with_cards {
+        return Err(CliError::Usage(format!(
+            "board {:?} still holds {} card(s); deleting it alone would orphan them. \
+             Re-run with --with-cards to delete the cards first.",
+            board.id,
+            cards.len()
+        )));
+    }
+
+    let mut deleted_cards = 0usize;
+    for card in &cards {
+        require_owner(client, &card.owner, "card", &card.id)?;
+        let builder = build_addressable_delete_event(&card.coordinate())?;
+        sign_and_submit(client, builder, "relay reported deletion as duplicate").await?;
+        deleted_cards += 1;
+        println!("deleted    {}", card.coordinate());
+    }
+
+    let builder = build_addressable_delete_event(&board.coordinate())?;
+    let event = sign_and_submit(client, builder, "relay reported deletion as duplicate").await?;
+    println!("deleted    {}", board.coordinate());
+    println!("deletion   {}", event.id.to_hex());
+    println!("cards      {deleted_cards}");
+    Ok(())
+}
+
+/// Delete one card by deleting its addressable coordinate (NIP-09).
+pub async fn cmd_card_delete(
+    client: &BuzzClient,
+    board_id: &str,
+    card_id: &str,
+) -> Result<(), CliError> {
+    let (_board, card) = fetch_card_for_update(client, board_id, card_id).await?;
+    require_owner(client, &card.owner, "card", &card.id)?;
+    let builder = build_addressable_delete_event(&card.coordinate())?;
+    let event = sign_and_submit(client, builder, "relay reported deletion as duplicate").await?;
+    println!("deleted    {}", card.coordinate());
+    println!("deletion   {}", event.id.to_hex());
+    Ok(())
+}
+
+/// SMART body of a goal. Field order matches the TS `Goal["smart"]` shape.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct GoalSmart {
+    pub specific: String,
+    pub measurable: String,
+    pub attainable: String,
+    pub relevant: String,
+    #[serde(rename = "timeBound")]
+    pub time_bound: String,
+}
+
+/// One OKR key result. `currentValue`/`targetValue` are optional in the TS
+/// shape and are omitted, not nulled, when absent.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct GoalKeyResult {
+    pub description: String,
+    #[serde(rename = "targetMetric")]
+    pub target_metric: String,
+    #[serde(rename = "currentValue", skip_serializing_if = "Option::is_none")]
+    pub current_value: Option<String>,
+    #[serde(rename = "targetValue", skip_serializing_if = "Option::is_none")]
+    pub target_value: Option<String>,
+}
+
+/// OKR body of a goal.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct GoalOkr {
+    pub objective: String,
+    #[serde(rename = "keyResults")]
+    pub key_results: Vec<GoalKeyResult>,
+}
+
+/// PACT body of a goal.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct GoalPact {
+    pub purposeful: String,
+    pub actionable: String,
+    pub continuous: String,
+    pub trackable: String,
+}
+
+/// Content of a kind:30625 event. Field order matches the TS `Goal`
+/// interface minus `id` (`brandScope`, `framework`, `smart?`, `okr?`,
+/// `pact?`, `status`, `proposedCards`) so the serialized bytes equal
+/// Desktop's `JSON.stringify` output.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct GoalContent {
+    #[serde(rename = "brandScope")]
+    pub brand_scope: String,
+    pub framework: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub smart: Option<GoalSmart>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub okr: Option<GoalOkr>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pact: Option<GoalPact>,
+    pub status: String,
+    /// Authored by Desktop/Comet, never by the CLI. Held as raw values so a
+    /// `cardDraft` shape the CLI does not model survives a status change.
+    #[serde(rename = "proposedCards")]
+    pub proposed_cards: Vec<serde_json::Value>,
+}
+
+/// Build the unsigned kind:30625 event, mirroring `buildGoalEventTemplate`:
+/// content is the goal minus its id, tags are the `d` tag alone. Pure for
+/// testability.
+pub fn build_goal_event(id: &str, content: &GoalContent) -> Result<EventBuilder, CliError> {
+    if id.is_empty() {
+        return Err(CliError::Usage("goal id is required".into()));
+    }
+    if content.brand_scope.is_empty() {
+        return Err(CliError::Usage("goal brandScope is required".into()));
+    }
+    if !GOAL_FRAMEWORKS.contains(&content.framework.as_str()) {
+        return Err(CliError::Usage(format!(
+            "unknown goal framework {:?} (expected one of {})",
+            content.framework,
+            GOAL_FRAMEWORKS.join(", ")
+        )));
+    }
+    if !GOAL_STATUSES.contains(&content.status.as_str()) {
+        return Err(CliError::Usage(format!(
+            "unknown goal status {:?} (expected one of {})",
+            content.status,
+            GOAL_STATUSES.join(", ")
+        )));
+    }
+    let tags = vec![Tag::parse(["d", id]).map_err(tag_err)?];
+    let body = serde_json::to_string(content)
+        .map_err(|e| CliError::Other(format!("failed to serialize goal: {e}")))?;
+    Ok(EventBuilder::new(kind_board_goal(), body).tags(tags))
+}
+
+/// Parse one `--key-result` value: `description|targetMetric[|currentValue[|targetValue]]`.
+fn parse_key_result(raw: &str) -> Result<GoalKeyResult, CliError> {
+    let parts: Vec<&str> = raw.split('|').collect();
+    if parts.len() < 2 || parts.len() > 4 {
+        return Err(CliError::Usage(format!(
+            "--key-result {raw:?} must be \"description|targetMetric\", optionally \
+             followed by |currentValue and |targetValue"
+        )));
+    }
+    let field = |index: usize| parts.get(index).map(|s| s.trim()).unwrap_or("");
+    let description = field(0);
+    let target_metric = field(1);
+    if description.is_empty() || target_metric.is_empty() {
+        return Err(CliError::Usage(format!(
+            "--key-result {raw:?} needs a non-empty description and targetMetric"
+        )));
+    }
+    let optional = |index: usize| {
+        let value = field(index);
+        (!value.is_empty()).then(|| value.to_owned())
+    };
+    Ok(GoalKeyResult {
+        description: description.to_owned(),
+        target_metric: target_metric.to_owned(),
+        current_value: optional(2),
+        target_value: optional(3),
+    })
+}
+
+/// The framework body a goal carries: exactly one of the three is `Some`.
+#[derive(Debug)]
+struct GoalBody {
+    smart: Option<GoalSmart>,
+    okr: Option<GoalOkr>,
+    pact: Option<GoalPact>,
+}
+
+/// Require every flag of the framework the caller chose, and reject flags
+/// belonging to a framework they did not — a SMART goal carrying `--objective`
+/// is a typo, not an intent, and silently dropping it loses the field.
+fn goal_body(
+    framework: &str,
+    smart: [Option<&str>; 5],
+    objective: Option<&str>,
+    key_results: &[String],
+    pact: [Option<&str>; 4],
+) -> Result<GoalBody, CliError> {
+    const SMART_FLAGS: [&str; 5] = [
+        "--specific",
+        "--measurable",
+        "--attainable",
+        "--relevant",
+        "--time-bound",
+    ];
+    const PACT_FLAGS: [&str; 4] = [
+        "--purposeful",
+        "--actionable",
+        "--continuous",
+        "--trackable",
+    ];
+    let smart_given = smart.iter().any(Option::is_some);
+    let okr_given = objective.is_some() || !key_results.is_empty();
+    let pact_given = pact.iter().any(Option::is_some);
+
+    let stray = |name: &str, given: bool| -> Result<(), CliError> {
+        if given {
+            return Err(CliError::Usage(format!(
+                "--framework {framework} does not take {name} flags"
+            )));
+        }
+        Ok(())
+    };
+    let require = |values: &[Option<&str>], flags: &[&str]| -> Result<Vec<String>, CliError> {
+        let mut out = Vec::with_capacity(values.len());
+        for (value, flag) in values.iter().zip(flags) {
+            let value = value.unwrap_or("").trim();
+            if value.is_empty() {
+                return Err(CliError::Usage(format!(
+                    "--framework {framework} requires {flag}"
+                )));
+            }
+            out.push(value.to_owned());
+        }
+        Ok(out)
+    };
+
+    match framework {
+        "SMART" => {
+            stray("OKR", okr_given)?;
+            stray("PACT", pact_given)?;
+            let v = require(&smart, &SMART_FLAGS)?;
+            Ok(GoalBody {
+                smart: Some(GoalSmart {
+                    specific: v[0].clone(),
+                    measurable: v[1].clone(),
+                    attainable: v[2].clone(),
+                    relevant: v[3].clone(),
+                    time_bound: v[4].clone(),
+                }),
+                okr: None,
+                pact: None,
+            })
+        }
+        "OKR" => {
+            stray("SMART", smart_given)?;
+            stray("PACT", pact_given)?;
+            let objective = objective.unwrap_or("").trim();
+            if objective.is_empty() {
+                return Err(CliError::Usage(
+                    "--framework OKR requires --objective".into(),
+                ));
+            }
+            if key_results.is_empty() {
+                return Err(CliError::Usage(
+                    "--framework OKR requires at least one --key-result".into(),
+                ));
+            }
+            let key_results = key_results
+                .iter()
+                .map(|raw| parse_key_result(raw))
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok(GoalBody {
+                smart: None,
+                okr: Some(GoalOkr {
+                    objective: objective.to_owned(),
+                    key_results,
+                }),
+                pact: None,
+            })
+        }
+        "PACT" => {
+            stray("SMART", smart_given)?;
+            stray("OKR", okr_given)?;
+            let v = require(&pact, &PACT_FLAGS)?;
+            Ok(GoalBody {
+                smart: None,
+                okr: None,
+                pact: Some(GoalPact {
+                    purposeful: v[0].clone(),
+                    actionable: v[1].clone(),
+                    continuous: v[2].clone(),
+                    trackable: v[3].clone(),
+                }),
+            })
+        }
+        other => Err(CliError::Usage(format!(
+            "unknown goal framework {other:?} (expected one of {})",
+            GOAL_FRAMEWORKS.join(", ")
+        ))),
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+pub async fn cmd_goal_add(
+    client: &BuzzClient,
+    id: &str,
+    brand: &str,
+    framework: &str,
+    status: Option<&str>,
+    smart: [Option<&str>; 5],
+    objective: Option<&str>,
+    key_results: &[String],
+    pact: [Option<&str>; 4],
+) -> Result<(), CliError> {
+    let id = crate::commands::notes::parse_slug(id)?;
+    let brand = validate_brand(brand)?;
+    let status = status.unwrap_or("draft");
+    if !GOAL_STATUSES.contains(&status) {
+        return Err(CliError::Usage(format!(
+            "unknown goal status {status:?} (expected one of {})",
+            GOAL_STATUSES.join(", ")
+        )));
+    }
+    let body = goal_body(framework, smart, objective, key_results, pact)?;
+
+    // Read-before-write: goals reconcile by d-tag across authors, so filing
+    // over an existing id would overwrite someone else's goal — and every
+    // card pointing at it would silently re-parent.
+    if fetch_goal_head(client, &id).await?.is_some() {
+        return Err(CliError::Conflict(format!(
+            "goal {id:?} already exists; goals reconcile by id across authors, \
+             so filing it again would overwrite the shared head"
+        )));
+    }
+
+    let content = GoalContent {
+        brand_scope: brand.to_owned(),
+        framework: framework.to_owned(),
+        smart: body.smart,
+        okr: body.okr,
+        pact: body.pact,
+        status: status.to_owned(),
+        proposed_cards: Vec::new(),
+    };
+    let builder = build_goal_event(&id, &content)?;
+    let event = sign_and_submit(client, builder, "relay reported goal event as duplicate").await?;
+    println!("event_id   {}", event.id.to_hex());
+    println!(
+        "coordinate {KIND_BOARD_GOAL}:{}:{id}",
+        event.pubkey.to_hex()
+    );
+    println!("id         {id}");
+    println!("brand      {brand}");
+    println!("framework  {framework}");
+    println!("status     {status}");
+    Ok(())
+}
+
+pub async fn cmd_goal_ls(
+    client: &BuzzClient,
+    brand: Option<&str>,
+    limit: Option<u32>,
+) -> Result<(), CliError> {
+    let brand = brand.map(validate_brand).transpose()?;
+    let limit = limit.unwrap_or(50).min(200);
+    let filter = serde_json::json!({
+        "kinds": [KIND_BOARD_GOAL],
+        "limit": 500,
+    });
+    let raw = client.query(&filter).await?;
+    let mut goals = reconcile_by_dtag(parse_events(&raw)?)
+        .iter()
+        .filter_map(|e| GoalSnapshot::from_event(e).ok())
+        .filter(|g| brand.is_none_or(|b| g.brand_scope == b))
+        .collect::<Vec<_>>();
+    goals.sort_by(|l, r| r.updated_at.cmp(&l.updated_at).then(l.id.cmp(&r.id)));
+    goals.truncate(limit as usize);
+
+    let rows = goals
+        .iter()
+        .map(|g| {
+            serde_json::json!({
+                "id": g.id,
+                "brandScope": g.brand_scope,
+                "framework": g.framework,
+                "status": g.status,
+                "owner": g.owner,
+                "coordinate": g.coordinate(),
+                "updatedAt": g.updated_at,
+            })
+        })
+        .collect::<Vec<_>>();
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&rows)
+            .map_err(|e| CliError::Other(format!("failed to serialize goals: {e}")))?
+    );
+    Ok(())
+}
+
+/// Delete a goal by deleting its addressable coordinate (NIP-09).
+pub async fn cmd_goal_delete(client: &BuzzClient, id: &str) -> Result<(), CliError> {
+    let goal = fetch_goal_head(client, id)
+        .await?
+        .ok_or_else(|| CliError::NotFound(format!("goal not found: {id}")))?;
+    require_owner(client, &goal.owner, "goal", &goal.id)?;
+
+    // `card add --goal` and `card set --goal` both refuse an id with no goal
+    // head, so deleting a goal out from under its cards would leave them
+    // pointing at something the CLI itself would no longer accept.
+    let filter = serde_json::json!({
+        "kinds": [KIND_BOARD_CARD],
+        "limit": 500,
+    });
+    let raw = client.query(&filter).await?;
+    let attached = reconcile_by_dtag(parse_events(&raw)?)
+        .iter()
+        .filter_map(|e| CardSnapshot::from_event(e).ok())
+        .filter(|c| c.parent_goal_id.as_deref() == Some(goal.id.as_str()))
+        .map(|c| c.id)
+        .collect::<Vec<_>>();
+    if !attached.is_empty() {
+        return Err(CliError::Usage(format!(
+            "goal {:?} still has {} card(s) attached ({}); re-point or delete them first",
+            goal.id,
+            attached.len(),
+            attached.join(", ")
+        )));
+    }
+
+    let builder = build_addressable_delete_event(&goal.coordinate())?;
+    let event = sign_and_submit(client, builder, "relay reported deletion as duplicate").await?;
+    println!("deleted    {}", goal.coordinate());
+    println!("deletion   {}", event.id.to_hex());
+    Ok(())
+}
+
+pub async fn cmd_goal_set(client: &BuzzClient, id: &str, status: &str) -> Result<(), CliError> {
+    if !GOAL_STATUSES.contains(&status) {
+        return Err(CliError::Usage(format!(
+            "unknown goal status {status:?} (expected one of {})",
+            GOAL_STATUSES.join(", ")
+        )));
+    }
+    let goal = fetch_goal_head(client, id)
+        .await?
+        .ok_or_else(|| CliError::NotFound(format!("goal not found: {id}")))?;
+
+    // Read-before-write, then prove the round-trip before writing: this CLI
+    // re-emits from a typed rebuild, and `serde_json::Value` re-orders object
+    // keys alphabetically. If the rebuild is not byte-identical to the head,
+    // the head holds a shape we cannot mirror — refuse rather than rewrite it
+    // into a different-but-equivalent JSON that breaks the byte pins.
+    let mut content: GoalContent = serde_json::from_str(&goal.content).map_err(|e| {
+        CliError::Other(format!("goal content is not a shape this CLI models: {e}"))
+    })?;
+    let round_trip = serde_json::to_string(&content)
+        .map_err(|e| CliError::Other(format!("failed to serialize goal: {e}")))?;
+    if round_trip != goal.content {
+        return Err(CliError::Other(format!(
+            "goal {id:?} was written in a shape this CLI cannot re-emit byte-identically; \
+             editing it here would rewrite fields it does not own. Change it from the \
+             client that wrote it."
+        )));
+    }
+    if content.status == status {
+        return Err(CliError::Usage(format!(
+            "goal {id:?} is already {status:?}"
+        )));
+    }
+    let previous = content.status.clone();
+    content.status = status.to_owned();
+
+    let builder = build_goal_event(&goal.id, &content)?;
+    let event = sign_and_submit(client, builder, "relay reported goal event as duplicate").await?;
+    let me = event.pubkey.to_hex();
+    println!("event_id   {}", event.id.to_hex());
+    println!("coordinate {KIND_BOARD_GOAL}:{me}:{}", goal.id);
+    println!("id         {}", goal.id);
+    println!("status     {previous} -> {status}");
+    if !goal.owner.eq_ignore_ascii_case(&me) {
+        println!(
+            "warning    previous head was authored by {}; your write is now the \
+             reconciled head at a new coordinate",
+            goal.owner
+        );
+    }
+    Ok(())
+}
+
 pub async fn dispatch(cmd: crate::BoardCmd, client: &BuzzClient) -> Result<(), CliError> {
-    use crate::{BoardCardCmd, BoardCmd};
+    use crate::{BoardCardCmd, BoardCmd, BoardGoalCmd};
     match cmd {
+        BoardCmd::Set {
+            board_id,
+            title,
+            description,
+            brand,
+        } => {
+            cmd_set(
+                client,
+                &board_id,
+                title.as_deref(),
+                description.as_deref(),
+                brand.as_deref(),
+            )
+            .await
+        }
+        BoardCmd::Retire {
+            board_id,
+            with_cards,
+        } => cmd_retire(client, &board_id, with_cards).await,
+        BoardCmd::Goal(BoardGoalCmd::Add(args)) => {
+            let crate::GoalAddArgs {
+                id,
+                brand,
+                framework,
+                status,
+                specific,
+                measurable,
+                attainable,
+                relevant,
+                time_bound,
+                objective,
+                key_results,
+                purposeful,
+                actionable,
+                continuous,
+                trackable,
+            } = *args;
+            cmd_goal_add(
+                client,
+                &id,
+                &brand,
+                &framework,
+                status.as_deref(),
+                [
+                    specific.as_deref(),
+                    measurable.as_deref(),
+                    attainable.as_deref(),
+                    relevant.as_deref(),
+                    time_bound.as_deref(),
+                ],
+                objective.as_deref(),
+                &key_results,
+                [
+                    purposeful.as_deref(),
+                    actionable.as_deref(),
+                    continuous.as_deref(),
+                    trackable.as_deref(),
+                ],
+            )
+            .await
+        }
+        BoardCmd::Goal(BoardGoalCmd::Ls { brand, limit }) => {
+            cmd_goal_ls(client, brand.as_deref(), limit).await
+        }
+        BoardCmd::Goal(BoardGoalCmd::Delete { id }) => cmd_goal_delete(client, &id).await,
+        BoardCmd::Goal(BoardGoalCmd::Set { id, status }) => {
+            cmd_goal_set(client, &id, &status).await
+        }
+        BoardCmd::Card(BoardCardCmd::Delete { board, card }) => {
+            cmd_card_delete(client, &board, &card).await
+        }
         BoardCmd::Ls { brand, limit } => cmd_ls(client, brand.as_deref(), limit).await,
         BoardCmd::Get { board_id } => cmd_get(client, &board_id).await,
         BoardCmd::Create {
@@ -3023,5 +3695,203 @@ mod tests {
         assert_eq!(ok.id, "goal-1");
         assert_eq!(ok.brand_scope, "clean");
         assert!(GoalSnapshot::from_event(&goal_event(&keys, "BOGUS")).is_err());
+    }
+
+    #[test]
+    fn goal_snapshot_carries_the_head_verbatim_for_round_trip_checks() {
+        let keys = Keys::generate();
+        let event = goal_event(&keys, "OKR");
+        let snapshot = GoalSnapshot::from_event(&event).unwrap();
+        assert_eq!(snapshot.framework, "OKR");
+        assert_eq!(snapshot.status, "approved");
+        assert_eq!(snapshot.owner, keys.public_key().to_hex());
+        // `goal set` diffs its typed rebuild against this string, so it must
+        // be the event's bytes and not a re-serialization of them.
+        assert_eq!(snapshot.content, event.content);
+        assert_eq!(
+            snapshot.coordinate(),
+            format!("{KIND_BOARD_GOAL}:{}:goal-1", keys.public_key().to_hex())
+        );
+    }
+
+    /// The relay routes a kind:5 to its coordinate soft-delete path only when
+    /// the event carries no `e` target ids. An `e` tag would leave the live
+    /// replaceable row intact, so the board would survive its own deletion.
+    #[test]
+    fn addressable_delete_carries_an_a_tag_and_never_an_e_tag() {
+        let keys = Keys::generate();
+        let coordinate = format!("{KIND_BOARD}:{}:clean", keys.public_key().to_hex());
+        let event = build_addressable_delete_event(&coordinate)
+            .unwrap()
+            .sign_with_keys(&keys)
+            .unwrap();
+        assert_eq!(event.kind, Kind::EventDeletion);
+        assert_eq!(event.content, "");
+        assert_eq!(first_tag(&event, "a"), Some(coordinate.as_str()));
+        assert!(
+            first_tag(&event, "e").is_none(),
+            "board deletion must not carry an `e` tag"
+        );
+    }
+
+    #[test]
+    fn addressable_delete_rejects_an_empty_coordinate() {
+        assert!(build_addressable_delete_event("").is_err());
+    }
+
+    fn smart_content() -> GoalContent {
+        GoalContent {
+            brand_scope: "hvgapp".into(),
+            framework: "SMART".into(),
+            smart: Some(GoalSmart {
+                specific: "S".into(),
+                measurable: "M".into(),
+                attainable: "A".into(),
+                relevant: "R".into(),
+                time_bound: "2026-09-30".into(),
+            }),
+            okr: None,
+            pact: None,
+            status: "draft".into(),
+            proposed_cards: Vec::new(),
+        }
+    }
+
+    /// Byte-pin against Desktop's `buildGoalEventTemplate`: content is the
+    /// goal minus its id, in `Goal` field order, and the only tag is `d`.
+    #[test]
+    fn goal_event_content_matches_the_typescript_field_order() {
+        let keys = Keys::generate();
+        let event = build_goal_event("hvgapp-ship", &smart_content())
+            .unwrap()
+            .sign_with_keys(&keys)
+            .unwrap();
+        assert_eq!(event.kind, kind_board_goal());
+        assert_eq!(
+            event.content,
+            r#"{"brandScope":"hvgapp","framework":"SMART","smart":{"specific":"S","measurable":"M","attainable":"A","relevant":"R","timeBound":"2026-09-30"},"status":"draft","proposedCards":[]}"#
+        );
+        assert_eq!(unique_d_tag(&event), Some("hvgapp-ship"));
+        assert_eq!(event.tags.len(), 1, "goal events carry the d tag alone");
+    }
+
+    /// An absent framework body is omitted, never nulled — `parseGoal` reads
+    /// `smart`/`okr`/`pact` as optional and a null would not match Desktop.
+    #[test]
+    fn goal_event_omits_the_frameworks_it_does_not_use() {
+        let keys = Keys::generate();
+        let content = GoalContent {
+            framework: "OKR".into(),
+            smart: None,
+            okr: Some(GoalOkr {
+                objective: "Run the operation from the app".into(),
+                key_results: vec![GoalKeyResult {
+                    description: "Board is writable".into(),
+                    target_metric: "verbs shipped".into(),
+                    current_value: Some("0".into()),
+                    target_value: Some("4".into()),
+                }],
+            }),
+            ..smart_content()
+        };
+        let event = build_goal_event("hvgapp-ship", &content)
+            .unwrap()
+            .sign_with_keys(&keys)
+            .unwrap();
+        assert_eq!(
+            event.content,
+            r#"{"brandScope":"hvgapp","framework":"OKR","okr":{"objective":"Run the operation from the app","keyResults":[{"description":"Board is writable","targetMetric":"verbs shipped","currentValue":"0","targetValue":"4"}]},"status":"draft","proposedCards":[]}"#
+        );
+    }
+
+    #[test]
+    fn goal_key_result_omits_absent_optional_values() {
+        let parsed = parse_key_result("Board is writable|verbs shipped").unwrap();
+        assert_eq!(parsed.current_value, None);
+        assert_eq!(parsed.target_value, None);
+        assert_eq!(
+            serde_json::to_string(&parsed).unwrap(),
+            r#"{"description":"Board is writable","targetMetric":"verbs shipped"}"#
+        );
+    }
+
+    #[test]
+    fn goal_key_result_parses_three_and_four_field_forms() {
+        let three = parse_key_result("d|m|1").unwrap();
+        assert_eq!(three.current_value.as_deref(), Some("1"));
+        assert_eq!(three.target_value, None);
+        let four = parse_key_result("d|m|1|9").unwrap();
+        assert_eq!(four.target_value.as_deref(), Some("9"));
+    }
+
+    #[test]
+    fn goal_key_result_rejects_malformed_input() {
+        assert!(parse_key_result("only-a-description").is_err());
+        assert!(parse_key_result("|m").is_err());
+        assert!(parse_key_result("d|").is_err());
+        assert!(parse_key_result("a|b|c|d|e").is_err());
+    }
+
+    const NO_SMART: [Option<&str>; 5] = [None; 5];
+    const NO_PACT: [Option<&str>; 4] = [None; 4];
+
+    #[test]
+    fn goal_body_requires_every_flag_of_the_chosen_framework() {
+        let partial = [Some("S"), Some("M"), Some("A"), Some("R"), None];
+        let err = goal_body("SMART", partial, None, &[], NO_PACT).unwrap_err();
+        assert!(
+            err.to_string().contains("--time-bound"),
+            "error must name the missing flag, got: {err}"
+        );
+        assert!(goal_body("OKR", NO_SMART, Some("O"), &[], NO_PACT).is_err());
+        assert!(goal_body("PACT", NO_SMART, None, &[], [Some("P"), None, None, None]).is_err());
+    }
+
+    /// A flag from another framework is a typo, not an intent. Dropping it
+    /// silently would lose whatever the caller meant to record.
+    #[test]
+    fn goal_body_rejects_flags_from_another_framework() {
+        let smart = [Some("S"), Some("M"), Some("A"), Some("R"), Some("T")];
+        let err = goal_body("SMART", smart, Some("objective"), &[], NO_PACT).unwrap_err();
+        assert!(err.to_string().contains("does not take OKR"), "got: {err}");
+        let okr_with_pact = goal_body(
+            "OKR",
+            NO_SMART,
+            Some("O"),
+            &["d|m".to_string()],
+            [Some("P"), Some("A"), Some("C"), Some("T")],
+        );
+        assert!(okr_with_pact.is_err());
+    }
+
+    #[test]
+    fn goal_body_rejects_an_unknown_framework() {
+        assert!(goal_body("BOGUS", NO_SMART, None, &[], NO_PACT).is_err());
+    }
+
+    #[test]
+    fn build_goal_event_rejects_values_outside_the_mirrored_enums() {
+        let mut content = smart_content();
+        content.status = "shipped".into();
+        assert!(build_goal_event("g", &content).is_err());
+        let mut content = smart_content();
+        content.framework = "BOGUS".into();
+        assert!(build_goal_event("g", &content).is_err());
+        assert!(build_goal_event("", &smart_content()).is_err());
+    }
+
+    /// `goal set` only writes when its typed rebuild reproduces the head's
+    /// bytes exactly. This pins that a CLI-authored goal round-trips, which
+    /// is what makes the guard a real gate rather than a permanent refusal.
+    #[test]
+    fn goal_content_round_trips_byte_identically() {
+        let keys = Keys::generate();
+        let event = build_goal_event("hvgapp-ship", &smart_content())
+            .unwrap()
+            .sign_with_keys(&keys)
+            .unwrap();
+        let snapshot = GoalSnapshot::from_event(&event).unwrap();
+        let parsed: GoalContent = serde_json::from_str(&snapshot.content).unwrap();
+        assert_eq!(serde_json::to_string(&parsed).unwrap(), snapshot.content);
     }
 }
