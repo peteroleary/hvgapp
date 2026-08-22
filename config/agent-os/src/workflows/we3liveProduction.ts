@@ -1,7 +1,7 @@
 import { ownedBy, type WorkflowDefinition } from "./types.ts";
 
 /**
- * We 3 Live Production Flow: KDK ➔ LDA ➔ IVY ➔ ROO ➔ NKI.
+ * We 3 Live Production Flow: YAK ➔ LDA ➔ IVY ➔ ROO ➔ NKI.
  *
  * Script leads, visuals follow, commerce and brand kit wrap it, community
  * receives it. Public release still requires Peter — LDA builds the queue
@@ -20,7 +20,7 @@ export const WE3LIVE_PRODUCTION: WorkflowDefinition = {
       name: "Script & Dialogue",
       owner: ownedBy("kodak"),
       description:
-        "KDK writes episodic scripts and character dialogue, balancing satire, relatability, and family-appropriate faith.",
+        "YAK writes episodic scripts and character dialogue, balancing satire, relatability, and family-appropriate faith.",
       on: { advance: "visuals", block: "script" },
       terminal: false,
     },

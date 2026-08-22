@@ -16,7 +16,7 @@ that has no agent on it.
 
 | Runtime | Agents | Kits needed |
 |---|---|---|
-| **claude** | ICBM, KDK, MFR, MIA, ROO | standard + Command + Build + Creative + Trust |
+| **claude** | ICBM, YAK, MFR, MIA, ROO | standard + Command + Build + Creative + Trust |
 | **grok** | 3TH, BOO, LDA, PAT, TIP, VON, YBY | standard + Build + R&D + Creative + Growth + Ship |
 | **codex** | IVY, JUV | standard + Command + Growth |
 | **cursor** | NKI, SLM | standard + R&D + Trust |
@@ -78,7 +78,7 @@ clears it** (`TOOLING.md` §5 rule 4).
 
 | # | GAP | Runtime | Resolution |
 |---|---|---|---|
-| 1 | Image generation | claude (KDK, ROO) | **REROUTE** to grok — LDA already owns media production and grok generates natively. No install. |
+| 1 | Image generation | claude (YAK, ROO) | **REROUTE** to grok — LDA already owns media production and grok generates natively. No install. |
 | 2 | Web analytics | grok, codex, kimi | **Standardize on Vercel Web Analytics** — every brand site deploys to Vercel (card F1), and the `vercel` MCP already exposes `get_web_analytics` on claude/grok/kimi today. Codex/cursor add the same remote MCP (`https://mcp.vercel.com`). One vendor, no new tooling. |
 | 3 | SEO on kimi | kimi (PMP) | **INSTALL kimi-seo** — verified real (github.com/bentocodeing/kimi-seo). PAT verifies before TIP installs. |
 | 4 | resend, supabase | kimi (PMP, TUN) | **INSTALL** both MCPs. |
@@ -95,7 +95,7 @@ clears it** (`TOOLING.md` §5 rule 4).
 Order: MIA clearance for ⚠️w items → install → PAT confirms **reachability per runtime**
 (S3 exit criterion), not config presence.
 
-### claude (ICBM, KDK, MFR, MIA, ROO) — 2 fixes, otherwise full
+### claude (ICBM, YAK, MFR, MIA, ROO) — 2 fixes, otherwise full
 ```bash
 npm install -g typescript-language-server typescript   # un-degrades typescript-lsp
 brew install --force gitleaks                          # current install is broken

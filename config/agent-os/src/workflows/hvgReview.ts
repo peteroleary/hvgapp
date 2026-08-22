@@ -1,7 +1,7 @@
 import { OWNED_BY_PETER, ownedBy, type WorkflowDefinition } from "./types.ts";
 
 /**
- * High Value Growth Review Flow: PAT ➔ KDK ➔ LDA ➔ BOO ➔ Peter.
+ * High Value Growth Review Flow: PAT ➔ YAK ➔ LDA ➔ BOO ➔ Peter.
  *
  * PAT drives the tool himself before anyone writes a word about it — the
  * review is grounded in a real workflow run, not a feature page.
@@ -28,7 +28,7 @@ export const HVG_REVIEW: WorkflowDefinition = {
       name: "Review Copy",
       owner: ownedBy("kodak"),
       description:
-        "KDK writes the no-BS review that respects the reader's time, working from PAT's cited brief.",
+        "YAK writes the no-BS review that respects the reader's time, working from PAT's cited brief.",
       on: { advance: "media", reject: "research" },
       terminal: false,
     },

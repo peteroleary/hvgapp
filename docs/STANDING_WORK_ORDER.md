@@ -221,7 +221,7 @@ a build tracker with a marketing footnote. Nine tracks, per brand:
 | Channels — social handles, YouTube, newsletter, community | LDA, BOO, NKI |
 | Build, per surface | MFR, TUN, YBY, 3TH |
 | Products — core offer, merch/POD, curated sourcing | IVY |
-| Marketing & advertising | KDK, LDA, BOO |
+| Marketing & advertising | YAK, LDA, BOO |
 | Ops & managing | JUV, NKI |
 | Legal & compliance | MIA |
 

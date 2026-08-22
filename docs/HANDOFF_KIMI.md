@@ -110,7 +110,7 @@ Roster and routing in `TEAM_BRIEFING.md` §1–2. Squads in `SQUADS.md`.
 | Command | ICBM | ICBM, JUV | routing — `board:card-created`, `webhook:inbound` |
 | Build | MFR | MFR, TUN, YBY, 3TH | CI / build pipeline |
 | Research & Data | PAT | PAT, SLM | `sensor:field-ingestion`, `sensor:verification-ingestion` |
-| Creative | ROO | ROO, KDK, LDA | asset + publishing ⚠️ **no trigger — gap** |
+| Creative | ROO | ROO, YAK, LDA | asset + publishing ⚠️ **no trigger — gap** |
 | Growth | PMP | PMP, IVY, BOO | `schedule:sweep` |
 | Trust & Safety | MIA | MIA, NKI, **+DEE** | `community:inbound`, `support:inbound` |
 | Ship | TIP | TIP, VON | feed-rule executor + release |
@@ -128,11 +128,11 @@ housekeeping task**:
    all four MCPs in his profile (`theological-integrity-mcp`, `ethical-alignment-auditor-mcp`,
    `faith-narrative-skills`, `we3-ministry-engine-mcp`) **do not exist**. The model *is* the
    check. Gates get the judgment tier, same as MIA. **Revisit at Phase 5** — if co-writing `three`
-   scripts with KDK and LDA becomes his dominant load, Fable 5 becomes the better fit.
+   scripts with YAK and LDA becomes his dominant load, Fable 5 becomes the better fit.
 2. **Squad: Trust & Safety, not Creative.** His profile has him co-writing `three` scripts *and*
    gating them — the same defect as putting VON in Build. MIA gates legal/compliance, DEE gates
    ethical/theological, both independent of the squad producing the work. His collaboration with
-   KDK and LDA is a **handoff, not membership** (`SQUADS.md` §4).
+   YAK and LDA is a **handoff, not membership** (`SQUADS.md` §4).
 
 **To stand him up:** create the agent in Desktop → get his pubkey → add to `setup-squads.sh` PK map
 and the `trust` row → update roster count to **19** in `TEAM_BRIEFING.md` §1/§2 and `SQUADS.md`
@@ -263,7 +263,7 @@ Kinds: `48100` started · `48101` joined · `48102` left · `48103` ended · `48
 
 | Runtime | Agents |
 |---|---|
-| **claude** | ICBM, KDK, MFR, MIA, ROO |
+| **claude** | ICBM, YAK, MFR, MIA, ROO |
 | **grok** | 3TH, BOO, LDA, PAT, TIP, VON, YBY |
 | **codex** | IVY, JUV |
 | **cursor** | NKI, SLM |

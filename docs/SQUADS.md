@@ -24,7 +24,7 @@
 | **Command** | ICBM | ICBM, JUV | Routing — `board:card-created`, `webhook:inbound` |
 | **Build** | MFR | MFR, TUN, YBY, 3TH | CI / build pipeline |
 | **Research & Data** | PAT | PAT, SLM | Ingestion — `sensor:field-ingestion`, `sensor:verification-ingestion` |
-| **Creative** | ROO | ROO, KDK, LDA | Asset + publishing pipeline ⚠️ *no trigger yet — §7* |
+| **Creative** | ROO | ROO, YAK, LDA | Asset + publishing pipeline ⚠️ *no trigger yet — §7* |
 | **Growth** | PMP | PMP, IVY, BOO | Search sweep — `schedule:sweep` |
 | **Trust & Safety** | MIA | MIA, NKI, DEE | Inbound — `community:inbound`, `support:inbound` |
 | **Ship** | TIP | TIP, VON | Feed-rule executor + release |
@@ -62,7 +62,7 @@ It was wrong for four agents whose real work already crosses a squad line every 
 | **ROO** | Creative | Build — "Design System & UI Spec" mid-flow | Platform Build Flow: MFR & TUN → **ROO** → YBY |
 | **SLM** | Research & Data | Build — "Optimization Pass" | Platform Build Flow: YBY → **SLM** → BOO |
 | **BOO** | Growth | Build — "Search & Schema Sweep", hands back to MFR/TUN | Platform Build Flow + BOO handoff row |
-| **PAT** | Research & Data | Creative — the benchmark *is* the content for `itshvg` | HVG Review Flow: **PAT** → KDK → LDA |
+| **PAT** | Research & Data | Creative — the benchmark *is* the content for `itshvg` | HVG Review Flow: **PAT** → YAK → LDA |
 
 **The rules:**
 
@@ -110,10 +110,10 @@ optimization passes (SLM).
 **Appears in.** Clean Ingestion Flow (both), lhfyc Escrow Flow (both), HVG Review Flow (PAT),
 Platform Build Flow (SLM).
 
-### Creative — ROO (lead), KDK, LDA
+### Creative — ROO (lead), YAK, LDA
 **Purpose.** Brand identity, voice, and produced media. What the audience actually sees.
 **Runs.** Asset + publishing pipeline. ⚠️ **Has no automated trigger today — §7.**
-**Delivers.** Design foundation and brand kits (ROO). Scripts, review copy, messaging (KDK).
+**Delivers.** Design foundation and brand kits (ROO). Scripts, review copy, messaging (YAK).
 Video, animatics, hooks, trend scouting (LDA).
 **Gate.** First public publish per channel needs Peter. After that, publish freely.
 
@@ -130,7 +130,7 @@ search, schema (BOO).
 **Delivers.** Security, privacy, compliance review (MIA). Community, support triage, moderation,
 crisis paging (NKI). Ethical and theological review, `three` stewardship (DEE).
 **DEE.** Model `opus[1m]`, no tools — the model is the check (`TEAM_BRIEFING.md` §1). His
-co-writing with KDK and LDA on `three` scripts is a handoff, not membership.
+co-writing with YAK and LDA on `three` scripts is a handoff, not membership.
 **Independence.** **Never attaches to Build, Creative, or Growth.**
 **Standing rule.** Crisis outranks everything. NKI pages Peter immediately and does not wait.
 **Owns the gates on.** `lhfyc` escrow, `clean` in-home capture consent, `three` IP (MIA legal/compliance, DEE ethical/theological).
@@ -160,7 +160,7 @@ Home squad in **bold**. `→` means attached for that phase only.
 | PAT | **R&D** | R&D *(diagnose)* | R&D | R&D | R&D | → **Creative** *(`itshvg`)* | R&D |
 | SLM | **R&D** | → **Build** | R&D | → **Build** | R&D | R&D | R&D |
 | ROO | **Creative** | → **Build** | Creative *(**foundation, all brands**)* | → **Build** | Creative | Creative *(`lhfyc`)* | Creative |
-| KDK | **Creative** | — | Creative | Creative | Creative | Creative *(`itshvg`)* | Creative |
+| YAK | **Creative** | — | Creative | Creative | Creative | Creative *(`itshvg`)* | Creative |
 | LDA | **Creative** | — | Creative | → **Build** *(understudy)* | Creative | Creative *(`clean`)* | Creative |
 | PMP | **Growth** | — | Growth | Growth | **Growth** *(Selina)* | Growth | Growth |
 | IVY | **Growth** | — | Growth | Growth | Growth | Growth | Growth |
@@ -175,7 +175,7 @@ Home squad in **bold**. `→` means attached for that phase only.
 
 | Brand | Build | Creative | Growth | R&D | Trust | Ship |
 |---|---|---|---|---|---|---|
-| `itshvg` | TUN | KDK | BOO | **PAT** *(attached to Creative)* | — | VON |
+| `itshvg` | TUN | YAK | BOO | **PAT** *(attached to Creative)* | — | VON |
 | `lhfyc` | YBY, 3TH *(shell)* | ROO | — | SLM | **MIA** *(escrow gate)* | VON |
 | `clean` | MFR, 3TH *(shell)* | LDA | IVY | SLM | **MIA** *(consent gate)* | VON |
 
@@ -190,8 +190,8 @@ the fix is applied one to three phases upstream, not on the day it breaks.
 | **ROO — design ×2 brands** | The design foundation (tokens, type scale, spacing, logo slot) is built **once in Phase 1 for all brands**, not per-brand in Phase 4. Phase 4 design is instantiation against a template, not origination. | **LDA attaches to Build in Phase 2** and learns the design-system work while the stakes are internal. In Phase 4 LDA owns `clean` design; ROO owns `lhfyc`. |
 | **3TH — mobile ×2 brands** | `gomarco` is the first mobile build (Phase 3). 3TH builds a **shared mobile shell** there, reused by `lhfyc` and `clean`. Three mobile apps, one architecture. | **YBY pairs with 3TH on `gomarco` mobile in Phase 3.** In Phase 4 YBY runs `lhfyc` mobile against the shell; 3TH owns the shell itself and reviews both instantiations rather than building both. |
 
-`itshvg` loses LDA and keeps KDK. Correct trade: `itshvg` is website + web app with no mobile,
-its launch-blocking need is review copy (KDK), and LDA's video work for it is post-launch content.
+`itshvg` loses LDA and keeps YAK. Correct trade: `itshvg` is website + web app with no mobile,
+its launch-blocking need is review copy (YAK), and LDA's video work for it is post-launch content.
 
 **VON still covers all three.** Testing does not parallelise by adding testers, it parallelises
 by testing smaller things. That is Ship's problem to solve — §7 gap 4.
@@ -202,7 +202,7 @@ by testing smaller things. That is Ship's problem to solve — §7 gap 4.
 
 | # | Gap | Consequence | Owner |
 |---|---|---|---|
-| 1 | **Creative has no automated trigger.** Every other squad has an inbound source; ROO/KDK/LDA only move when a human routes to them. | Content stalls silently — nothing distinguishes "idle" from "nothing assigned". | ROO + JUV define one before Phase 1 ends. |
+| 1 | **Creative has no automated trigger.** Every other squad has an inbound source; ROO/YAK/LDA only move when a human routes to them. | Content stalls silently — nothing distinguishes "idle" from "nothing assigned". | ROO + JUV define one before Phase 1 ends. |
 | 2 | **`gomarco` has no flow** in `TEAM_BRIEFING.md` §4 — the only brand without one, and it is priority #2. | No squad has a defined path through it. | ICBM + PMP, before Phase 3. |
 | 3 | **JUV is the sole router for 16 agents.** | First bottleneck once the board works. | ICBM — decide whether routing splits by squad or stays central. **Apply rule 8: name JUV's understudy in Phase 1, not Phase 4.** |
 | 4 | **Ship is 2 agents gating all six brands.** | VON becomes the queue in Phase 4. | TIP — decide what VON delegates and what he never delegates. Rule 8 applies: front-load the test harness so Phase 4 testing is running suites, not writing them, and name VON's understudy by Phase 2. **Constraint: the understudy cannot come from Build, Creative, or Growth** (rule 3), which makes NKI or TIP the only candidates. |

@@ -18,7 +18,7 @@ From `managed-agents.json`, verified 2026-08-21:
 
 | Runtime | Agents | Inherits `~/.claude` plugins? |
 |---|---|---|
-| **claude** | ICBM, KDK, MFR, MIA, ROO | ✅ **Yes** — all 16 plugins available |
+| **claude** | ICBM, YAK, MFR, MIA, ROO | ✅ **Yes** — all 16 plugins available |
 | **grok** | 3TH, BOO, LDA, PAT, TIP, VON, YBY | ❌ No — xAI runtime, separate config |
 | **codex** | IVY, JUV | ❌ No — own MCP config |
 | **cursor** | NKI, SLM | ❌ No — own MCP config |
@@ -214,7 +214,7 @@ BLOCKING:       <yes — work stops | no — slower without it>
 > — heavy focus on AI tools — so small business owners don't waste time or money on the bad ones."*
 
 **Internal tool vetting IS `itshvg`'s product.** PAT benchmarks an MCP because Build is blocked →
-KDK writes the review → LDA cuts the video → BOO handles schema. That is the **High Value Growth
+YAK writes the review → LDA cuts the video → BOO handles schema. That is the **High Value Growth
 Review Flow**, already defined in `TEAM_BRIEFING.md` §4, running on work that has to happen anyway.
 
 Nineteen agents doing private, unrecorded marketplace shopping produces nothing publishable.

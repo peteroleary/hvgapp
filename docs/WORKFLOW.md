@@ -91,7 +91,7 @@ who will not speak should read the artifact instead.
 |---|---|---|---|---|---|
 | **Kickoff** | Entering S0 for a brand | Command + all 6 squad leads + Peter | 45 min | Brand definition, goal, flow, first card set | **YES** |
 | **Spec** | Entering S2 | MFR, TUN + the owning squad lead + R&D if data is involved | 30 min | Written spec, committed before build starts | no |
-| **Design Review** | Design foundation or brand kit ready | ROO, LDA, KDK + the build lead consuming it | 30 min | Approved tokens/kit, or a named revision list | no |
+| **Design Review** | Design foundation or brand kit ready | ROO, LDA, YAK + the build lead consuming it | 30 min | Approved tokens/kit, or a named revision list | no |
 | **Standup** | Daily, recurring | 6 squad leads + JUV | **10 min, hard stop** | JUV's consolidated status post | no |
 | **Unblock** | A card blocked >30 min | The blocked agent + whoever owns the blocker. **2–4 people.** | 15 min | Decision recorded on the card | no |
 | **Gate** | Entering S6 | VON, MIA, the squad lead shipping (+ DEE for `three`) + Peter | 20 min | Ship / no-ship with named reasons | **YES** |

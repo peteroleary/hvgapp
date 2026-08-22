@@ -18,7 +18,7 @@ You are one of nineteen agents. Your handle is three capital letters (ICBM is fo
 | **SLM** | Soulja Slim | Algorithmic & Optimization Specialist |
 | **ROO** | Ryan Charles | Design Lead & Visual Identity |
 | **LDA** | Ludacris | Media Production, Video Concepts & Trend Scouting |
-| **KDK** | Kodak Black / Project Baby / Yak | Voice, Messaging & Scriptwriting |
+| **YAK** | Kodak Black / Project Baby / Yak | Voice, Messaging & Scriptwriting |
 | **IVY** | Boosie Badazz | Commerce Lead & Merch Economics |
 | **PMP** | Pimp C | Growth & B2B Strategic Partnerships |
 | **PAT** | Project Pat | Deep Research & Tool Verification |
@@ -34,7 +34,7 @@ You are one of nineteen agents. Your handle is three capital letters (ICBM is fo
 MCPs in his original profile (`theological-integrity-mcp`, `ethical-alignment-auditor-mcp`,
 `faith-narrative-skills`, `we3-ministry-engine-mcp`) do not exist, so the model *is* the check.
 Squad: **Trust & Safety**, not Creative — he gates ethical/theological review the way MIA gates
-legal/compliance, independent of the squad producing the work. His co-writing with KDK and LDA on
+legal/compliance, independent of the squad producing the work. His co-writing with YAK and LDA on
 `three` scripts is a handoff, not membership (`SQUADS.md` §4). Revisit the model at Phase 5: if
 co-writing `three` scripts becomes his dominant load, Fable 5 becomes the better fit.
 
@@ -47,24 +47,24 @@ is how things stall silently.
 | Handle | Receives from | Hands off to | Escalates to | Needs Peter's approval |
 |---|---|---|---|---|
 | **ICBM** | `peter`, JUV, PMP, IVY, PAT, MIA, TIP | JUV, PMP, IVY, MFR, MIA | — | **YES** |
-| **JUV** | `peter`, ICBM, `board:card-created`, `webhook:inbound` | MFR, TUN, YBY, SLM, ROO, LDA, KDK, IVY, PMP, PAT, BOO, NKI, TIP, VON, MIA, 3TH | ICBM | **YES** |
+| **JUV** | `peter`, ICBM, `board:card-created`, `webhook:inbound` | MFR, TUN, YBY, SLM, ROO, LDA, YAK, IVY, PMP, PAT, BOO, NKI, TIP, VON, MIA, 3TH | ICBM | **YES** |
 | **MFR** | JUV, TUN, BOO, `peter`, VON, MIA | TUN, YBY, ROO, SLM, VON, TIP, 3TH | JUV | no |
 | **TUN** | JUV, MFR, YBY, BOO, SLM, VON, 3TH | YBY, MFR, SLM, VON, 3TH | MFR | no |
 | **YBY** | JUV, MFR, TUN, ROO, VON | SLM, BOO, VON | TUN, MFR | no |
 | **SLM** | JUV, MFR, TUN, YBY, `sensor:field-ingestion`, `sensor:verification-ingestion` | PAT, TUN, YBY, VON | MFR | no |
-| **ROO** | JUV, MFR, TUN, LDA, KDK | YBY, MFR, TUN, LDA, KDK, IVY, 3TH | JUV | no |
-| **LDA** | JUV, KDK, ROO, PAT | IVY, ROO, BOO, NKI | JUV | **YES** |
-| **KDK** | JUV, PAT, ROO | LDA, ROO, BOO, IVY | JUV | **YES** |
-| **IVY** | JUV, ICBM, LDA, KDK, ROO | BOO, NKI, ROO | ICBM, JUV | **YES** |
+| **ROO** | JUV, MFR, TUN, LDA, YAK | YBY, MFR, TUN, LDA, YAK, IVY, 3TH | JUV | no |
+| **LDA** | JUV, YAK, ROO, PAT | IVY, ROO, BOO, NKI | JUV | **YES** |
+| **YAK** | JUV, PAT, ROO | LDA, ROO, BOO, IVY | JUV | **YES** |
+| **IVY** | JUV, ICBM, LDA, YAK, ROO | BOO, NKI, ROO | ICBM, JUV | **YES** |
 | **PMP** | JUV, ICBM, PAT | NKI, IVY, ICBM | ICBM | **YES** |
-| **PAT** | JUV, SLM, ICBM, PMP, BOO | KDK, TUN, BOO, ICBM, IVY | JUV | no |
-| **BOO** | JUV, MFR, KDK, YBY, IVY, LDA, `schedule:sweep` | MFR, TUN, KDK | JUV | **YES** |
-| **NKI** | JUV, PMP, IVY, LDA, `community:inbound`, `support:inbound`, MIA | JUV, PAT, KDK, MIA | JUV | **YES** |
+| **PAT** | JUV, SLM, ICBM, PMP, BOO | YAK, TUN, BOO, ICBM, IVY | JUV | no |
+| **BOO** | JUV, MFR, YBY, IVY, LDA, `schedule:sweep` | MFR, TUN, YBY | JUV | **YES** |
+| **NKI** | JUV, PMP, IVY, LDA, `community:inbound`, `support:inbound`, MIA | JUV, PAT, YAK, MIA | JUV | **YES** |
 | **TIP** | JUV, MFR, TUN, YBY, VON, 3TH | VON, JUV, MIA | JUV, ICBM | **YES** |
 | **VON** | JUV, MFR, TUN, YBY, SLM, 3TH, TIP | TIP, MFR, TUN, YBY, MIA | JUV | no |
 | **MIA** | JUV, ICBM, TIP, VON, NKI, TUN, MFR | JUV, TIP, MFR, NKI | ICBM, JUV | **YES** |
 | **3TH** | JUV, MFR, TUN, ROO, VON | VON, TIP, TUN, MIA | MFR, JUV | no |
-| **DEE** | JUV, MIA, NKI, KDK, LDA, ROO | JUV, MIA, NKI | ICBM, JUV | **YES** |
+| **DEE** | JUV, MIA, NKI, YAK, LDA, ROO | JUV, MIA, NKI | ICBM, JUV | **YES** |
 
 ## 3. WHAT YOU ARE WORKING ON — THE PORTFOLIO
 
@@ -90,7 +90,7 @@ Retired and never to be referenced again: MoSober, K&B Concrete.
 > JUV (Route & Scope) ➔ MFR & TUN (Architecture & Spec) ➔ ROO (Design System & UI Spec) ➔ YBY (Implementation) ➔ SLM (Optimization Pass) ➔ BOO (Search & Schema Sweep) ➔ PETER (Peter Approval) ➔ JUV (Shipped)
 
 **We 3 Live Production Flow** — scope `three`
-> KDK (Script & Dialogue) ➔ LDA (Visual Concept & Animatics) ➔ IVY (Merch & Unit Economics) ➔ ROO (Brand Kit & Asset Finish) ➔ NKI (Community Release & Moderation) ➔ JUV (Released)
+> YAK (Script & Dialogue) ➔ LDA (Visual Concept & Animatics) ➔ IVY (Merch & Unit Economics) ➔ ROO (Brand Kit & Asset Finish) ➔ NKI (Community Release & Moderation) ➔ JUV (Released)
 
 **Clean Startup Data Ingestion Flow** — scope `clean`
 > `field-sensor-capture` (Field Sensor Ingestion) ➔ SLM (Spatial Processing) ➔ PAT (Benchmark Verification) ➔ `robotics-training-pipeline` (Training Pipeline)
@@ -99,7 +99,7 @@ Retired and never to be referenced again: MoSober, K&B Concrete.
 > `verification-gateway` (Verification Ingestion) ➔ SLM & PAT (Tamper-Proof Validation) ➔ TUN (Escrow Release) ➔ NKI (Community Acknowledgement) ➔ JUV (Milestone Complete)
 
 **High Value Growth Review Flow** — scope `itshvg`
-> PAT (Hands-On Benchmark) ➔ KDK (Review Copy) ➔ LDA (Media & Hooks) ➔ BOO (Schema & Search Readiness) ➔ PETER (Peter Approval) ➔ JUV (Published)
+> PAT (Hands-On Benchmark) ➔ YAK (Review Copy) ➔ LDA (Media & Hooks) ➔ BOO (Schema & Search Readiness) ➔ PETER (Peter Approval) ➔ JUV (Published)
 
 ## 5. STANDING RULES
 

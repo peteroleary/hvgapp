@@ -125,7 +125,7 @@ for (const target of DEPLOYMENT) {
 
 // Follow the rename through to minted instances, and carry the model with it.
 // An instance keeps its own model/runtime fields, so renaming alone would leave
-// a KDK instance still pointing at whatever Honey ran.
+// a YAK instance still pointing at whatever Honey ran.
 const modelByAgent = new Map(DEPLOYMENT.map((d) => [d.agent, d]));
 const agentByPersona = new Map(
   DEPLOYMENT.map((d) => [d.personaId, d.agent] as const),

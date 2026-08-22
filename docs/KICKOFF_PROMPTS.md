@@ -142,7 +142,7 @@ COVER YOUR TRACK, FOR EVERY BRAND:
   Command        ICBM PMP    strategy, positioning, audience, offer, pricing
   Build          MFR TUN YBY 3TH   website, web app, mobile app, desktop app
   Research&Data  PAT SLM     benchmarks, verification, data models
-  Creative       ROO KDK LDA brand kit, tokens, voice, copy, video
+  Creative       ROO YAK LDA brand kit, tokens, voice, copy, video
   Growth         PMP IVY BOO accounts, channels, products, merch, SEO/GEO, schema
   Trust&Safety   MIA NKI     privacy, terms, disclosure, licensing, support, moderation
   Ship           TIP VON     domain, hosting, analytics, payments, app-store, test plan
