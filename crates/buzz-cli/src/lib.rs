@@ -1191,6 +1191,11 @@ pub enum BoardCmd {
     /// Card operations.
     #[command(subcommand)]
     Card(BoardCardCmd),
+    /// Goal operations (kind:30625). A goal has no board linkage — `d` is
+    /// the only index; `brandScope` is the scope field; cards attach upward
+    /// via `parentGoalId`.
+    #[command(subcommand)]
+    Goal(BoardGoalCmd),
     /// Seed the standard boards and cards. Idempotent: re-running skips
     /// boards/cards that already exist on the reconciled head.
     #[command(after_help = "Examples:\n  buzz board seed\n  buzz board seed --dry-run")]
@@ -1329,6 +1334,62 @@ pub enum BoardCardCmd {
         /// Optional human-readable reason.
         #[arg(long)]
         reason: Option<String>,
+    },
+}
+
+#[derive(Subcommand)]
+pub enum BoardGoalCmd {
+    /// Create a kind:30625 goal. No `--board` flag: the event is `[["d", id]]`
+    /// plus content; cards attach later with `card add/set --goal`. Status
+    /// defaults to `draft`, `proposedCards` to `[]`.
+    #[command(
+        after_help = "Examples:\n  buzz board goal create --id clean-launch --brand clean --framework SMART --specific 'Live site takes a quote' --measurable 'Quote arrives' --attainable '11 clean cards filed' --relevant 'P0 brand' --time-bound '2-3 weeks'\n  buzz board goal create --id itshvg-reviews --brand itshvg --framework OKR --objective 'First reviews ship' --kr 'content model::pages::1'\n  buzz board goal create --id lhfyc-habits --brand lhfyc --framework PACT --purposeful 'Daily proof stays with the user' --actionable 'Ship check-in' --continuous 'One check-in per day' --trackable 'Streak length'"
+    )]
+    Create {
+        /// Goal id — human slug, becomes the `d` tag. `[a-z0-9._-]{1,80}`.
+        /// Unique per author; a second create of the same id is a conflict
+        /// because `parentGoalId` is a d-tag, not a full address.
+        #[arg(long)]
+        id: String,
+        /// Brand scope (locked set — validated at the write boundary).
+        #[arg(long)]
+        brand: String,
+        /// Framework: SMART, OKR, or PACT (exact case).
+        #[arg(long)]
+        framework: String,
+        /// SMART: specific.
+        #[arg(long)]
+        specific: Option<String>,
+        /// SMART: measurable.
+        #[arg(long)]
+        measurable: Option<String>,
+        /// SMART: attainable.
+        #[arg(long)]
+        attainable: Option<String>,
+        /// SMART: relevant.
+        #[arg(long)]
+        relevant: Option<String>,
+        /// SMART: time-bound.
+        #[arg(long = "time-bound")]
+        time_bound: Option<String>,
+        /// OKR: objective.
+        #[arg(long)]
+        objective: Option<String>,
+        /// OKR key result as `description::targetMetric::targetValue`. Repeatable.
+        #[arg(long = "kr", value_name = "DESC::METRIC::VALUE")]
+        krs: Vec<String>,
+        /// PACT: purposeful.
+        #[arg(long)]
+        purposeful: Option<String>,
+        /// PACT: actionable.
+        #[arg(long)]
+        actionable: Option<String>,
+        /// PACT: continuous.
+        #[arg(long)]
+        continuous: Option<String>,
+        /// PACT: trackable.
+        #[arg(long)]
+        trackable: Option<String>,
     },
 }
 
@@ -2775,6 +2836,124 @@ mod tests {
             ])
             .is_err(),
             "--visibility chartreuse on update must be rejected at parse time"
+        );
+    }
+
+    #[test]
+    fn board_goal_create_parses_smart_flags() {
+        let cli = Cli::try_parse_from([
+            "buzz",
+            "board",
+            "goal",
+            "create",
+            "--id",
+            "clean-launch",
+            "--brand",
+            "clean",
+            "--framework",
+            "SMART",
+            "--specific",
+            "s",
+            "--measurable",
+            "m",
+            "--attainable",
+            "a",
+            "--relevant",
+            "r",
+            "--time-bound",
+            "t",
+        ])
+        .expect("SMART goal create should parse");
+        match cli.command {
+            Cmd::Board(BoardCmd::Goal(BoardGoalCmd::Create {
+                id,
+                brand,
+                framework,
+                specific,
+                time_bound,
+                krs,
+                ..
+            })) => {
+                assert_eq!(id, "clean-launch");
+                assert_eq!(brand, "clean");
+                assert_eq!(framework, "SMART");
+                assert_eq!(specific.as_deref(), Some("s"));
+                assert_eq!(time_bound.as_deref(), Some("t"));
+                assert!(krs.is_empty());
+            }
+            _ => panic!("expected board goal create"),
+        }
+    }
+
+    #[test]
+    fn board_goal_create_parses_repeatable_kr() {
+        let cli = Cli::try_parse_from([
+            "buzz",
+            "board",
+            "goal",
+            "create",
+            "--id",
+            "itshvg-reviews",
+            "--brand",
+            "itshvg",
+            "--framework",
+            "OKR",
+            "--objective",
+            "First reviews ship",
+            "--kr",
+            "content model::pages::1",
+            "--kr",
+            "newsletter::captures::1",
+        ])
+        .expect("OKR goal create should parse");
+        match cli.command {
+            Cmd::Board(BoardCmd::Goal(BoardGoalCmd::Create { krs, objective, .. })) => {
+                assert_eq!(objective.as_deref(), Some("First reviews ship"));
+                assert_eq!(
+                    krs,
+                    vec!["content model::pages::1", "newsletter::captures::1"]
+                );
+            }
+            _ => panic!("expected board goal create"),
+        }
+    }
+
+    #[test]
+    fn board_goal_create_requires_id_brand_framework() {
+        assert!(
+            Cli::try_parse_from(["buzz", "board", "goal", "create"]).is_err(),
+            "goal create with no flags must fail at parse time"
+        );
+        assert!(
+            Cli::try_parse_from([
+                "buzz", "board", "goal", "create", "--id", "x", "--brand", "clean",
+            ])
+            .is_err(),
+            "goal create without --framework must fail at parse time"
+        );
+    }
+
+    #[test]
+    fn board_goal_create_rejects_board_flag() {
+        // Architecture ruling: a goal has no board linkage. `--board` must
+        // not parse as a hidden alias.
+        assert!(
+            Cli::try_parse_from([
+                "buzz",
+                "board",
+                "goal",
+                "create",
+                "--id",
+                "x",
+                "--brand",
+                "clean",
+                "--framework",
+                "SMART",
+                "--board",
+                "clean",
+            ])
+            .is_err(),
+            "--board on goal create must be rejected at parse time"
         );
     }
 }
