@@ -1,0 +1,144 @@
+# EXECUTION PROMPTS — paste these, in order
+
+Everything is verified against the live relay and repo, 2026-08-22. Each block names its
+target. Paste into the channel shown. Do not improvise scope.
+
+Current verified state: 9 boards (hvgapp/gomarco/lhfyc created 2026-08-22, owned by the
+desktop identity `3b0c5670…`); hvgapp board holds cards B1–B8; PR #18 OPEN, one commit
+`f5350cfe`, conflicts only in `crates/buzz-cli/src/commands/board.rs`.
+
+| # | Give to | Where | Depends on |
+|---|---|---|---|
+| P1 | TIP | #build | nothing |
+| P2 | MFR | #build | nothing |
+| P3 | TIP | #build | P2 |
+| P4 | YBY | #build | P2 |
+| P5 | TUN | #build | P4 |
+| P6 | MFR | #build | nothing |
+| P7 | YBY | #build | nothing |
+| P8 | squad leads | each squad channel | P3 + P5 |
+
+---
+
+## P1 — TIP — SHIP THE CI FIX YOU ALREADY WROTE
+
+```
+Your branch tip/ghcr-push-gateway-namespace (2ed9936e) already fixes the Docker workflow —
+IMAGE_NAME + GATEWAY_IMAGE derive from the GHCR_IMAGE repo variable, attestation uses
+GITHUB_REPOSITORY_OWNER. It is sitting unmerged while every PR runs red.
+
+1. cd into the worktree: /Users/po/Desktop/hvgapp/.worktrees/ghcr-push-gateway-namespace
+2. Rebase onto current main, run the workflow lint, push, open the PR.
+3. Set the repo variable: gh variable set GHCR_IMAGE --body "ghcr.io/pheartkeys/hvgapp" --repo pheartkeys/hvgapp
+4. Merge with --admin if the only red is the old registry push.
+5. Verify: next push to main runs the Docker workflow green end to end.
+
+DONE WHEN: a push to main produces green Docker image builds in pheartkeys/hvgapp.
+```
+
+## P2 — MFR — LAND PR #18 TODAY
+
+```
+PR #18 (pheartkeys/hvgapp, branch prop/board-card-set) is ONE commit, f5350cfe:
+card set / card move / --goal attach. It conflicts with main in exactly one file:
+crates/buzz-cli/src/commands/board.rs. No more review theater — rebase and land it.
+
+  git fetch origin pull/18/head:pr18
+  git worktree add -b pr18-rebase .worktrees/pr18 pr18
+  cd .worktrees/pr18 && git rebase origin/main
+  # resolve board.rs — keep main's CARD_EXECUTION_STATES six-state set, take the PR's new verbs
+  cargo build -p buzz-cli && cargo test -p buzz-cli
+  git push origin HEAD:prop/board-card-set --force-with-lease
+  gh pr merge 18 --repo pheartkeys/hvgapp --merge --admin
+
+NOTE: main moved under you — docs commits plus TUN's 62ac950. The conflict is mechanical.
+DONE WHEN: main contains f5350cfe's verbs and `buzz board card set --help` works from a
+fresh build. Hand off to TIP (P3) in-channel.
+```
+
+## P3 — TIP — REBUILD AND INSTALL THE CLI
+
+```
+After MFR lands PR #18: the installed binary at ~/.local/bin/buzz predates the board verbs.
+
+  cd /Users/po/Desktop/hvgapp && git pull origin main
+  . ./bin/activate-hermit && cargo build --release -p buzz-cli
+  cp target/release/buzz ~/.local/bin/buzz
+  buzz board card set --help   # must succeed
+
+DONE WHEN: the installed binary shows card set/move. Post proof in #build.
+```
+
+## P4 — YBY — BUILD B1: THE FOUR BOARD VERBS
+
+```
+Card B1 is filed on the hvgapp board. Build: board set, board retire, card delete,
+board goal. Spec: ~/.buzz/PLANS/BUZZ_BOARD_CLI.md. PR #18 (landing via MFR) gives you the
+read-modify-write pattern against the reconciled head — copy it, don't reinvent it.
+
+Validation set (the Phase 0 repair): retitle three -> "We 3 Live", retire concrete, retire
+sober, delete the five junk unified-master cards, create goals and attach a card via --goal.
+
+AUTH WARNING: manual CLI runs with your raw agent key return 403 relay_membership_required.
+Board kinds are global-scope and require NIP-OA owner delegation — run under the harness so
+BUZZ_AUTH_TAG is injected, or nothing you write lands.
+
+DONE WHEN: all four verbs in the runnable binary, TUN can execute the validation set.
+```
+
+## P5 — TUN — EXECUTE THE BOARD REPAIR
+
+```
+After YBY lands B1 and TIP installs the binary — the writes, from your key, under the
+harness (raw key 403s on global kinds):
+
+  buzz board set three --title "We 3 Live"
+  buzz board retire concrete
+  buzz board retire sober
+  # delete the 5 junk cards on unified-master (board card delete — YBY's verb)
+  # YBY separately: normalize unified-master from 4 columns to 5 (missing "Spec'd")
+
+DONE WHEN (VON verifies, not you): exactly seven boards, correct titles, zero cards on a
+slug outside the locked six, zero occurrences of "MoSober" or "K&B Concrete", and a card
+files, assigns, moves, and re-tags from the CLI.
+```
+
+## P6 — MFR — ASSIGNEES SHOW HEX, NOT HANDLES. FIX BOTH SIDES.
+
+```
+Peter's complaint, and he's right: cards show 64-char hex instead of TUN/YBY/3TH.
+
+(a) DATA: every agent key needs a kind:0 profile with name = handle (TUN, YBY, ...).
+    managed-agents.json has auth_tag: null at rest — tags mint at runtime. Set profiles
+    from inside the harness, not from a raw-key shell.
+(b) RENDER: Desktop board UI and `buzz board get` must resolve assignee pubkey -> profile
+    display name, falling back to 8-char prefix only when no profile exists. File the card
+    on hvgapp (--fn build), assign it, build it.
+
+DONE WHEN: `buzz board get hvgapp` prints TUN, not 845798e3….
+```
+
+## P7 — YBY — B4: DRAG AND DROP
+
+```
+DnD is not a mystery feature — the branch exists: comb/board-dnd-ui (b7f0e936) in
+~/.buzz/REPOS/hvgapp-board-dnd. Rebase it onto current main (post-PR-#18), open the PR.
+Drag = card move with rank from the reconciled target column, never caller-supplied.
+DONE WHEN: drag a card Backlog -> Done in Desktop, rank validates, VON confirms no
+reconciliation drift across authors.
+```
+
+## P8 — SQUAD LEADS — PHASE 1b FILING
+
+```
+Phase 1b is open once TIP posts binary proof (P3) and VON certifies Phase 0 (P5).
+File your drafted sets: ~/.buzz/PLANS/CARDS_<SQUAD>_<BRAND>.md -> the matching board.
+
+  buzz board card add --board <board> --title "..." --description "..." \
+    --brand <slug> --fn <area> --assignee <hex>:lead
+
+CORRECTIONS to the kickoff:
+- The write boundary validates brand slugs: hvgapp's brand is `hvg-app`, not `hvgapp`.
+- The six boards to file on: hvgapp, gomarco, itshvg, lhfyc, clean, three. Nothing else.
+DONE WHEN: every drafted card with a named assignee is filed on its brand's board.
+```
