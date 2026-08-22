@@ -1,4 +1,4 @@
-import { compareRank, rankBetween, type RankedEntry } from "./rank.ts";
+import { compareRank, rankBetween, type RankedEntry } from "./rank";
 
 export interface DropRankInput {
   /**
@@ -54,7 +54,9 @@ export function resolveDropRank({
   // overId is the container id: append at the end.
   if (overIndexInSorted === -1) {
     const withoutActive =
-      activeIndex === -1 ? sorted : sorted.filter((item) => item.id !== activeId);
+      activeIndex === -1
+        ? sorted
+        : sorted.filter((item) => item.id !== activeId);
     const insertionIndex = withoutActive.length;
     // If the active card was already last in this column, appending is a no-op.
     if (activeIndex !== -1 && insertionIndex === activeIndex) {
@@ -65,7 +67,8 @@ export function resolveDropRank({
 
   if (activeIndex === -1) {
     // Cross-column drop: insert before the over item.
-    const before = overIndexInSorted === 0 ? null : sorted[overIndexInSorted - 1].rank;
+    const before =
+      overIndexInSorted === 0 ? null : sorted[overIndexInSorted - 1].rank;
     const after = sorted[overIndexInSorted].rank;
     return { rank: rankBetween(before, after) };
   }

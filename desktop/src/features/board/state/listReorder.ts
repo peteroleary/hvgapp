@@ -1,5 +1,5 @@
 import { arrayMove } from "@dnd-kit/sortable";
-import { rankBetween, type RankedEntry } from "./rank.ts";
+import { rankBetween, type RankedEntry } from "./rank";
 
 export interface BoardList extends RankedEntry {
   id: string;
@@ -18,7 +18,7 @@ export function reorderLists<T extends BoardList>(
     return null;
   }
 
-  const newLists = arrayMove(lists, activeIndex, overIndex);
+  const newLists = arrayMove([...lists], activeIndex, overIndex);
   const movedIndex = overIndex;
   const before = movedIndex === 0 ? null : newLists[movedIndex - 1].rank;
   const after =

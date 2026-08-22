@@ -8,7 +8,11 @@ function item(id, rank) {
 }
 
 test("empty column returns the seed rank", () => {
-  const result = resolveDropRank({ column: [], activeId: "a", overId: "list-1" });
+  const result = resolveDropRank({
+    column: [],
+    activeId: "a",
+    overId: "list-1",
+  });
   assert.equal(result.rank, "n");
 });
 
@@ -33,7 +37,10 @@ test("reorder within column: dropped on container appends", () => {
 test("reorder within column: dropped between two items", () => {
   const column = [item("a", "h"), item("b", "n"), item("c", "u")];
   const result = resolveDropRank({ column, activeId: "c", overId: "b" });
-  assert.ok(result.rank > "h" && result.rank < "n", "rank must sit between neighbours");
+  assert.ok(
+    result.rank > "h" && result.rank < "n",
+    "rank must sit between neighbours",
+  );
 });
 
 test("reorder within column: excludes dragged card from its own neighbour set", () => {
