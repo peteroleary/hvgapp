@@ -7,4 +7,5 @@ export { BoardCard } from "./ui/BoardCard";
 export { BoardCardModal } from "./ui/BoardCardModal";
 export { BoardColumn } from "./ui/BoardColumn";
 export { BoardFeedRulesModal } from "./ui/BoardFeedRulesModal";
+export { GoalComposerModal } from "./ui/GoalComposerModal";
 export { GoalDraftPanel } from "./ui/GoalDraftPanel";

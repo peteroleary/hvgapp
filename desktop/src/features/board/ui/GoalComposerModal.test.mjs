@@ -78,6 +78,18 @@ test("GoalComposerModal renders SMART fields for a new goal", () => {
   contains(html, "hvg.app");
 });
 
+test("GoalComposerModal keeps a board brand that is not in BRAND_TOKENS", () => {
+  const html = renderToStaticMarkup(
+    React.createElement(GoalComposerModal, {
+      isOpen: true,
+      defaultBrand: "hvg-app",
+      onClose: () => {},
+      onCreateGoal: () => {},
+    }),
+  );
+  contains(html, 'value="hvg-app"');
+});
+
 test("GoalComposerModal renders nothing when closed", () => {
   const html = renderToStaticMarkup(
     React.createElement(GoalComposerModal, {

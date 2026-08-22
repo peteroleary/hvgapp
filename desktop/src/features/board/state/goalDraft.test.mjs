@@ -1,7 +1,27 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import {
+  buildBoardSnapshot,
+  buildCardEventTemplate,
+  buildGoalEventTemplate,
+} from "./boardEvents.ts";
 import { assembleGoal, goalHeadline } from "./goalDraft.ts";
+
+const OWNER = "a".repeat(64);
+const SIG = "c".repeat(128);
+
+function asEvent(id, template) {
+  return {
+    id,
+    kind: template.kind,
+    tags: template.tags,
+    content: template.content,
+    created_at: 1,
+    pubkey: OWNER,
+    sig: SIG,
+  };
+}
 
 test("assembleGoal builds a SMART goal from complete fields", () => {
   const goal = assembleGoal("hvgapp-ship", {
@@ -87,4 +107,77 @@ test("goalHeadline falls back to the id", () => {
     }),
     "orphan",
   );
+});
+
+test("assembled SMART goal survives a snapshot round-trip", () => {
+  const goal = assembleGoal("hvgapp-ship", {
+    brandScope: "hvgapp",
+    framework: "SMART",
+    status: "approved",
+    specific: "Peter can create a goal from Desktop",
+    measurable: "One goal exists after refresh",
+    attainable: "publishGoal writes kind 30625",
+    relevant: "Cards attach via parentGoalId",
+    timeBound: "2026-08-22",
+  });
+  const snapshot = buildBoardSnapshot([
+    asEvent("goal-event", buildGoalEventTemplate(goal)),
+  ]);
+  assert.equal(snapshot.goals.length, 1);
+  assert.equal(snapshot.goals[0].goal.id, "hvgapp-ship");
+  assert.equal(snapshot.goals[0].goal.status, "approved");
+  assert.equal(
+    snapshot.goals[0].goal.smart?.specific,
+    "Peter can create a goal from Desktop",
+  );
+});
+
+test("card parentGoalId survives a snapshot round-trip", () => {
+  const template = buildCardEventTemplate({
+    boardAddress: `30623:${OWNER}:hvgapp`,
+    card: {
+      id: "card-1",
+      title: "B9",
+      description: "Attach me",
+      brand: "hvgapp",
+      functionArea: "build",
+      assignees: [],
+      executionState: "idle",
+      rank: "n",
+      listId: "backlog",
+      boardId: "hvgapp",
+      createdBy: OWNER,
+      comments: [],
+      parentGoalId: "hvgapp-ship",
+    },
+  });
+  const snapshot = buildBoardSnapshot([asEvent("card-event", template)]);
+  assert.equal(snapshot.cards.length, 1);
+  assert.equal(snapshot.cards[0].card.parentGoalId, "hvgapp-ship");
+});
+
+test("clearing parentGoalId omits it from the published card", () => {
+  const attached = {
+    id: "card-1",
+    title: "B9",
+    description: "Attach me",
+    brand: "hvgapp",
+    functionArea: "build",
+    assignees: [],
+    executionState: "idle",
+    rank: "n",
+    listId: "backlog",
+    boardId: "hvgapp",
+    createdBy: OWNER,
+    comments: [],
+    parentGoalId: "hvgapp-ship",
+  };
+  const detached = { ...attached, parentGoalId: undefined };
+  const template = buildCardEventTemplate({
+    boardAddress: `30623:${OWNER}:hvgapp`,
+    card: detached,
+  });
+  assert.equal(JSON.parse(template.content).parentGoalId, undefined);
+  const snapshot = buildBoardSnapshot([asEvent("card-event", template)]);
+  assert.equal(snapshot.cards[0].card.parentGoalId, undefined);
 });

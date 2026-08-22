@@ -15,6 +15,16 @@ export interface GoalComposerModalProps {
 const BRAND_OPTIONS = Object.keys(BRAND_TOKENS);
 const FRAMEWORKS: Goal["framework"][] = ["SMART", "OKR", "PACT"];
 
+function brandOptionsFor(defaultBrand?: string): string[] {
+  return [
+    ...new Set(
+      [defaultBrand, ...BRAND_OPTIONS].filter((value): value is string =>
+        Boolean(value),
+      ),
+    ),
+  ];
+}
+
 const EMPTY: GoalDraft = {
   brandScope: "",
   framework: "SMART",
@@ -31,9 +41,10 @@ export const GoalComposerModal: React.FC<GoalComposerModalProps> = ({
   onClose,
   onCreateGoal,
 }) => {
+  const brandOptions = brandOptionsFor(defaultBrand);
   const [draft, setDraft] = useState<GoalDraft>({
     ...EMPTY,
-    brandScope: defaultBrand ?? BRAND_OPTIONS[0] ?? "",
+    brandScope: defaultBrand ?? brandOptions[0] ?? "",
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -48,13 +59,13 @@ export const GoalComposerModal: React.FC<GoalComposerModalProps> = ({
     try {
       const next: GoalDraft = {
         ...draft,
-        brandScope: draft.brandScope || defaultBrand || BRAND_OPTIONS[0] || "",
+        brandScope: draft.brandScope || defaultBrand || brandOptions[0] || "",
       };
       assembleGoal("pending", next);
       onCreateGoal(next);
       setDraft({
         ...EMPTY,
-        brandScope: defaultBrand ?? BRAND_OPTIONS[0] ?? "",
+        brandScope: defaultBrand ?? brandOptions[0] ?? "",
       });
       setError(null);
       onClose();
@@ -94,7 +105,7 @@ export const GoalComposerModal: React.FC<GoalComposerModalProps> = ({
                 onChange={(e) => setField("brandScope", e.target.value)}
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary/60"
               >
-                {BRAND_OPTIONS.map((option) => (
+                {brandOptions.map((option) => (
                   <option key={option} value={option}>
                     {brandDisplayName(option)}
                   </option>
