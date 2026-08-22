@@ -213,21 +213,26 @@ LIVE=$(pgrep -f buzz-acp | wc -l | tr -d ' ')
 
 **Files:**
 - Create: `docs/ENV_MATRIX.md` — one row per agent: runtime(s) it may fail over into,
-  required env vars per runtime, where each value comes from (keychain item name, not the
-  value).
+  required env vars per runtime, source of each value. Step 1 assumed a keychain item
+  name; the shipped field is plaintext `env_vars` (MIA S1). Secret-shaped cells are
+  **NO**. S0 values (not secrets) may land. There is no keychain item to name today.
 - Modify: `managed-agents.json` via Desktop only (Edit Agent → Advanced → Environment
   Variables) — never by hand-editing the JSON in this task.
 
 **Interfaces:**
-- Consumes: TOOL_PARITY §4 per-runtime requirements; Task 5's provider facts.
-- Produces: every agent smoke-tested on every runtime it may fail over into (ALLOCATION §6).
+- Consumes: TOOL_PARITY §4 per-runtime requirements; Task 5's provider facts; MIA S1
+  ruling (nest `PLANS/TRUST_S1_AGENT_SECRET_CUSTODY.md`).
+- Produces: every agent smoke-tested on every runtime it may fail over into (ALLOCATION §6)
+  against **subscription logins only**.
 
-- [ ] **Step 1 (PAT):** draft the matrix. Columns: agent, home runtime, failover runtimes,
-  vars per runtime, source, cleared-by-MIA checkbox.
-- [ ] **Step 2 (MIA):** clearance pass — anything touching secrets gets a written yes/no
-  in the doc.
-- [ ] **Step 3 (TIP):** apply via Desktop; one-turn smoke task per agent per failover
-  runtime ("reply with your model name").
+- [x] **Step 1 (PAT):** draft the matrix. Columns: agent, home runtime, failover runtimes,
+  vars per runtime, source, cleared-by-MIA checkbox. Locked copy: `docs/ENV_MATRIX.md`.
+- [x] **Step 2 (MIA):** clearance pass — **NO on every secret-shaped cell**, every agent,
+  every runtime. S0 YES. Kimi GAP closed as not to be built. INCIDENTS I6 / PR #24.
+- [ ] **Step 3 (TIP):** apply S0 via Desktop only where a live value exists
+  (`BUZZ_RELAY_URL=wss://hvg.app` optional on JUV; `PLAID_ENV` waits — MCP unprovisioned).
+  Nothing secret-shaped. One-turn smoke per agent per failover runtime ("reply with your
+  model name") against subscription logins only. Missing login → wait.
 - [ ] **Step 4 (SLM):** verify every smoke result against the matrix — the row doesn't
   count until SLM confirms the reported model matches the target runtime. Paste results
   into the matrix. Push after each stage.

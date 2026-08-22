@@ -57,8 +57,10 @@ today; becomes a real field when the rebuilt binary ships `card set` — P3). No
 
 **Failover:** subscription capped → next-cheapest live model at or above the floor.
 An agent failing over into a runtime must already be env-ready for it (§6) — otherwise
-the task waits. A task that waits because nobody is env-ready is JUV's escalation, posted
-in #command with the missing env named.
+the task waits. Env-ready means a **smoked subscription login** on that runtime, not an
+API key in Desktop env (S1 ruling, 2026-08-22). A task that waits because nobody is
+env-ready is JUV's escalation, posted in #command with the missing *login* named — not a
+prompt to paste a key.
 
 ## 3. BUDGET PACING — THE ANTI-EXHAUSTION MECHANICS
 
@@ -112,15 +114,27 @@ No brand enters S1 without this pipeline completing. The stages:
 
 ## 6. PER-AGENT ENV READINESS (FAILOVER SURVIVABILITY)
 
-Every agent gets its own environment-variable set (Desktop → Edit Agent → Advanced →
-Environment Variables) covering **every runtime it could fail over into** — credentials,
-base URLs, model pins. Owned as:
+Canonical table: [`ENV_MATRIX.md`](./ENV_MATRIX.md). Failover is **subscription →
+subscription** (grok ↔ cursor ↔ claude/codex login). It needs **no key on any runtime**.
+
+Desktop → Edit Agent → Advanced → Environment Variables writes a plaintext
+`env_vars` map into `managed-agents.json`. That path is **not** a keychain. MIA
+ruled 2026-08-22 (**S1**, nest `PLANS/TRUST_S1_AGENT_SECRET_CUSTODY.md`; INCIDENTS I6):
+**NO on every secret-shaped cell** until the four product guards in that ruling §5
+exist at a committed SHA. S0 non-secrets (`PLAID_ENV`, plain URLs, `BUZZ_AGENT_OS_*`)
+may land now. Owned as:
 
 - **PAT** produces the per-agent env matrix (which vars, per agent, per runtime).
-- **MIA** clears anything touching secrets before it lands.
-- **TIP** applies and verifies with a one-turn smoke task per agent per runtime.
-- No failover assignment ships to a runtime the agent hasn't smoked. The grok/PTY incident
-  (2026-08-22, 8 agents dead for a day) is what happens when readiness is assumed.
+- **MIA** clears anything touching secrets before it lands. Current clearance is NO
+  on S1/S2/S3.
+- **TIP** applies S0 via Desktop only (never by hand-editing the JSON) and runs a
+  one-turn smoke per agent per runtime: "reply with your model name" against
+  subscription logins only.
+- **SLM** verifies the reported model matches the target runtime.
+- No failover assignment ships to a runtime the agent hasn't smoked. The grok/PTY
+  incident (2026-08-22, 8 agents dead for a day) is what happens when readiness is
+  assumed. Floor: no env and no smoked login → the task waits. A waiting task is a
+  correct outcome.
 
 ## 7. THE LEARNING LOOP — DATA, STORAGE, ACCESS
 
@@ -184,7 +198,7 @@ remembers.**
 | 2 | `[floor:T?]` convention in card drafts | This doc; effective with Phase 1b filing (P8) |
 | 3 | `~/.buzz/max-agents` + dispatch rule | This doc; effective on JUV's next dispatch |
 | 4 | Subscription window table (§1) | Complete 2026-08-22 (SLM + PAT source-check) |
-| 5 | Per-agent env matrix | PAT → MIA → TIP |
+| 5 | Per-agent env matrix | PAT draft + MIA S1 NO locked 2026-08-22; TIP apply + SLM smoke open. See [`ENV_MATRIX.md`](./ENV_MATRIX.md) |
 | 6 | Desktop concurrency toggle | Build card, MFR |
 | 7 | headroom telemetry (P10) | TIP/PAT — upgrades pacing from events to numbers |
 | 8 | B2 executor absorbs matrix | MFR — automation lands underneath, rules unchanged |
