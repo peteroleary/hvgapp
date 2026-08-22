@@ -8,6 +8,7 @@ import { BoardCardModal } from "./ui/BoardCardModal";
 import { BoardColumn } from "./ui/BoardColumn";
 import { BoardFeedRulesModal } from "./ui/BoardFeedRulesModal";
 import { CardComposerModal, type CardDraft } from "./ui/CardComposerModal";
+import { GoalCreateForm } from "./ui/GoalCreateForm";
 import { GoalDraftPanel } from "./ui/GoalDraftPanel";
 
 export interface BoardViewProps {
@@ -27,6 +28,7 @@ export interface BoardViewProps {
   onAddComment?: (cardId: string, commentBody: string) => void;
   onApproveGoal?: (goalId: string) => void;
   onRejectGoal?: (goalId: string) => void;
+  onCreateGoal?: (goal: Goal) => void;
 }
 
 export const BoardView: React.FC<BoardViewProps> = ({
@@ -45,6 +47,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
   onAddComment,
   onApproveGoal,
   onRejectGoal,
+  onCreateGoal,
 }) => {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const selectedCard = cards.find((card) => card.id === selectedCardId) ?? null;
@@ -56,9 +59,12 @@ export const BoardView: React.FC<BoardViewProps> = ({
   const [activeTab, setActiveTab] = useState<"columns" | "goals" | "feedRules">(
     "columns",
   );
+  const [isCreatingGoal, setIsCreatingGoal] = useState(false);
 
   const pendingGoals = goals.filter((g) => g.status === "proposed");
+  const setGoals = goals.filter((g) => g.status !== "proposed");
   const composerList = board.lists.find((list) => list.id === composerListId);
+  const goalBrandScope = board.brandScope ?? board.id;
 
   return (
     <div className="flex flex-col h-full w-full bg-background overflow-hidden">
@@ -171,7 +177,59 @@ export const BoardView: React.FC<BoardViewProps> = ({
 
         {activeTab === "goals" && (
           <div className="max-w-4xl mx-auto space-y-6">
-            <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">
+                Goals
+              </h2>
+              {onCreateGoal && !isCreatingGoal && (
+                <button
+                  type="button"
+                  onClick={() => setIsCreatingGoal(true)}
+                  className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-2xs font-semibold"
+                >
+                  Set goal
+                </button>
+              )}
+            </div>
+            {isCreatingGoal && onCreateGoal && (
+              <GoalCreateForm
+                brandScope={goalBrandScope}
+                onCreateGoal={(goal) => {
+                  onCreateGoal(goal);
+                  setIsCreatingGoal(false);
+                }}
+                onCancel={() => setIsCreatingGoal(false)}
+              />
+            )}
+            {setGoals.map((goal) => (
+              <div
+                key={goal.id}
+                className="rounded-xl border border-border bg-card p-4 text-sm"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold text-foreground">
+                    {goal.smart?.specific ??
+                      goal.okr?.objective ??
+                      goal.pact?.purposeful ??
+                      goal.id}
+                  </span>
+                  <span className="text-2xs uppercase text-muted-foreground">
+                    {goal.status}
+                  </span>
+                </div>
+                {goal.smart?.measurable ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {goal.smart.measurable}
+                  </p>
+                ) : null}
+              </div>
+            ))}
+            {setGoals.length === 0 && !isCreatingGoal && (
+              <div className="text-center py-10 text-xs text-muted-foreground italic border border-dashed border-border rounded-xl">
+                No goals set on this board yet.
+              </div>
+            )}
+            <h2 className="text-sm font-bold text-foreground uppercase tracking-wider pt-4">
               Pending Comet Goal Proposals
             </h2>
             {pendingGoals.map((goal) => (
@@ -183,7 +241,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
               />
             ))}
             {pendingGoals.length === 0 && (
-              <div className="text-center py-16 text-xs text-muted-foreground italic border border-dashed border-border rounded-xl">
+              <div className="text-center py-8 text-xs text-muted-foreground italic border border-dashed border-border rounded-xl">
                 No active Comet goal proposals requiring review.
               </div>
             )}
