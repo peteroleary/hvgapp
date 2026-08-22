@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import type React from "react";
 
 import type { UserProfileLookup } from "@/features/profile/lib/identity";
@@ -14,6 +15,7 @@ export interface BoardCardProps {
   onSelectCard: (card: Card) => void;
   /** Resolved kind:0 profiles for this board's assignees. */
   profiles?: UserProfileLookup;
+  isDragging?: boolean;
 }
 
 export const FUNCTION_TOKENS: Record<string, string> = {
@@ -27,12 +29,24 @@ export const FUNCTION_TOKENS: Record<string, string> = {
   other: "text-slate-400 bg-slate-900 border-slate-700/40",
 };
 
-export const BoardCard: React.FC<BoardCardProps> = ({
-  card,
-  requiresApproval,
-  onSelectCard,
-  profiles,
-}) => {
+export const BoardCard = forwardRef<
+  HTMLDivElement,
+  BoardCardProps & React.HTMLAttributes<HTMLDivElement>
+>(function BoardCard(
+  {
+    card,
+    requiresApproval,
+    onSelectCard,
+    profiles,
+    isDragging,
+    className,
+    style,
+    onClick,
+    onKeyDown,
+    ...rest
+  },
+  ref,
+) {
   const isRejected = card.approvalDecision?.state === "rejected";
 
   const brandStyle = BRAND_TOKENS[card.brand] || {
@@ -62,16 +76,24 @@ export const BoardCard: React.FC<BoardCardProps> = ({
   return (
     // biome-ignore lint/a11y/useSemanticElements: card wrapper contains block-level children, cannot be a <button>
     <div
+      ref={ref}
       role="button"
       tabIndex={0}
-      onClick={() => onSelectCard(card)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
+      style={style}
+      {...rest}
+      onClick={(event) => {
+        onClick?.(event);
+        if (!event.defaultPrevented) onSelectCard(card);
+      }}
+      onKeyDown={(event) => {
+        onKeyDown?.(event);
+        if (event.defaultPrevented) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
           onSelectCard(card);
         }
       }}
-      className={`group relative rounded-md p-3 shadow-sm transition-all cursor-pointer ${cardStateStyle}`}
+      className={`group relative rounded-md p-3 shadow-sm transition-all cursor-pointer ${cardStateStyle} ${isDragging ? "opacity-40 ring-2 ring-primary/50 z-50" : ""} ${className ?? ""}`}
     >
       {/* Top Bar */}
       <div className="flex items-center justify-between gap-2 mb-2">
@@ -150,4 +172,4 @@ export const BoardCard: React.FC<BoardCardProps> = ({
       </div>
     </div>
   );
-};
+});

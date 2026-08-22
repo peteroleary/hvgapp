@@ -1,8 +1,18 @@
+import {
+  closestCorners,
+  DndContext,
+  type DragEndEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import type React from "react";
 import { useState } from "react";
 
 import type { UserProfileLookup } from "@/features/profile/lib/identity";
 
+import { resolveDropRank } from "./state/dropRank";
+import { compareRank } from "./state/rank";
 import type { Board, Card, FeedRule, Goal } from "./types/boardTypes";
 import { BoardCardModal } from "./ui/BoardCardModal";
 import { BoardColumn } from "./ui/BoardColumn";
@@ -22,6 +32,11 @@ export interface BoardViewProps {
   onSelectBoard?: (boardId: string) => void;
   onNewBoard?: () => void;
   onAddCard?: (listId: string, draft: CardDraft) => void;
+  onMoveCard?: (input: {
+    cardId: string;
+    listId: string;
+    rank: string;
+  }) => void;
   onApproveCard?: (cardId: string) => void;
   onRejectCard?: (cardId: string, reason: string) => void;
   onAddComment?: (cardId: string, commentBody: string) => void;
@@ -40,6 +55,7 @@ export const BoardView: React.FC<BoardViewProps> = ({
   onSelectBoard,
   onNewBoard,
   onAddCard,
+  onMoveCard,
   onApproveCard,
   onRejectCard,
   onAddComment,
@@ -59,6 +75,45 @@ export const BoardView: React.FC<BoardViewProps> = ({
 
   const pendingGoals = goals.filter((g) => g.status === "proposed");
   const composerList = board.lists.find((list) => list.id === composerListId);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 6 },
+    }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || !onMoveCard) return;
+
+    const activeId = String(active.id);
+    const overId = String(over.id);
+    const activeCard = cards.find((card) => card.id === activeId);
+    if (!activeCard) return;
+
+    const targetListId =
+      board.lists.find((list) => list.id === overId)?.id ??
+      cards.find((card) => card.id === overId)?.listId;
+    if (!targetListId) return;
+
+    const columnCards = cards
+      .filter((card) => card.listId === targetListId)
+      .sort((left, right) =>
+        compareRank(
+          { rank: left.rank, id: left.id },
+          { rank: right.rank, id: right.id },
+        ),
+      );
+
+    const result = resolveDropRank({
+      column: columnCards,
+      activeId,
+      overId,
+    });
+    if (!result) return;
+
+    onMoveCard({ cardId: activeId, listId: targetListId, rank: result.rank });
+  };
 
   return (
     <div className="flex flex-col h-full w-full bg-background overflow-hidden">
@@ -146,27 +201,37 @@ export const BoardView: React.FC<BoardViewProps> = ({
       {/* Main Canvas Surface */}
       <div className="flex-1 overflow-x-auto p-6 bg-background">
         {activeTab === "columns" && (
-          <div className="flex h-full gap-4 items-start">
-            {board.lists.map((list) => {
-              const listCards = cards.filter((c) => c.listId === list.id);
-              return (
-                <BoardColumn
-                  key={list.id}
-                  listId={list.id}
-                  title={list.title}
-                  cards={listCards}
-                  approvalPendingByCardId={approvalPendingByCardId}
-                  onSelectCard={(card) => setSelectedCardId(card.id)}
-                  onAddCard={
-                    onAddCard
-                      ? (listId) => setComposerListId(listId)
-                      : undefined
-                  }
-                  profiles={profiles}
-                />
-              );
-            })}
-          </div>
+          <DndContext
+            // Nested card+column droppables. Default rectIntersection prefers
+            // the larger column, so every drop looks like an append (overId
+            // becomes the list id). closestCorners lets over.id land on a card
+            // when that is the target — the overload RANKING.md documents.
+            collisionDetection={closestCorners}
+            sensors={sensors}
+            onDragEnd={handleDragEnd}
+          >
+            <div className="flex h-full gap-4 items-start">
+              {board.lists.map((list) => {
+                const listCards = cards.filter((c) => c.listId === list.id);
+                return (
+                  <BoardColumn
+                    key={list.id}
+                    listId={list.id}
+                    title={list.title}
+                    cards={listCards}
+                    approvalPendingByCardId={approvalPendingByCardId}
+                    onSelectCard={(card) => setSelectedCardId(card.id)}
+                    onAddCard={
+                      onAddCard
+                        ? (listId) => setComposerListId(listId)
+                        : undefined
+                    }
+                    profiles={profiles}
+                  />
+                );
+              })}
+            </div>
+          </DndContext>
         )}
 
         {activeTab === "goals" && (
