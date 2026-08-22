@@ -2,18 +2,22 @@
 
 **Decision needed from Peter: none. Build order below is the recommendation.**
 
-## The answer to "smallest local model"
+## The answer to "smallest local model" — superseded 2026-08-22
 
-**Qwen3-4B (Q4_K_M, ~2.5 GB) via Ollama** — the smallest model that holds structured
-judgment reliably (classify OK/anomaly, emit clean JSON). Below 4B (Llama 3.2 3B, Qwen3
-1.7B) classification gets flaky and you spend more tokens re-asking than you save.
-Ollama itself is a ~250 MB install. Total footprint under 3 GB — nothing like the 28 GB
-LM Studio install we just removed.
+**Use the cloud small models, not a local one.** The watcher only calls a model on
+anomalies — a few ~2K-token calls a day, worst case 96 (every 15 min). That is cents per
+month; a local model is 3 GB on disk forever and *worse* at structured judgment.
 
-**But the model is the smallest part of this design.** 90% of monitoring is deterministic
-— a script, not an LLM. The model only writes the anomaly summary. And in v1 even that is
-optional: JUV is already an LLM with judgment; burning a local model to pre-digest for him
-only pays when telemetry volume gets big. Build script-first.
+| Option | Verdict |
+|---|---|
+| **Gemini flash-class** (NKI already runs gemini-3.7-flash — access proven) | **Recommended.** Cheapest, fastest, zero disk. Via goose's configured Google provider or a direct API key if one exists. |
+| **GPT nano/mini-class** (via codex) | Equal fallback. Same cost ballpark. |
+| goose as the runtime | Only if no raw API key exists — goose is a harness, not a model; one-shot classify doesn't need it if curl can hit the API. |
+| Local Qwen3-4B via Ollama (~3 GB) | Only if offline operation or zero-cloud-dependency becomes a requirement. Not today. |
+
+**And the v1 truth:** most anomalies are templated (dead agent, low disk, relay down) —
+the script can post those with NO model at all. The model only interprets ambiguous
+cases. Build v1 model-free; wire the flash summarizer when a vague anomaly actually shows up.
 
 ## Architecture
 
@@ -29,7 +33,8 @@ launchd (every 15 min)
        └─ subscription pressure: which runtime hit a rate limit + reset time (from logs)
   └─ verdict
        ├─ healthy → append one line to a rolling log, post NOTHING (quiet when healthy)
-       └─ anomaly → Qwen3-4B (Ollama, local, free) condenses to a 5-line dispatch note
+       └─ anomaly → templated alert posts directly (dead agent / low disk / relay down
+            need no model); ambiguous cases go through gemini flash-class (cents/month)
             → posted to #command with @JUV mention
 ```
 
@@ -57,8 +62,9 @@ Build the 15-minute watcher per docs/MONITORING.md.
    with a condensed anomaly payload on stdout.
 2. launchd plist: StartInterval 900, run monitor.sh. On exit 1, post the payload to
    #command mentioning @JUV (buzz messages send --channel fdf5cf79-... --mention <JUV hex>).
-3. Install Ollama, pull qwen3:4b. The summarizer call sits between the payload and the
-   post — max 5 lines, no fluff, always ends with the named owner of the fix.
+3. NO local model, NO Ollama. Templated alerts post directly. For ambiguous anomalies,
+   summarize via gemini flash-class (goose's Google provider, or a direct API key if one
+   exists) — max 5 lines, no fluff, always ends with the named owner of the fix.
 4. Add the disk check first and test it by hand — 1 GiB free nearly killed us today.
 
 DONE WHEN: an anomaly you stage (kill one agent's process) produces a JUV-mention post in
