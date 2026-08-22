@@ -181,6 +181,9 @@ File your drafted sets: ~/.buzz/PLANS/CARDS_<SQUAD>_<BRAND>.md -> the matching b
 CORRECTIONS to the kickoff:
 - The write boundary validates brand slugs: hvgapp's brand is `hvg-app`, not `hvgapp`.
 - The six boards to file on: hvgapp, gomarco, itshvg, lhfyc, clean, three. Nothing else.
+- NEW (ALLOCATION §2): every card description starts with `[floor:T0|T1|T2|T3]` — the
+  minimum model tier allowed to execute it. No tag = T2. Floors are minimums; failover
+  never goes below them.
 DONE WHEN: every drafted card with a named assignee is filed on its brand's board.
 ```
 
