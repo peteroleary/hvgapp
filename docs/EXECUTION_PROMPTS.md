@@ -197,10 +197,12 @@ that pager, not ACP itself, was the ENXIO source. Verified: `grok agent stdio` a
 full ACP initialize over plain pipes, no PTY required.
 
 LIVE FIX (deployed by Kimi, 2026-08-22): shim at /Users/po/.local/bin/grok-acp-pty —
-  exec /Users/po/.local/bin/grok "$@" stdio
-All 8 grok-runtime agents (LDA, YBY, PAT, 3TH, BOO, Bumble, TIP, VON) are pinned to it via
-agent_command_override. NOTE: LDA's record carries stale agent_args=["acp"] from its old
-goose config — if LDA misbehaves, blank his agent_args in Desktop first.
+appends `stdio` ONLY if the harness args lack it (the catalog passes `agent
+--always-approve stdio` on some paths; a blind append doubles it and grok exits with a
+usage error). All 8 grok-runtime agents (LDA, YBY, PAT, 3TH, BOO, Bumble, TIP, VON) are
+pinned to it via agent_command_override. NOTE: LDA's record carries stale
+agent_args=["acp"] from its old goose config — if LDA misbehaves, blank his agent_args in
+Desktop first.
 
 RESTART REQUIRED: harness instances that exhausted 10 init retries ("cannot continue") do
 NOT respawn on config change. Quit Buzz.app fully and relaunch (or toggle the 8 agents in
