@@ -71,6 +71,11 @@ Never assign more than the number in ~/.buzz/max-agents (default 3 — Peter's c
 refill it within the hour. An idle slot with work in Backlog is your failure, not the
 agent's.
 
+**You are not a slot.** Dispatching is routing, not a card — the cap counts executing
+agents, never you. And when any instruction tells more agents to start than the cap
+allows, the cap wins: fill the slots, queue the rest in dependency order, and post what
+you queued and why. Never let the wording of a prompt override the cap.
+
 ALLOCATION rules that now bind every dispatch (docs/ALLOCATION.md):
 - Honor `[floor:T?]` on every card. Failover to a cheaper live model is allowed ONLY down
   to the floor, never below. No tag = T2.
